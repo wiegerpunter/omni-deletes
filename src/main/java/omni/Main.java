@@ -50,6 +50,7 @@ public class Main {
     public static int kminDeletes = 0;
     public static boolean spreadOutDeletes = true;
     public static boolean twoLHSFast = true;
+    public static boolean useTwoLHSAcrossRows = true;
     static String setting;
     public static boolean readAllFiles = true; // Set true if all files should be read, false if only the first file should be read
     public static boolean rangeQueries = false;
@@ -79,7 +80,7 @@ public class Main {
     public static int sensitivityNumberOfRecords = 5000000;
     public static boolean LOO = false;
     public static boolean LTO = false;
-    public static long[] ramVals = {(long) (50*8E6), (long) (100*8E6), (long) (200*8E6), (long) (400*8E6), (long) (800*8E6), (long) (1600*8E6)};
+    public static long[] ramVals = {(long) (50*8E6)};//, (long) (100*8E6), (long) (200*8E6), (long) (400*8E6), (long) (800*8E6), (long) (1600*8E6)};
     //public static long[] ramVals = {(long) (1000*8E6), (long) (1500*8E6)};
 
     public static String currentDate;

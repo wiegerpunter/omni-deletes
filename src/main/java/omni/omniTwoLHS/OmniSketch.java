@@ -23,6 +23,7 @@ public class OmniSketch extends SynopsisRefactor {
     TWOLHS[] TWOLHSTmp;
     //boolean useTwoLHS;
     boolean rangeQueries;
+    Random randomHashG = new Random(Main.repetition);
     //boolean useTwoKmin;
 
 
@@ -76,11 +77,12 @@ public class OmniSketch extends SynopsisRefactor {
 //    }
 
     public OmniSketch(long ram, int numStoredAttributes, int[] parameters, int dyadicBits,
-                      boolean useTwoLHS, boolean rangeQueries, boolean useTwoKmin, boolean twoLHSFast) {
+                      boolean useTwoLHS, boolean useAcrossRows, boolean rangeQueries, boolean useTwoKmin, boolean twoLHSFast) {
         this.parameters = parameters;
         this.ram = ram;
         this.dyadicRangeBits = dyadicBits;
         this.useTwoLHS = useTwoLHS;
+        this.useAcrossRows = useAcrossRows;
         this.numStoredAttributes = numStoredAttributes;
         this.rangeQueries = rangeQueries;
         this.useTwoKmin = useTwoKmin;
@@ -159,11 +161,14 @@ public class OmniSketch extends SynopsisRefactor {
         long hx = id;
         long[] hx_2lhs = null;
         long[][] vals = null;
+        int hashG = -1;
 
         if (!useTwoLHS){
             hx = kminTmp.hash(id);
         } else {
-            if (!twoLHSFast) {
+            if (twoLHSFast) {
+                hashG = hashG(id);
+            } else {
                 long hx_i;
                 //hx_2lhs = new long[numTwoLHSReps];
                 vals = new long[numTwoLHSReps][TWOLHSTmp[0].bitSize];
@@ -184,7 +189,7 @@ public class OmniSketch extends SynopsisRefactor {
 
         if (!rangeQueries) {
             for (int i = 0; i < numStoredAttributes; i++) {
-                CMSketches[i].ingest(record[i + 1], hx, vals, sign);
+                CMSketches[i].ingest(record[i + 1], hx, vals, hashG, sign);
             }
             if (Main.checkConditions) {
                 for (int i = 0; i < numStoredAttributes; i++) {
@@ -202,7 +207,10 @@ public class OmniSketch extends SynopsisRefactor {
             }
         }
     }
-
+    private int hashG(long id) {
+        randomHashG.setSeed(id + Main.repetition);
+        return randomHashG.nextInt(numTwoLHSReps);
+    }
     private long[][] wrapperInitLogRanges(long l) {
         //l += (long) Math.pow(2, Main.dyadicRangeBits - 1); // shift to positive
         if (l < 0) {
@@ -356,7 +364,11 @@ public class OmniSketch extends SynopsisRefactor {
     public int query(long[] query, int numPreds, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
         // Get estimate per depth. Take minimum of all estimates.
         if (useTwoLHS) {
-            return queryEstPerRowTwoLHSWithInfo(getSamplesTwoLHS(query, numPreds), queryInfo); //TODO: how to store info on 2lhs.
+            if (useAcrossRows) {
+                return queryEstAcrossRowsTwoLHS(getSamplesTwoLHSAcrossRows(query, numPreds), queryInfo);
+            } else {
+                return queryEstPerRowTwoLHSWithInfo(getSamplesTwoLHSPerRow(query, numPreds), queryInfo);
+            }
         } else {
             return queryKmin(getSamplesKmin(query, numPreds), queryInfo);
         }
@@ -413,6 +425,24 @@ public class OmniSketch extends SynopsisRefactor {
             return medianEstimate(estimates);
         }
     }
+    private int queryEstAcrossRowsTwoLHS(TWOLHS[][] samples, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
+
+        double u = setUnionEstimator(samples, Main.eps/3); // Est of union size.
+        //System.out.println("u: " + u + ", unionSize: " + unionSize + " diff: " + (u - unionSize));
+        int estimate = setIntersectEstimator(samples, u, Main.eps/3, -1,queryInfo);
+
+        if (queryInfo.jaccardEstimates.isEmpty() && useTwoLHS) {
+            throw new IllegalArgumentException("Jaccard estimates not set");
+        } else if (queryInfo.jaccardEstimates.size() > 1) {
+            throw new IllegalArgumentException("Jaccard estimates size > 1");
+        }
+        double jaccardEstimate = queryInfo.jaccardEstimates.get(0);
+        int witnessEstimate = queryInfo.witnessEstimates.get(0);
+
+        queryInfo.set2LHS(u, witnessEstimate, jaccardEstimate);
+        return estimate;
+    }
+
     public int query(long[] q, int numPreds, int unionSize) {
         throw new IllegalArgumentException("OmniSketch does not support this query method");
     }
@@ -425,7 +455,7 @@ public class OmniSketch extends SynopsisRefactor {
         }
     }
 
-    public TWOLHS[][][] getSamplesTwoLHS(long[] q, int numPreds) {
+    public TWOLHS[][][] getSamplesTwoLHSPerRow(long[] q, int numPreds) {
         TWOLHS[][][] samples = new TWOLHS[depth][numPreds][];
         // initialize arrays
         for (int i = 0; i < depth; i++) {
@@ -452,6 +482,30 @@ public class OmniSketch extends SynopsisRefactor {
         }
         return samples;
     }
+
+    public TWOLHS[][] getSamplesTwoLHSAcrossRows(long[] q, int numPreds) {
+        TWOLHS[][] samples = new TWOLHS[depth*numPreds][];
+        // initialize arrays
+        for (int i = 0; i < samples.length; i++) {
+            samples[i] = new TWOLHS[numTwoLHSReps];
+        }
+        int attrWithoutPred = 0;
+        for (int i = 0; i < q.length; i++) {
+            if (q[i] != -1) { // Find way to not take the -1s into account in query.
+                TWOLHS[][] temp = CMSketches[i].queryTwoLHS(q[i]);
+                if (depth >= 0) {
+                    for (int j = 0; j < depth; j++) {
+                        System.arraycopy(temp[j], 0, samples[(i - attrWithoutPred) * depth + j], 0, numTwoLHSReps);
+                    }
+                }
+            } else {
+                attrWithoutPred++;
+            }
+        }
+        return samples;
+    }
+
+
     public Kmin[] getSamplesKmin(long[] q, int numPreds) {
         Kmin[] samples = new Kmin[numPreds * depth];
         int attrWithoutPred = 0;
@@ -515,7 +569,7 @@ public class OmniSketch extends SynopsisRefactor {
     }
 
     private int queryEstPerRow(long[] q, int numPreds, int unionSize, AnalysisBaselinesRefactor.QueryInfo CMRow) {
-        TWOLHS[][][] samples = (TWOLHS[][][]) getSamplesTwoLHS(q, numPreds);
+        TWOLHS[][][] samples = (TWOLHS[][][]) getSamplesTwoLHSPerRow(q, numPreds);
         // Get estimate per depth. Take minimum of all estimates.
         int[] estimates = new int[depth];
         for (int i = 0; i < depth; i++) {
@@ -723,7 +777,8 @@ public class OmniSketch extends SynopsisRefactor {
         return 1; // witness found of intersection.
     }
 
-    private int setIntersectEstimator(TWOLHS[][] samples, double unionEstimate, double eps, int unionSizeExact, AnalysisBaselinesRefactor.QueryInfo CMRow) {
+    private int setIntersectEstimator(TWOLHS[][] samples, double unionEstimate, double eps,
+                                      int unionSizeExact, AnalysisBaselinesRefactor.QueryInfo CMRow) {
         int sum = 0;
         int count = 0;
         for (int i = 0; i < numTwoLHSReps; i++) {

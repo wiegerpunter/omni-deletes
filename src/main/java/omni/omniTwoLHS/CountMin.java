@@ -95,19 +95,16 @@ public class CountMin {
 //        }
 //    }
 
-    private int hashG(long id) {
-        rn.setSeed(id + Main.repetition);
-        return rn.nextInt(numTwoLHSReps);
-    }
 
-    public void ingest(long attrValue, long hx, long[][] vals, int sign) {
+
+    public void ingest(long attrValue, long hx, long[][] vals, int hashG, int sign) {
         // Test if all element in A and B are consistent
         int[] hashes = hash(attrValue, depth, width);
         for (int j = 0; j < depth; j++) {
             int w = hashes[j];
             if (useTwoLHS) {
                 if (twoLHSFast) {
-                    CMTwoLHS[j][w][hashG(hx)].ingest(hx, sign); // Hash in Sample  as in section 5 of paper
+                    CMTwoLHS[j][w][hashG].ingest(hx, sign); // Hash in Sample  as in section 5 of paper
                 } else {
                     for (int k = 0; k < numTwoLHSReps; k++) {
                         CMTwoLHS[j][w][k].ingest(vals[k], sign); // Hash in Sample  as in section 3 of paper

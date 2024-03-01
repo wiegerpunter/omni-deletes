@@ -91,7 +91,7 @@ public class TestTwoLHS {
         Main.depth =  params[0];
         Main.width = params[1];
         Main.rs = new OmniSketch(ram, Main.numStoredAttributes, params, Main.dyadicRangeBits,
-                useTwoLHS, Main.rangeQueries, useTwoKmin, Main.twoLHSFast);
+                useTwoLHS, Main.useTwoLHSAcrossRows, Main.rangeQueries, useTwoKmin, Main.twoLHSFast);
         ((OmniSketch) Main.rs).printParams();
         runSynopsisRamBased(Main.rs);
     }
