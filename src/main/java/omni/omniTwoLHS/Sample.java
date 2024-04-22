@@ -3,7 +3,7 @@ package omni.omniTwoLHS;
 public abstract class Sample {
     public int n;
     public long hashDomain;
-    public int bitSize = 31;
+    public int bitSize = 41;
     protected String setting;
     protected int ram;
     public int memUsageSynopsis;

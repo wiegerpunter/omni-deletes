@@ -777,6 +777,30 @@ public class OmniSketch extends SynopsisRefactor {
         return 1; // witness found of intersection.
     }
 
+    private int[] bucketDiffEstimatorGreedy(TWOLHS[][] samples, double unionEstimate, double eps, int repetition, int unionSizeExact) {
+        int index;
+        int count =0;
+        int sum=0;
+
+        for (int i = 0; i < TWOLHSTmp[0].bitSize; i++) {
+            if (!singletonUnionBucket(samples, repetition, i)) {
+                continue;
+            }
+            boolean witnessFound = true;
+            for (TWOLHS[] sample : samples) {
+                if (!sample[repetition].singletonBucket(i)) {
+                    witnessFound = false;
+                }
+            }
+            if (witnessFound) {
+                sum++;
+            }
+            count++;
+        }
+        return new int[]{sum, count};
+    }
+
+
     private int setIntersectEstimator(TWOLHS[][] samples, double unionEstimate, double eps,
                                       int unionSizeExact, AnalysisBaselinesRefactor.QueryInfo CMRow) {
         int sum = 0;
@@ -806,6 +830,7 @@ public class OmniSketch extends SynopsisRefactor {
 
         return resultInt;
     }
+
     private double[] setIntersectEstimatorInfo(TWOLHS[][] samples, double unionEstimate, double eps, int unionSizeExact) {
         int sum = 0;
         int count = 0;

@@ -760,9 +760,6 @@ public class Helper {
             result[23] = d.parsePointQueryToString(d.pointQueries[i]);
             result[24] = String.valueOf(SCap[i]);
             result[25] = String.valueOf(NMax[i]);
-            if (jaccardEstimates2LHS[i] > 0) {
-                System.out.println("Jaccard estimate: " + jaccardEstimates2LHS[i]);
-            }
             result[26] = String.valueOf(jaccardEstimates2LHS[i]);
             result[27] = String.valueOf(unionEstimates2LHS[i]);
             result[28] = String.valueOf(witness2LHS[i]);

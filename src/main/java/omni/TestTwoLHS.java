@@ -2,6 +2,7 @@ package omni;
 
 import com.opencsv.exceptions.CsvValidationException;
 import omni.omniTwoLHS.OmniSketch;
+import omni.omniTwoLHS.ReservoirSample;
 
 import java.io.IOException;
 
@@ -70,6 +71,7 @@ public class TestTwoLHS {
                 runSketch(ram, rtp, useTwoLHS, false);
                 //runSketch(ram, rtp, !useTwoLHS, false);
                 //runSketch(ram, rtp, !useTwoLHS, true);
+                runReservoirSampling(ram, rtp);
             }
         }
     }
@@ -93,6 +95,14 @@ public class TestTwoLHS {
         Main.rs = new OmniSketch(ram, Main.numStoredAttributes, params, Main.dyadicRangeBits,
                 useTwoLHS, Main.useTwoLHSAcrossRows, Main.rangeQueries, useTwoKmin, Main.twoLHSFast);
         ((OmniSketch) Main.rs).printParams();
+        runSynopsisRamBased(Main.rs);
+    }
+
+    public void runReservoirSampling(long ram, RamToPar rtp) throws IOException {
+        int[] params = rtp.getParamsReservoirSampling(ram);
+
+        Main.rs = new ReservoirSample(ram, Main.numStoredAttributes, params);
+        ((ReservoirSample) Main.rs).printParams();
         runSynopsisRamBased(Main.rs);
     }
 

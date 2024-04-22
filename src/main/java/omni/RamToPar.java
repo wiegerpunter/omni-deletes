@@ -314,6 +314,11 @@ public class RamToPar {
         }
     }
 
+    public int[] getParamsReservoirSampling(long ram) {
+        //TODO: Implement
+        return new int[]{0, 0, 0};
+    }
+
     public double[] getParamsKmin(long ram) {
         //HashMap<Integer, double[]> ramToParams;
         if (ramToKminParams.containsKey(ram)) {

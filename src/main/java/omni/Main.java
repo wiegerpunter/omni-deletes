@@ -80,7 +80,7 @@ public class Main {
     public static int sensitivityNumberOfRecords = 5000000;
     public static boolean LOO = false;
     public static boolean LTO = false;
-    public static long[] ramVals = {(long) (50*8E6)};//, (long) (100*8E6), (long) (200*8E6), (long) (400*8E6), (long) (800*8E6), (long) (1600*8E6)};
+    public static long[] ramVals = {(long) (50*8E6), (long) (100*8E6), (long) (200*8E6), (long) (400*8E6), (long) (800*8E6), (long) (1600*8E6)};
     //public static long[] ramVals = {(long) (1000*8E6), (long) (1500*8E6)};
 
     public static String currentDate;
