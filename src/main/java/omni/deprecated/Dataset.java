@@ -1,6 +1,8 @@
-package omni;
+package omni.deprecated;
 
 import com.opencsv.exceptions.CsvValidationException;
+import omni.*;
+import omni.Record;
 import omni.dataGeneration.ProcessedStreamLoaderGeneric;
 
 import java.io.*;
@@ -10,7 +12,7 @@ import java.util.stream.Collectors;
 
 public class Dataset implements Externalizable{
     //OmniSketch s;
-    int size;
+    public int size;
     String setting;
     public ArrayList<Record> dataset = new ArrayList<>();
     public ArrayList<Record> warmupDataset = new ArrayList<>();
@@ -716,7 +718,7 @@ public class Dataset implements Externalizable{
     int queryId = 0;
     boolean[] queryWithPredicates = new boolean[Main.numAttributes];
 
-    boolean[] attributesInWorkload = new boolean[Main.numAttributes];
+    public boolean[] attributesInWorkload = new boolean[Main.numAttributes];
     int distinctPredSize;
 
 

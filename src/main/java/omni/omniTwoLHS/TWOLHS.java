@@ -1,7 +1,5 @@
 package omni.omniTwoLHS;
 
-import omni.Main;
-
 import java.util.Random;
 
 public class TWOLHS extends Sample {
@@ -13,11 +11,13 @@ public class TWOLHS extends Sample {
     int a;
     int b;
     int c;
-    int seed;
+    int repetition;
+    //int seed;
 
     //public int bitSize = 31;
-    public TWOLHS(int seed) {
+    public TWOLHS(int seed, int TWOLHSRepetition) {
         this.seed = seed;
+        this.repetition = TWOLHSRepetition;
         this.M = Integer.MAX_VALUE;
         this.K = 2;
         this.hashDomain = (long) Math.pow(M, K);
@@ -210,7 +210,7 @@ public class TWOLHS extends Sample {
     private int[] randomPrimes() {
         // generate 3 random primes
         int[] primes = new int[3];
-        Random rand = new Random(Main.repetition + seed);
+        Random rand = new Random(this.repetition); // + (int) Math.pow(10,seed)); //TODO: we need a 'random seed' based on the seed for each repetition.
         for (int i = 0; i < 3; i++) {
             int prime = 0;
             int cnt = 0;

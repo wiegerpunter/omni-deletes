@@ -8,6 +8,7 @@ public abstract class Sample {
     protected int ram;
     public int memUsageSynopsis;
     public int curSampleSize;
+    public int seed;
 
     public Sample() {
 

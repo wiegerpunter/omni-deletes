@@ -4,6 +4,8 @@ public class Formulas {
 
     static double ramOmniKmin(int numAttrsToUse, int depth, int width, int B, int smallb) {
         return (double) depth * width * numAttrsToUse * (B * (smallb + 3 * 32 + 1) + 32);
+        //return (double) depth * width * numAttrsToUse * (B * smallb + 32);
+
     }
 
     public static long ramSingleKmin(int B, int smallb) {

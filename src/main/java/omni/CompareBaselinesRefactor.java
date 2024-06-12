@@ -115,7 +115,7 @@ public class CompareBaselinesRefactor {
         System.out.println("Memory usage synopsis " + syn.setting + ": " + syn.getMemoryUsage());
         System.out.println("Memory usage dataset: " + d.getMemoryUsage());
         System.out.println("\n");
-        AnalysisBaselinesRefactor ab = new AnalysisBaselinesRefactor(syn, cd, h, time_passed);
+        AnalysisBaselinesRefactor ab = new AnalysisBaselinesRefactor(syn, cd, h, time_passed, 1);
         ab.run();
         syn.reset();
         //ConditionChecks.run(d, s);

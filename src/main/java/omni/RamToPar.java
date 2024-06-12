@@ -27,6 +27,8 @@ public class RamToPar {
     HashMap<Long, double[]> ramToCMBaseline = new HashMap<>();
 
     HashMap<Long, double[]> ramToHydra = new HashMap<>();
+    HashMap<Long, double[]> ramToReservoir = new HashMap<>();
+    HashMap<Long, double[]> ramToAdap = new HashMap<>();
     int numAttrs;
     public RamToPar(int numAttrsToUse) {
         this.numAttrs = numAttrsToUse;
@@ -77,6 +79,12 @@ public class RamToPar {
             double[] parsKmin = gridSearchKmin(ram);
             ramToKminParams.put(ram , parsKmin);
 
+            double[] parsReservoir = gridSearchReservoir(ram);
+            ramToReservoir.put(ram, parsReservoir);
+
+            double[] parsAdap = gridSearchAdap(ram);
+            ramToAdap.put(ram, parsAdap);
+
         }
 
 //        for (long ram : Main.ramVals) {
@@ -100,6 +108,16 @@ public class RamToPar {
 
     }
 
+    private double[] gridSearchReservoir(long ram) {
+        // memory usage of reservoir sampling is sample size * 32 * numAttrs
+        double sampleSize = (double) ram / (32 * numAttrs);
+        return new double[]{sampleSize};
+    }
+    private double[] gridSearchAdap(long ram) {
+        // memory usage of aSH sampling is sample size * 32 * numAttrs * 4
+        double sampleSize = (double) ram / (32 * numAttrs * 4);
+        return new double[]{sampleSize};
+    }
 
     private double[] gridSearchCMBaseline(long ram) {
         int maxSize = 0;
@@ -315,10 +333,24 @@ public class RamToPar {
     }
 
     public int[] getParamsReservoirSampling(long ram) {
-        //TODO: Implement
-        return new int[]{0, 0, 0};
+        if (ramToReservoir.containsKey(ram)) {
+            double[] info = ramToReservoir.get(ram);
+            int sampleSize = (int) info[0];
+            return new int[]{sampleSize};
+        } else {
+            throw new IllegalArgumentException("RAM not found in ramToReservoir");
+        }
     }
 
+    public int[] getParamsAdapSampling(long ram) {
+        if (ramToAdap.containsKey(ram)) {
+            double[] info = ramToAdap.get(ram);
+            int sampleSize = (int) info[0];
+            return new int[]{sampleSize};
+        } else {
+            throw new IllegalArgumentException("RAM not found in ramToAdap");
+        }
+    }
     public double[] getParamsKmin(long ram) {
         //HashMap<Integer, double[]> ramToParams;
         if (ramToKminParams.containsKey(ram)) {

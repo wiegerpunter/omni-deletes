@@ -1,4 +1,6 @@
-package omni;
+package omni.deprecated;
+
+import omni.*;
 
 import java.io.IOException;
 import java.util.ArrayList;

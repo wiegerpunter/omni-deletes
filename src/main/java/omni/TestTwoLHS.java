@@ -1,10 +1,14 @@
 package omni;
 
+import cern.jet.random.Beta;
 import com.opencsv.exceptions.CsvValidationException;
 import omni.omniTwoLHS.OmniSketch;
 import omni.omniTwoLHS.ReservoirSample;
+import omni.omniTwoLHS.aSH;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
 
 public class TestTwoLHS {
     Helper h;
@@ -23,6 +27,7 @@ public class TestTwoLHS {
         //Main.useMultNumAttributes = true;
         cd = new CleanDataset(h);
         readDatasetSettings();
+        int numRepetitions = 5;
         double[] percToDelete;
         double maxPercent = 0;
         if (Main.withDeletes) {
@@ -37,18 +42,22 @@ public class TestTwoLHS {
                     for (int j = 2; j < cd.cleanIds.length; j++) {
                             Main.numStoredAttributes = j;
                             readDataset(i, perc, maxPercent);
-                            runSyns(i);
+                            for (int repetition = 0; repetition < numRepetitions; repetition++) {
+                                runSyns(i, repetition);
+                            }
                     }
                 } else {
                     Main.numStoredAttributes = cd.cleanIds.length;
                     readDataset(i, perc, maxPercent);
-                    runSyns(i);
+                    for (int repetition = 0; repetition < numRepetitions; repetition++) {
+                        runSyns(i, repetition);
+                    }
                 }
             }
         }
     }
 
-    private void runSyns(int i) throws IOException {
+    private void runSyns(int i, int repetition) throws IOException {
 
         System.out.println("Running dataset " + (i + 1) + " of " + conditions.length);
         this.rtp = new RamToPar(Main.numStoredAttributes);
@@ -66,22 +75,61 @@ public class TestTwoLHS {
                 cd.setNoiseUpdates(numNoiseUpdates);
             for (long ram : Main.ramVals) {
                 System.out.println("Running sketch with ram " + ram);
+
                 System.out.println("OMNISKETCH");
                 boolean useTwoLHS = true;
-                runSketch(ram, rtp, useTwoLHS, false);
-                //runSketch(ram, rtp, !useTwoLHS, false);
-                //runSketch(ram, rtp, !useTwoLHS, true);
-                runReservoirSampling(ram, rtp);
+                boolean useBetaKmin = false;
+                if (Main.countUniqueSamples) {
+                    Main.uniqueSamples = new HashMap<>();
+                    Main.uniqueSamplesReservoir = new HashSet<>();
+                }
+
+                boolean useTwoLHSAcrossRows = true;
+                boolean useFastTwoLHS = true;
+                boolean useInvDistPaper2LHS = true;
+                boolean useMinEstimate = true;
+                boolean useExactUnion2LHS = false;
+                double[] BetaKminVals = new double[]{1, 1.5, 2, 2.5, 3, 9};
+
+                for (double BetaKmin_ : BetaKminVals) {
+                    runSketch(ram, rtp, !useTwoLHS, false, false, false,
+                            true, false, useExactUnion2LHS, BetaKmin_, repetition);
+                }
+//                runSketch(ram, rtp, !useTwoLHS, false, repetition);
+                int combinations = (int) Math.pow(2, 3);
+                for (int comb = 0; comb < combinations; comb++) {
+                    useTwoLHSAcrossRows = (comb & 1) == 1;
+                    useInvDistPaper2LHS = (comb & 2) == 2;
+                    useMinEstimate = (comb & 4) == 4;
+                    runSketch(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, useFastTwoLHS, useInvDistPaper2LHS,
+                            useBetaKmin, useMinEstimate,useExactUnion2LHS, 1, repetition);
+                }
+
+
+//                //runSketch(ram, rtp, !useTwoLHS, true, repetition);
+
+//                System.out.println("RESERVOIR SAMPLING");
+//                runReservoirSampling(ram, rtp, repetition);
+////
+
             }
+
+//            for (long ram : Main.ramVals) {
+//                System.out.println("Running sketch with ram " + ram);
+//                System.out.println("ADAP SAMPLING");
+//                runAdapSampling(ram, rtp, repetition);
+//            }
         }
     }
 
-    public void runSketch(long ram, RamToPar rtp, boolean useTwoLHS, boolean useTwoKmin) throws IOException {
+    public void runSketch(long ram, RamToPar rtp, boolean useTwoLHS, boolean use2LHSAcrossRows,
+                          boolean useFastTwoLHS, boolean useInvDistPaper2LHS,
+                          boolean useBetaKmin, boolean useMinEstimate, boolean useExactUnion2LHS, double BetaKmin, int repetition) throws IOException {
         int[] params;
 
         if (useTwoLHS) {
-            if (useTwoKmin) {
-                throw new RuntimeException("Cannot use both TwoLHS and TwoKmin");
+            if (useBetaKmin) {
+                throw new RuntimeException("Cannot use both TwoLHS and BetaKmin");
             }
             params = rtp.getParamsSketchTwoLHS(ram);
             Main.numTwoLHSReps = params[2];
@@ -92,21 +140,34 @@ public class TestTwoLHS {
         }
         Main.depth =  params[0];
         Main.width = params[1];
+        System.out.println("Using twolhs: " + useTwoLHS + " and twoKmin: " + useBetaKmin);
+        for (int i = 0; i < params.length; i++) {
+            System.out.println("params[" + i + "] = " + params[i]);
+        }
         Main.rs = new OmniSketch(ram, Main.numStoredAttributes, params, Main.dyadicRangeBits,
-                useTwoLHS, Main.useTwoLHSAcrossRows, Main.rangeQueries, useTwoKmin, Main.twoLHSFast);
+                useTwoLHS, use2LHSAcrossRows, Main.rangeQueries, useBetaKmin, useFastTwoLHS,
+                useInvDistPaper2LHS, useMinEstimate, useExactUnion2LHS, BetaKmin, repetition);
         ((OmniSketch) Main.rs).printParams();
-        runSynopsisRamBased(Main.rs);
+        runSynopsisRamBased(Main.rs, repetition);
     }
 
-    public void runReservoirSampling(long ram, RamToPar rtp) throws IOException {
+    public void runReservoirSampling(long ram, RamToPar rtp, int repetition) throws IOException {
         int[] params = rtp.getParamsReservoirSampling(ram);
 
-        Main.rs = new ReservoirSample(ram, Main.numStoredAttributes, params);
+        Main.rs = new ReservoirSample(ram, Main.numStoredAttributes, params, repetition);
         ((ReservoirSample) Main.rs).printParams();
-        runSynopsisRamBased(Main.rs);
+        runSynopsisRamBased(Main.rs, repetition);
     }
 
-    public void runSynopsisRamBased(SynopsisRefactor syn) throws IOException {
+    public void runAdapSampling(long ram, RamToPar rtp, int repetition) throws IOException {
+        int[] params = rtp.getParamsAdapSampling(ram);
+        params = new int[]{1000};
+        Main.rs = new aSH(ram, Main.numStoredAttributes, params, repetition);
+        ((aSH) Main.rs).printParams();
+        runSynopsisRamBased(Main.rs, repetition);
+    }
+
+    public void runSynopsisRamBased(SynopsisRefactor syn, int repetition) throws IOException {
         long time_passed;
         if (Main.spreadOutDeletes) {
             time_passed= runSynWithSpreadDeletes(syn);
@@ -118,7 +179,7 @@ public class TestTwoLHS {
         System.out.println("Memory usage synopsis " + syn.setting + ": " + syn.getMemoryUsage());
         System.out.println("Memory usage dataset: " + cd.getMemoryUsage());
         System.out.println("\n");
-        AnalysisBaselinesRefactor ab = new AnalysisBaselinesRefactor(syn, cd, h, time_passed);
+        AnalysisBaselinesRefactor ab = new AnalysisBaselinesRefactor(syn, cd, h, time_passed, repetition);
         ab.run();
         syn.reset();
         //ConditionChecks.run(d, s);
@@ -128,34 +189,34 @@ public class TestTwoLHS {
         System.out.println("Running synopsis");
         int numUpdates = 0;
         long startTime = System.currentTimeMillis();
-
-        for (long[] r: cd.noiseUpdates) {
-            if (numUpdates % 1000000 == 0 && !Main.runOnODC) {
+//
+//        for (long[] r: cd.noiseUpdates) {
+//            if (numUpdates % 10000000 == 0 && !Main.runOnODC) {
+//                System.out.println("Number of updates: " + numUpdates);
+//            }
+//            syn.add(r);
+//            numUpdates++;
+//        }
+        for (long[] r: cd.dataset) {
+            if (numUpdates % 10000000 == 0 && !Main.runOnODC) {
                 System.out.println("Number of updates: " + numUpdates);
             }
             syn.add(r);
             numUpdates++;
         }
-        for (long[] r: cd.datasetResidu) {
-            if (numUpdates % 1000000 == 0 && !Main.runOnODC) {
-                System.out.println("Number of updates: " + numUpdates);
-            }
-            syn.add(r);
-            numUpdates++;
-        }
-        int numDeletes = 0;
-        for (long[] r: cd.noiseUpdates) {
-            if (numDeletes % 1000000 == 0 && !Main.runOnODC) {
-                Main.logger.info("Number of deletes: " + numUpdates);
-                System.out.println("Number of deletes: " + numDeletes);
-            }
-            syn.delete(r);
-            numDeletes++;
-        }
+//        int numDeletes = 0;
+//        for (long[] r: cd.noiseUpdates) {
+//            if (numDeletes % 10000000 == 0 && !Main.runOnODC) {
+//                Main.logger.info("Number of deletes: " + numUpdates);
+//                System.out.println("Number of deletes: " + numDeletes);
+//            }
+//            syn.delete(r);
+//            numDeletes++;
+//        }
 
         // Stop the timer
         long endTime = System.currentTimeMillis();
-        cd.numDeletes = cd.noiseUpdates.length;
+        //cd.numDeletes = cd.noiseUpdates.length;
         return endTime - startTime;
     }
 
@@ -173,13 +234,13 @@ public class TestTwoLHS {
                 for (int j = 0; j < cd.toDelete[i].size(); j++) {
                     syn.delete(cd.dataset[cd.toDelete[i].get(j)]);
                     numDeletes++;
-                    if (numDeletes != 0 && numDeletes % 1000000 == 0 && !Main.runOnODC) {
+                    if (numDeletes != 0 && numDeletes % 10000000 == 0 && !Main.runOnODC) {
                         System.out.println("Number of deletes: " + numDeletes);
                     }
                 }
             }
 
-            if (numUpdates % 1000000 == 0 && !Main.runOnODC) {
+            if (numUpdates % 10000000 == 0 && !Main.runOnODC) {
                 System.out.println("Number of updates: " + numUpdates);
             }
             numUpdates++;
@@ -199,9 +260,14 @@ public class TestTwoLHS {
             Main.numFiles = Integer.parseInt(conditions[i]);
         }
 
-        d = new DatasetRefactor(Main.datasetName, h);
         //cd.cleanDataset(d);
-        cd.cleanDataset(d, perc, maxPerc);
+        if (Main.datasetName.equals("synthEquiDepthBins")) {
+            cd.cleanDatasetEquiDepthBins(perc, maxPerc);
+        } else {
+            d = new DatasetRefactor(Main.datasetName, h);
+            cd.cleanDataset(d, perc, maxPerc);
+        }
+
         // print distributions
         cd.getDistributions();
         //drop dataset

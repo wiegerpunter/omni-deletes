@@ -16,8 +16,8 @@ public class CountMin {
     int numTwoLHSReps;
 
     int attr;
-    final Random rn = new Random(Main.repetition);
-
+    Random rn;
+    final int seed;
 
     private int[] hash_a;
     private int[] hash_b;
@@ -25,15 +25,19 @@ public class CountMin {
     final boolean useTwoLHS;
     final boolean twoLHSFast;
     final boolean useTwoKmin;
+    final double BetaKmin;
 
     public CountMin(int attr, int[] parameters,
-                    boolean useTwoLHS, boolean useTwoKmin, boolean twoLHSFast){//int depth, int width, int numTwoLHSReps, int B, int b) {
+                    boolean useTwoLHS, boolean useTwoKmin, double BetaKmin, boolean twoLHSFast, int seed){//int depth, int width, int numTwoLHSReps, int B, int b) {
         this.attr = attr;
         this.depth = parameters[0];
         this.width = parameters[1];
         this.useTwoLHS = useTwoLHS;
         this.useTwoKmin = useTwoKmin;
         this.twoLHSFast = twoLHSFast;
+        this.seed = seed;
+        this.BetaKmin = BetaKmin;
+        rn = new Random(seed);
         if (useTwoLHS) {
             this.numTwoLHSReps = parameters[2];
             this.maxSize = -1;
@@ -59,7 +63,7 @@ public class CountMin {
             for (int j = 0; j < depth; j++) {
                 for (int i = 0; i < width; i++) {
                     for (int k = 0; k < numTwoLHSReps; k++) {
-                        CMTwoLHS[j][i][k] = new TWOLHS(k);
+                        CMTwoLHS[j][i][k] = new TWOLHS(seed, k);
                     }
                 }
             }
@@ -67,7 +71,7 @@ public class CountMin {
             CMKmin = new Kmin[depth][width];
             for (int j = 0; j < depth; j++) {
                 for (int i = 0; i < width; i++) {
-                        CMKmin[j][i] = new Kmin(maxSize, b, useTwoKmin);//Main.withDeletes);
+                        CMKmin[j][i] = new Kmin(maxSize, b, useTwoKmin, BetaKmin, seed);//Main.withDeletes);
                 }
             }
         }
@@ -75,7 +79,7 @@ public class CountMin {
 
     int[] hash(long attrValue, int depth, int width) {
         int[] hashes = new int[depth];
-        rn.setSeed(attrValue + Main.repetition);
+        rn.setSeed(attrValue + this.seed);
         for (int i = 0; i < depth; i++) hashes[i] = rn.nextInt(width);
         return hashes;
 //        int[] hashes = new int[depth];
@@ -114,6 +118,7 @@ public class CountMin {
 
                 //
             } else {
+
                 CMKmin[j][w].ingest(hx, sign); // In Kminwise
             }
         }

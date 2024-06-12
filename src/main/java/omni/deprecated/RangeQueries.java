@@ -1,6 +1,10 @@
-package omni;
+package omni.deprecated;
 
 import com.opencsv.exceptions.CsvValidationException;
+import omni.Helper;
+import omni.Main;
+import omni.Record;
+import omni.Synopsis;
 import omni.omni.OmniSketch;
 
 import java.io.IOException;

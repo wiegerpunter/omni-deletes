@@ -10,8 +10,11 @@ public abstract class SynopsisRefactor {
     protected long ram;
     public long memUsageSynopsis;
     public int[] parameters;
-    public boolean useTwoKmin;
+    public boolean useBetaKmin;
     public boolean twoLHSFast;
+    public boolean invDistPaper2LHS;
+    public boolean useMinEstimate;
+    public int seed;
 
     public SynopsisRefactor() {
 

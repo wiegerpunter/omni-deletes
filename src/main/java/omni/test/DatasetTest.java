@@ -1,11 +1,11 @@
 package omni.test;
 
-import omni.Dataset;
+import omni.DatasetRefactor;
 import omni.Record;
 
 public class DatasetTest {
-    Dataset d;
-    public DatasetTest(Dataset d) {
+    DatasetRefactor d;
+    public DatasetTest(DatasetRefactor d) {
         this.d = d;
     }
 

@@ -20,16 +20,20 @@ public class CountMinDyad {
     final int numTwoLHSReps;
     final int dyadicRangeBits;
     final boolean useTwoLHS;
+    final int seed;
+    final double BetaKmin;
 
     int n = 0;
 
-    public CountMinDyad(int attr, long intervalSize, int dyadicRangeBits, int[] parameters, boolean useTwoLHS) {
+    public CountMinDyad(int attr, long intervalSize, int dyadicRangeBits, int[] parameters, boolean useTwoLHS, double BetaKmin, int seed) {
         this.attr = attr;
         this.intervalSize = intervalSize;
         this.dyadicRangeBits = dyadicRangeBits;
         this.depth = parameters[0];
         this.width = parameters[1];
         this.useTwoLHS = useTwoLHS;
+        this.seed = seed;
+        this.BetaKmin = BetaKmin;
         if (useTwoLHS) {
             this.numTwoLHSReps = parameters[2];
             this.maxSize = -1;
@@ -54,9 +58,9 @@ public class CountMinDyad {
             for (int i = 0; i < width; i++) {
                 if (useTwoLHS)
                     for (int k = 0; k < numTwoLHSReps; k++)
-                        CMTwoLHS[j][i][k] = new TWOLHS(k);
+                        CMTwoLHS[j][i][k] = new TWOLHS(seed, k);
                 else
-                    CM[j][i] = new Kmin(maxSize, b, Main.withDeletes);
+                    CM[j][i] = new Kmin(maxSize, b, Main.withDeletes, BetaKmin, seed);
 
             }
         }
@@ -65,7 +69,7 @@ public class CountMinDyad {
     int[] hash(long attrValue, int depth, int width) {
         int[] hash = new int[depth];
         //int attrValueInt = (int) attrValue;
-        rn.setSeed(attrValue + Main.repetition);
+        rn.setSeed(attrValue + seed);
         for (int i = 0; i < depth; i++) {
             hash[i] = rn.nextInt(width);
         }

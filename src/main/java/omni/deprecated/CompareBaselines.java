@@ -1,6 +1,8 @@
-package omni;
+package omni.deprecated;
 
 import com.opencsv.exceptions.CsvValidationException;
+import omni.*;
+import omni.Record;
 import omni.baseline.SimpleSketch;
 import omni.hydra.*;
 import omni.omni.OmniSketch;
@@ -226,7 +228,7 @@ public class CompareBaselines {
         int numUpdates = 0;
         long startTime = System.currentTimeMillis();
 
-        for (Record r: d.dataset) {
+        for (omni.Record r: d.dataset) {
             if (numUpdates % 1000000 == 0 && !Main.runOnODC) {
                 Main.logger.info("Number of updates: " + numUpdates);
                 System.out.println("Number of updates: " + numUpdates);
@@ -246,7 +248,7 @@ public class CompareBaselines {
         long time_passed = 0;
 
         System.out.println("Running synopsis");
-        for (Record r: d.warmupDataset) {
+        for (omni.Record r: d.warmupDataset) {
             if (numUpdates % 1000000 == 0 && !Main.runOnODC) {
                 System.out.println("Number of updates: " + numUpdates);
             }

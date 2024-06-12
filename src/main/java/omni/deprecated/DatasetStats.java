@@ -1,4 +1,9 @@
-package omni;
+package omni.deprecated;
+
+import omni.AttributeStats;
+import omni.Main;
+import omni.Parser;
+import omni.Record;
 
 import java.io.IOException;
 import java.io.ObjectInput;

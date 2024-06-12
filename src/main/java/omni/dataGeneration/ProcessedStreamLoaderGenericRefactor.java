@@ -191,7 +191,7 @@ public class ProcessedStreamLoaderGenericRefactor {
 				if (b == null) { // End of file.
 					skip++;
 					return null;
-				} //TODO: assembling goes wrong for caida, look at what line was erased from here. compare to ProcessedStreamLoaderGeneric.
+				}
 				line = replace(b);
 				r.assemble(id);
 				Record r2;

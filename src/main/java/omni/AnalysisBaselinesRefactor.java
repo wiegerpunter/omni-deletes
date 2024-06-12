@@ -29,12 +29,14 @@ public class AnalysisBaselinesRefactor {
     int totalQueriesZero = 0;
     int totalEstimatesZero=0;
     long ingestionTime;
+    int repetition;
 
-    public AnalysisBaselinesRefactor(SynopsisRefactor s, CleanDataset cd, Helper h, long timepassed) throws IOException {
+    public AnalysisBaselinesRefactor(SynopsisRefactor s, CleanDataset cd, Helper h, long timepassed, int repetition) throws IOException {
         this.s = s;
         this.d = cd;
         this.h = h;
         this.ingestionTime = timepassed;
+        this.repetition = repetition;
         //this.ew = ew;
         h.setRamSettingInfo(d, s, timepassed);
         estimatedAnswersPointQuery = new int[Main.numQueries];
@@ -54,12 +56,12 @@ public class AnalysisBaselinesRefactor {
         error = new ArrayList<>();
         long startTime = System.currentTimeMillis();
         if (Main.rangeQueries) {
-            for (int i = 0; i< Main.numQueries; i++) {
+            for (int i = 0; i< d.rangeQueries.length; i++) {
                 computeErrorRangeQuery(i, d.rangeQueries[i], d.rangeQueryAnswers[i]);
                 //h.addQueryResult(q);
             }
         } else {
-            for (int i = 0; i< Main.numQueries; i++) {
+            for (int i = 0; i< d.pointQueries.length; i++) {
                 computeErrorPointQuery(i, d.pointQueries[i], d.pointQueriesNumAttrs[i], d.pointQueryAnswers[i], d.pointQueryUnion[i]);
                 //h.addQueryResult(q);
             }
@@ -84,7 +86,7 @@ public class AnalysisBaselinesRefactor {
             //TODO: write range query results to file here
         } else {
             h.setConditionInfo(intersectionOfR, unionOfR);
-            h.writeResultsToFilePointQuery(s, d, ingestionTime, estimatedAnswersPointQuery,
+            h.writeResultsToFilePointQuery(repetition, s, d, ingestionTime, estimatedAnswersPointQuery,
                     SCap, NMax, jaccardEstimates2LHS, unionEstimates2LHS, witness2LHS, queryExecutionTime, totalQueryExecutionTime);
         }
         System.out.println("Total queries: " + Main.numQueries);

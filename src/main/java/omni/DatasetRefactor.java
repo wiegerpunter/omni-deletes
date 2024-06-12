@@ -117,6 +117,18 @@ public class DatasetRefactor {
                     synthDataset(Main.sensitivityNumberOfRecords, numZipfAttrs, zipfAlpha, false);
                 }
             }
+            case "synthEquiDepthQueryBins"-> {
+                numZipfAttrs = 0;
+                boolean differAlphas = false;
+                String CSV_FILE_NAME = Main.outputFolder + "synthDataset_" + Main.datasetName + "_N="+ Main.sensitivityNumberOfRecords +
+                        "_ZipfAttrs="+ numZipfAttrs + "_zipfAlpha="+ zipfAlpha + "_differAlphas="+ differAlphas + ".csv";
+                File f = new File(CSV_FILE_NAME);
+                if (f.exists()) {
+                    dataset = h.readSynthDataset(Main.sensitivityNumberOfRecords, numZipfAttrs, zipfAlpha, false);
+                } else {
+                    synthEquiDepth(Main.sensitivityNumberOfRecords, numZipfAttrs, zipfAlpha, false);
+                }
+            }
             default -> {
                 Main.logger.severe("Invalid setting");
                 System.out.println("Invalid setting");
@@ -127,6 +139,8 @@ public class DatasetRefactor {
         dataset.sort(Comparator.comparingLong(o -> o.timestamp));
         System.out.println("Dataset loaded with size: " + dataset.size());
     }
+
+
 
     public DatasetRefactor() {
     }
@@ -473,23 +487,54 @@ public class DatasetRefactor {
     public void synthDataset(int numRecords, int numZipfianAttributes, double zipfAlpha, boolean differAlphas) throws IOException {
 
         //long[] zipfianSumArray = new long[0];
-
-        long[][] zipfData = ZipfGenerator.zipfData(numRecords, numZipfianAttributes, 10000, zipfAlpha);
-
+        
+        long[][] zipfData = new long[0][];
+        long[][] unifData = new long[0][];
+        if (numZipfianAttributes>0){
+            zipfData=ZipfGenerator.zipfData(numRecords, numZipfianAttributes, 10000, zipfAlpha);
+        }
+        if (Main.numAttributes - numZipfianAttributes > 0) {
+            unifData = new long[numRecords][Main.numAttributes - numZipfianAttributes];
+        }
+        Random random = new Random(1);
+        for (int i = 0; i < numRecords; i++) {
+            for (int j = 0; j < Main.numAttributes - numZipfianAttributes; j++) {
+                unifData[i][j] = (long) (random.nextLong(10000000));
+            }
+        }
 
 //        Random random = new Random();
 //        System.out.println("Generating synthetic dataset");
 //        //zipfianSumArray = generateZipfianSumArray(numRecords, zipfAlpha);
-
+        int rec_id = 0;
         for (int i = 0; i < numRecords; i++) {
-            long[] values = zipfData[i];
-            this.dataset.add(new RecordSynth(i, values));
-            String[] data = synthInfoToWrite(i, values);
+            long[] values = new long[Main.numAttributes];
+            if (numZipfianAttributes > 0) System.arraycopy(zipfData[i], 0, values, 0, numZipfianAttributes);
+            if (Main.numAttributes - numZipfianAttributes > 0) {
+                System.arraycopy(unifData[i], 0, values, numZipfianAttributes, Main.numAttributes - numZipfianAttributes);
+            }
+            for (int j = 0; j < 15; j++) {
+
+                this.dataset.add(new RecordSynth(rec_id, values));
+                rec_id++;
+            }
+            String[] data = synthInfoToWrite(rec_id, values);
             h.initSynthDataset(data, numRecords, numZipfianAttributes, zipfAlpha, differAlphas);
             h.writeSynthDataset(data, numRecords, numZipfianAttributes, zipfAlpha, differAlphas);
 
-        }
+            }
         System.out.println("Dataset size Synthetic set: " + dataset.size());
+    }
+
+    private void synthEquiDepth(int sensitivityNumberOfRecords, int numZipfAttrs, double zipfAlpha, boolean b) {
+        // This will be a queries first -> dataset later approach.
+        // We have queries in 10 bins of 100 queries each.
+        // All queries in different bins are on distinct domains. No overlap.
+        // When we have the queries, we can generate the dataset.
+        // We want bin 0 to have answer size [2^0, 2^1], bin 1 [2^1, 2^2], bin 2 [2^2, 2^3], etc.
+        // We want the queries to be on distinct domains, so we can generate the dataset in one go.
+        
+
     }
 
     public String getMemoryUsage() {

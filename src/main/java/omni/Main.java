@@ -1,13 +1,15 @@
 package omni;
 
 import com.opencsv.exceptions.CsvValidationException;
-import omni.test.Test;
+//import omni.deprecated.*;
 import org.pcap4j.core.NotOpenException;
 import org.pcap4j.core.PcapNativeException;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.logging.*;
 
@@ -43,20 +45,18 @@ public class Main {
     public static int warmupNumber;
     public static int dyadicRangeBits = 33;
     public static int numFiles = 1;
-    public static boolean estPerRow = true;
+    public static boolean estPerRow = true; // Estimate per row for 2lhs
     public static boolean minEstimate = true;
     public static boolean useExactUnionSize = false;
-    public static boolean withDeletes = true;
+    public static boolean withDeletes = false;
     public static int kminDeletes = 0;
-    public static boolean spreadOutDeletes = true;
-    public static boolean twoLHSFast = true;
-    public static boolean useTwoLHSAcrossRows = true;
+    public static boolean spreadOutDeletes = false;
     static String setting;
     public static boolean readAllFiles = true; // Set true if all files should be read, false if only the first file should be read
     public static boolean rangeQueries = false;
     public static boolean checkConditions = false; // Set true if conditions should be checked
-    static boolean createNewWorkload = true; // Set true if new workload should be created
-    static boolean createNewRangeWorkload = false;
+    public static boolean createNewWorkload = true; // Set true if new workload should be created
+    public static boolean createNewRangeWorkload = false;
     static boolean useCustomMaxSize = false; // Set true if custom maxsize should be used. Only relevant for sensitivity analysis, not for comparison.
     public static boolean useMultNumAttributes = false; // Set true if want to test for multiple number of attributes instead of just all attributes.
     static boolean useTighterBound = false; // Set true if want to check tighter bound in sensitivity analysis
@@ -72,7 +72,7 @@ public class Main {
     // Set logger level to info
     static {logger.setLevel(Level.INFO);}
     public static FileHandler fileHandler;
-    public static int filesToRead = 2;//5;//5;
+    public static int filesToRead = 5;//5;//5;
     public static Helper h;
     public static boolean useWarmup = false;
     public static boolean writeSNMP = false;
@@ -80,10 +80,13 @@ public class Main {
     public static int sensitivityNumberOfRecords = 5000000;
     public static boolean LOO = false;
     public static boolean LTO = false;
-    public static long[] ramVals = {(long) (50*8E6), (long) (100*8E6), (long) (200*8E6), (long) (400*8E6), (long) (800*8E6), (long) (1600*8E6)};
+    public static long[] ramVals = {(long) (10*8E6), (long) (25*8E6), (long) (50*8E6), (long) (75*8E6), (long) (100*8E6), (long) (200*8E6), (long) (400*8E6), (long) (600*8E6), (long) (800*8E6), (long) (1600*8E6)}; //(long) (10*8E6), (long) (20*8E6), (long) (50*8E6), (long) (100*8E6),
     //public static long[] ramVals = {(long) (1000*8E6), (long) (1500*8E6)};
 
     public static String currentDate;
+    public static boolean countUniqueSamples = false;
+    public static HashMap<Long, Integer> uniqueSamples = new HashMap<>();
+    public static HashSet<long[]> uniqueSamplesReservoir = new HashSet<>();
 
     public static void main(String[] args) throws IOException, NotOpenException, PcapNativeException, CsvValidationException {
         // Args
@@ -143,10 +146,11 @@ public class Main {
         Main.workloadFilename = "workload_" + Main.datasetName + "_N" + Integer.toString(Main.filesToRead) + ".csv";
         h = new Helper();
 
-        if (Objects.equals(setting,"Compare Baselines")) {
-            CompareBaselines cb = new CompareBaselines(h);
-            cb.run();
-        } else if (Objects.equals(setting,"Compare Baselines Refactor")) {
+//        if (Objects.equals(setting,"Compare Baselines")) {
+//            CompareBaselines cb = new CompareBaselines(h);
+//            cb.run();
+//        } else
+        if (Objects.equals(setting,"Compare Baselines Refactor")) {
             CompareBaselinesRefactor cb = new CompareBaselinesRefactor(h);
             cb.run();
         } else if (Objects.equals(setting,"Test_two_LHS")) {
@@ -155,18 +159,18 @@ public class Main {
         } else if (Objects.equals(setting,"Delete Stream")) {
             DeleteStream ds = new DeleteStream(h);
             ds.run();
-        }else if (Objects.equals(setting,"Compare Estimators")) {
-            CompareEstimators ce = new CompareEstimators(h);
-            ce.run();
-        }  else if (Objects.equals(setting,"Compare Distributions")) {
-            CompareDistributions cd = new CompareDistributions(h);
-            cd.run();
-        } else if (Objects.equals(setting,"Scalability")) {
-            Scalability sc = new Scalability(h);
-            sc.run();
-        } else if (Objects.equals(setting, "Range Queries")) {
-            RangeQueries rq = new RangeQueries(h);
-            rq.run();
+//        else if (Objects.equals(setting,"Compare Estimators")) {
+//            CompareEstimators ce = new CompareEstimators(h);
+//            ce.run();
+//        }  else if (Objects.equals(setting,"Compare Distributions")) {
+//            CompareDistributions cd = new CompareDistributions(h);
+//            cd.run();
+//        } else if (Objects.equals(setting,"Scalability")) {
+//            Scalability sc = new Scalability(h);
+//            sc.run();
+//        } else if (Objects.equals(setting, "Range Queries")) {
+//            RangeQueries rq = new RangeQueries(h);
+//            rq.run();
         } else {
             logger.severe("Invalid argument");
             logger.severe(setting + " & " + args[1]);

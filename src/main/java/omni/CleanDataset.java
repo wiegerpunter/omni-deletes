@@ -3,9 +3,11 @@ package omni;
 
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
+import com.opencsv.exceptions.CsvException;
 import com.opencsv.exceptions.CsvValidationException;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.*;
 
 public class CleanDataset {
@@ -50,8 +52,8 @@ public class CleanDataset {
             }
         } else if (Objects.equals(name, "wc98")) {
             throw new RuntimeException("Not implemented");
-        } else if (Objects.equals(name, "synth")) {
-            cleanIds = new int[]{0, 1, 2, 3, 4};
+        } else if (name.contains("synth")) {
+            cleanIds = new int[]{0, 1, 2, 3, 4};//,5,6,7,8,9,10,11};
         }else {
             throw new RuntimeException("Unknown dataset name");
         }
@@ -78,8 +80,17 @@ public class CleanDataset {
         dataset = new long[original.dataset.size()][];
         clean();
         // warmupDataset is a subset of dataset, first Main.warmupNumber records.
-        warmupDataset = Arrays.copyOfRange(dataset, 0, Main.warmupNumber);
-        ingestionDataset = Arrays.copyOfRange(dataset, Main.warmupNumber, dataset.length);
+        int numToKeep = splitDeletes(percToDelete);
+        if (Main.rangeQueries) {
+            getRangeQueries();
+        } else {
+            getPointQueries(numToKeep, percToDelete, maxPercToDelete);
+        }
+    }
+
+    private int splitDeletes(double percToDelete) {
+        warmupDataset = Arrays.copyOfRange(dataset, 0, Math.min(Main.warmupNumber, dataset.length));
+        ingestionDataset = Arrays.copyOfRange(dataset, Math.min(Main.warmupNumber, dataset.length), dataset.length);
 
         int numToKeep=0;
         long time_start = System.currentTimeMillis();
@@ -121,13 +132,301 @@ public class CleanDataset {
         Main.streamSize = numToKeep;
         System.out.println("Dataset neg updates size: " + datasetNegUpdates.length);
         System.out.println("Dataset after deletes size: " + datasetResidu.length);
-        if (Main.rangeQueries) {
-            getRangeQueries();
-        } else {
-            getPointQueries(numToKeep, percToDelete, maxPercToDelete);
+        return numToKeep;
+    }
+
+    private boolean queryFileExists(String deletes) throws CsvValidationException, IOException {
+        String queriesDir = Main.inputFolder + "pointQueries/" + Main.datasetName + "/";
+        // num Queries unknown beforehand
+        String filenameToMatch = "queries_" + deletes + Main.datasetName  +
+                "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain +
+                "_numQueries_";
+        int numQueries = 0;
+        // check if there exists a file where first part of name matches filenameToMatch
+        File[] files = new File(queriesDir).listFiles();
+        assert files != null;
+        String filename = fileExists(filenameToMatch, files);
+        if (filename != null) {
+            System.out.println("File " + filename + " exists. Reading queries with exact frequency.");
+            // parse numQueries
+            numQueries = Integer.parseInt(filename.substring(filenameToMatch.length(), filename.length() - 4));
+            Main.numQueries = numQueries;
+            System.out.println("NumQueries: " + numQueries);
+            readWorkloadWithExact(queriesDir + filename);
+            return true;
+        }
+        return false;
+    }
+    public void cleanDatasetEquiDepthBins(double percToDelete, double maxPercToDelete) throws IOException, CsvValidationException {
+        // This will be a queries first -> dataset later approach.
+        // We have queries in 10 bins of 100 queries each.
+        // All queries in different bins are on distinct domains. No overlap.
+        // When we have the queries, we can generate the dataset.
+        // We want bin 0 to have answer size [2^0, 2^1], bin 1 [2^1, 2^2], bin 2 [2^2, 2^3], etc.
+        // We want the queries to be on distinct domains, so we can generate the dataset in one go.
+//
+//        String deletes = deletes(percToDelete, maxPercToDelete);
+//        if (queryFileExists(deletes)) {
+//            // check if dataset file exists.
+//            datasetFileExists(deletes);
+//        } else {
+//            // generate queries.
+//            generateQueriesEquiDepthBins(percToDelete, maxPercToDelete);
+//        }
+
+
+        // Check if queries already exists, if so load. If not, generate.
+        // If queries already exist, check if dataset exists. If so, load. If not, generate.
+        // If queries dont exist but are generated, generate dataset.
+
+        // If dataset is read from file, already insert in sketch to avoid putting in memory.
+
+
+
+            
+        // Generate queries
+        int numQueries = Main.numQueries;
+        int numBins = 10;
+        int numAttrs = Main.numStoredAttributes;
+        int numPredicates = 3;
+
+        int queriesPerBin = numQueries / numBins;
+        int[] binStartDomain = new int[numBins];
+        int[] binEndDomain = new int[numBins];
+
+        for (int i = 0; i < numBins; i++) {
+            binStartDomain[i] = i * 1000;
+            binEndDomain[i] = (i + 1) * 1000;
+        }
+        int noiseDomainStart=binEndDomain[numBins-1] + 1000;
+        int noiseDomainEnd=binEndDomain[numBins-1] + 2000;
+
+        pointQueries = new long[numQueries][];
+
+        Random predRng = new Random(0);
+        Random domainRng = new Random(1);
+        pointQueryBinNumber = new int[numQueries];
+
+        if (queryFileExists(deletes(percToDelete, maxPercToDelete))) {
+            // read queries and read dataset.
+            readDatasetFromFile(deletes(percToDelete, maxPercToDelete));
+            int numToKeep = splitDeletes(percToDelete);
+            return;
+        }
+
+        // Generate queries for each bin within the domain.
+        for (int i = 0; i < numBins; i++) {
+            for (int j = 0; j < queriesPerBin; j++) {
+                pointQueries[i * queriesPerBin + j] = new long[numAttrs];
+                //initialize with -1
+                for (int k = 0; k < numAttrs; k++) {
+                    pointQueries[i * queriesPerBin + j][k] = -1;
+                }
+                int hasPredicate = 0;
+                while (hasPredicate < numPredicates) {
+                    int attr = predRng.nextInt(numAttrs);
+                    if (pointQueries[i * queriesPerBin + j][attr] == -1) {
+                        pointQueries[i * queriesPerBin + j][attr] = (long) (binStartDomain[i] +
+                                (domainRng.nextDouble()) * (double) (binEndDomain[i] - binStartDomain[i]));
+                        hasPredicate++;
+                    }
+                    }
+//                }
+//                for (int k = 0; k < numAttrs; k++) {
+//                    // only add predicate for numPredicates attributes. Choose randomly which of the numAttrs attributes to add predicate for.
+//                    while (hasPredicate < numPredicates) {
+//
+//                    }
+//                    if (hasPredicate < numPredicates && predRng.nextDouble() < 0.5) {
+//                        pointQueries[i * queriesPerBin + j][k] = (long) (binStartDomain[i] +
+//                                (domainRng.nextDouble()) * (double) (binEndDomain[i] - binStartDomain[i]));
+//                        hasPredicate++;
+//                    } else {
+//                        pointQueries[i * queriesPerBin + j][k] = -1;
+//                    }
+//                }
+                pointQueryBinNumber[i * queriesPerBin + j] = i;
+            }
+        }
+
+
+        // Generate dataset
+        ArrayList<Long[]> potDataset = new ArrayList<>();
+        long id = 0;
+        for (int i = 0; i < numBins; i++) {
+            // Generate dataset for each bin.
+            int numRecords = (int) ((int) Math.pow(2, i*2));
+            // go over queries in bin i and add numRecords times.
+            for (int j = 0; j < queriesPerBin; j++) {
+                for (int k = 0; k < numRecords; k++) {
+                    Long[] record = new Long[numAttrs + 1];
+                    record[0] = id;
+                    for (int l = 0; l < numAttrs; l++) {
+                        if (pointQueries[i * queriesPerBin + j][l] != -1) {
+                            record[l + 1] = pointQueries[i * queriesPerBin + j][l];
+                        } else {
+                            record[l + 1] = (long) (noiseDomainStart + (domainRng.nextDouble()) * (double) (noiseDomainEnd - noiseDomainStart));
+                        }
+                    }
+                    potDataset.add(record);
+                    id++;
+                }
+            }
+        }
+        System.out.println("Num queried records: " + potDataset.size());
+        // Add noise
+        int numNoiseRecords = (int) Math.pow(2, numBins*2) * 2;
+        System.out.println("Num noise records: " + numNoiseRecords);
+        for (int i = 0; i < numNoiseRecords; i++) {
+            Long[] record = new Long[numAttrs + 1];
+            record[0] = id;
+            for (int j = 0; j < numAttrs; j++) {
+                record[j + 1] = (long) (noiseDomainStart + (domainRng.nextDouble()) * (double) (noiseDomainEnd - noiseDomainStart));
+            }
+            potDataset.add(record);
+            id++;
+        }
+
+        // Shuffle dataset
+//        Random rn_shuffle = new Random(2);
+//        Collections.shuffle(potDataset, rn_shuffle);
+//        Collections.shuffle(, rn_shuffle);
+        // Convert to long[][]
+        dataset = new long[potDataset.size()][];
+        for (int i = 0; i < potDataset.size(); i++) {
+            dataset[i] = new long[numAttrs + 1];
+            for (int j = 0; j < numAttrs + 1; j++) {
+                dataset[i][j] = potDataset.get(i)[j];
+            }
+            potDataset.set(i, null); // Clear memory.
+        }
+
+        potDataset.clear();
+        // dump dataset.
+        System.gc();
+
+        int numToKeep = splitDeletes(percToDelete);
+        computeExactPoint(datasetResidu);
+
+        // Check for every point query the number of attributes that are not -1.
+        pointQueriesNumAttrs = new int[pointQueries.length];
+        for (int i = 0; i < pointQueries.length; i++) {
+            for (int j = 0; j < numAttrs; j++) {
+                if (pointQueries[i] == null) {
+                    continue;
+                }
+                if (pointQueries[i][j] != -1) {
+                    pointQueriesNumAttrs[i]++;
+                }
+            }
+        }
+
+        writePointQueriesToFile(numToKeep, percToDelete, maxPercToDelete);
+        writeDatasetToFile(numToKeep, percToDelete, maxPercToDelete);
+
+    }
+
+    private void writeDatasetToFile(int numToKeep, double percToDelete, double maxPercToDelete) {
+        String deletes = deletes(numToKeep, percToDelete, maxPercToDelete);
+        String datasetDir = Main.inputFolder + "data/" + Main.datasetName + "/";
+        String datasetName = datasetDir + "dataset_" + deletes + Main.datasetName +
+                "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain + ".csv";
+        writeDataset(datasetName);
+    }
+
+    private void writeDataset(String datasetName) {
+        try {
+            CSVWriter writer = new CSVWriter(new FileWriter(datasetName));
+            for (int i = 0; i < dataset.length; i++) {
+                String[] record = new String[dataset[i].length];
+                for (int j = 0; j < dataset[i].length; j++) {
+                    record[j] = String.valueOf(dataset[i][j]);
+                }
+                writer.writeNext(record);
+            }
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void readDatasetFromFile(String deletes) {
+        // read queries
+//        String queriesDir = Main.inputFolder + "pointQueries/" + Main.datasetName + "/";
+//        String queriesWithExactName = queriesDir + "queries_" + deletes + Main.datasetName +
+//                "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain +
+//                "_numQueries_" + Main.numQueries + ".csv";
+////        String queriesWithoutExactName = queriesDir + "queries_" + deletes + Main.datasetName +
+////                "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain + "_numQueries_" +
+////                Main.numQueries +".csv";
+//
+//        File f = new File(queriesWithExactName);
+//        if (!f.exists()) {
+//            throw new RuntimeException("Queries with exact answers do not exist.");
+//        }
+//        try {
+//            readWorkloadWithExact(queriesWithExactName);
+//        } catch (IOException | CsvValidationException e) {
+//            e.printStackTrace();
+//        }
+        // read dataset
+        String datasetDir = Main.inputFolder + "data/" + Main.datasetName + "/";
+        String datasetName = datasetDir + "dataset_" + deletes + Main.datasetName +
+                "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain + ".csv";
+        File f = new File(datasetName);
+        if (!f.exists()) {
+            throw new RuntimeException("Dataset file does not exist.");
+        }
+        readDataset(datasetName);
+
+    }
+
+    private void readDataset(String datasetName) {
+        try {
+            CSVReader reader = new CSVReader(new FileReader(datasetName));
+            //BufferedInputStream bis = new BufferedInputStream(new FileInputStream(datasetName));
+            int numRecords = 0;
+            String[] record = reader.readNext();
+            ArrayList<String[]> records = new ArrayList<>();
+            while (record != null) {
+                records.add(record);
+                record = reader.readNext();
+                numRecords++;
+            }
+            dataset = new long[numRecords][];
+            for (int i = 0; i < numRecords; i++) {
+                dataset[i] = new long[records.get(i).length];
+                for (int j = 0; j < records.get(i).length; j++) {
+                    dataset[i][j] = Long.parseLong(records.get(i)[j]);
+                }
+            }
+            records.clear();
+        } catch (IOException | CsvException e) {
+            e.printStackTrace();
         }
     }
 //
+//    private void datasetFileExists(String deletes) {
+//        String datasetDir = Main.inputFolder + "pointQueries/" + Main.datasetName + "/";
+//        String datasetName = datasetDir + "dataset_" + deletes + Main.datasetName +
+//                "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain + "_orgN" + dataset.length + ".csv";
+//        File f = new File(datasetName);
+//        if (f.exists()) {
+//            System.out.println("Dataset file exists. Reading dataset.");
+//            try {
+//                readDataset(datasetName);
+//            } catch (IOException | CsvValidationException e) {
+//                e.printStackTrace();
+//            }
+//        } else {
+//            System.out.println("Dataset file does not exist. Generating dataset.");
+//        }
+//    }
+//
+//
+//    private void generateQueriesEquiDepthBins(double percToDelete, double maxPercToDelete) {
+//    }
+////
 //    private void getPointQueriesDeletes(int numToDelete) throws CsvValidationException, IOException {
 //        String queriesDir = Main.inputFolder + "pointQueries/" + Main.datasetName + "/";
 //        String queriesWithExactFileName = queriesDir + "queriesWithDeletes_" + Main.datasetName + "_numQueries_" + Main.numQueries +
@@ -163,7 +462,8 @@ public class CleanDataset {
         String queriesDir = Main.inputFolder + "pointQueries/" + Main.datasetName + "/";
         // num Queries unknown beforehand
         String filenameToMatch = "queries_" + deletes + Main.datasetName  +
-                "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain + "_orgN" + dataset.length + "_numQueries_";
+                "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain +
+                "_orgN" + dataset.length + "_numQueries_";
         int numQueries = 0;
         // check if there exists a file where first part of name matches filenameToMatch
         File[] files = new File(queriesDir).listFiles();
@@ -178,19 +478,6 @@ public class CleanDataset {
             readWorkloadWithExact(queriesDir + filename);
             return;
         }
-//
-//        System.out.println("Looking for file with name starting with: " + filenameToMatch);
-//        for (File file : files) {
-//            if (file.getName().startsWith(filenameToMatch)) {
-//                System.out.println("File " + file.getName() + " exists. Reading queries.");
-//                // parse numQueries
-//                numQueries = Integer.parseInt(file.getName().substring(filenameToMatch.length(), file.getName().length() - 4));
-//                Main.numQueries = numQueries;
-//                System.out.println("NumQueries: " + numQueries);
-//                readWorkloadWithExact(queriesDir + file.getName());
-//                return;
-//            }
-//        }
 
         deletes = deletes(numToKeep, maxPercToDelete, maxPercToDelete);
         String filenameToMatchMaxPerc = "queries_" + deletes + Main.datasetName +
@@ -217,22 +504,6 @@ public class CleanDataset {
             readWorkloadWithoutExact(queriesDir + filename, numToKeep, percToDelete, maxPercToDelete);
             return;
         }
-//        }
-//
-//        for (File file : files) {
-//            if (file.getName().startsWith(filenameToMatchDiffN)) {
-//                System.out.println("File " + file.getName() + " exists. Reading queries.");
-//                // parse numQueries
-//                //numQueries = Integer.parseInt(file.getName().substring(filenameToMatchMaxPerc.length(), file.getName().length() - 4));
-//                //Main.numQueries = numQueries;
-//                String subString = file.getName().substring(filenameToMatchDiffN.length(), file.getName().length() - 4);
-//                int N = Integer.parseInt(subString.substring(0, subString.indexOf("_")));
-//                Main.numQueries = Integer.parseInt(subString.substring(subString.indexOf("_") + 1).substring(subString.indexOf("_")));
-//                System.out.println("NumQueries: " + Main.numQueries + " N: " + N);
-//                readWorkloadWithoutExact(queriesDir + file.getName(), numToKeep, percToDelete, maxPercToDelete);
-//                return;
-//            }
-//        }
         if (maxPercToDelete == percToDelete) {
             generateQueries(numToKeep, percToDelete, maxPercToDelete);
         } else {
@@ -258,6 +529,7 @@ public class CleanDataset {
             h.writeRangeQueriesToFile();
         } else {
             generatePointQueriesAlt(datasetResidu,  3);// todo: queryGenProb based on ratio numToKeep / dataset.length
+            System.out.println("Generated queries, computing exact answers.");
             computeExactPoint(datasetResidu);
             // recompute exact answers based on neverDeleted
 
@@ -293,6 +565,9 @@ public class CleanDataset {
         return newRecord;
     }
 
+    private String deletes(double percToDelete, double maxPercToDelete) {
+        return deletes(0, percToDelete, maxPercToDelete);
+    }
 
     private String deletes(int numToKeep, double percToDelete, double maxPercToDelete) {
         if (Main.withDeletes) {
@@ -312,7 +587,7 @@ public class CleanDataset {
         boolean init = false;
         String queriesDir = Main.inputFolder + "pointQueries/" + Main.datasetName + "/";
         String queriesWithExactName = queriesDir + "queries_" + deletes + Main.datasetName +
-                "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain + "_orgN" + dataset.length +
+                "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain +
                 "_numQueries_" + Main.numQueries + ".csv";
         String queriesWithoutExactName = queriesDir + "queries_" + deletes + Main.datasetName +
                 "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain + "_numQueries_" +
@@ -556,8 +831,9 @@ public class CleanDataset {
 
     private void generatePointQueriesAlt(long[][] dataset, int numQueriedAttrs) {
         // Make point queries on the clean dataset.
-        ArrayList<Long[]> potentialQueries = new ArrayList<>();
-        ArrayList<Integer> potentialQueriesExactAnswer = new ArrayList<>();
+        //ArrayList<Long[]> potentialQueries = new ArrayList<>();
+        HashMap<Long[], Integer> potQueries = new HashMap<>();
+        //ArrayList<Integer> potentialQueriesExactAnswer = new ArrayList<>();
 
         // initialize with -1s
         int generatedQueries = 0;
@@ -576,16 +852,23 @@ public class CleanDataset {
             }
             // Check if query is already in list of queries.
             boolean alreadyInList = false;
-            for (int m = 0; m < potentialQueries.size(); m++) {
-                if (Arrays.equals(query, potentialQueries.get(m))) {
-                    alreadyInList = true;
-                    potentialQueriesExactAnswer.set(m, potentialQueriesExactAnswer.get(m) + 1);
-                    break;
-                }
+            // check if query in set
+            if (potQueries.containsKey(query)) {
+                alreadyInList = true;
+                potQueries.put(query, potQueries.get(query) + 1);
             }
+
+//            for (int m = 0; m < potentialQueries.size(); m++) {
+//                if (Arrays.equals(query, potentialQueries.get(m))) {
+//                    alreadyInList = true;
+//                    potentialQueriesExactAnswer.set(m, potentialQueriesExactAnswer.get(m) + 1);
+//                    break;
+//                }
+//            }
             if (!alreadyInList) {
-                potentialQueries.add(query);
-                potentialQueriesExactAnswer.add(1);
+                potQueries.put(query, 1);
+                //potentialQueries.add(query);
+                //potentialQueriesExactAnswer.add(1);
                 generatedQueries++;
             }
 
@@ -606,14 +889,25 @@ public class CleanDataset {
 
         long[][] potPointQueries = new long[generatedQueries][];
         int[] potPointQueryAnswers = new int[generatedQueries];
-
-        for (int i = 0; i < potentialQueries.size(); i++) {
+        Set<Long[]> keys = potQueries.keySet();
+        Long[][] keys_array = new Long[keys.size()][];
+        keys.toArray(keys_array);
+        for (int i = 0; i < generatedQueries; i++) {
             potPointQueries[i] = new long[Main.numStoredAttributes];
-            potPointQueryAnswers[i] = potentialQueriesExactAnswer.get(i);
+
+            potPointQueryAnswers[i] = potQueries.get(keys_array[i]);
             for (int j = 0; j < Main.numStoredAttributes; j++) {
-                potPointQueries[i][j] = potentialQueries.get(i)[j];
+                potPointQueries[i][j] = (long) keys_array[i][j];
             }
         }
+
+//        for (int i = 0; i < potentialQueries.size(); i++) {
+//            potPointQueries[i] = new long[Main.numStoredAttributes];
+//            potPointQueryAnswers[i] = potentialQueriesExactAnswer.get(i);
+//            for (int j = 0; j < Main.numStoredAttributes; j++) {
+//                potPointQueries[i][j] = potentialQueries.get(i)[j];
+//            }
+//        }
         Integer[] indices = new Integer[potPointQueryAnswers.length];
         for (int i = 0; i < indices.length; i++) {
             indices[i] = i;
@@ -928,4 +1222,5 @@ public class CleanDataset {
         }
         return numToKeep;
     }
+
 }

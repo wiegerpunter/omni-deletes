@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Kmin extends Sample {
+    private final double Beta;
     //PriorityQueue<Integer> sketch;
     public TreeSet<Long> sketch;
     //int sketchSize = 0;
@@ -25,12 +26,14 @@ public class Kmin extends Sample {
         return k;
     }
 
-    public Kmin(int maxSize, int b, boolean supportDeletes) {
+    public Kmin(int maxSize, int b, boolean supportDeletes, double Beta, int seed) {
         this.supportDeletes = supportDeletes;
         this.K = maxSize;
         this.b = b;
+        this.seed = seed;
+        this.Beta = Beta;
         if (supportDeletes) {
-            this.KInQuery = maxSize/2;
+            this.KInQuery = (int) (maxSize/Beta);
         } else {
             this.KInQuery = maxSize;
         }
@@ -44,18 +47,59 @@ public class Kmin extends Sample {
         n++;
         if (curSampleSize < K - 1) {
             sketch.add(hx);
+            if (Main.countUniqueSamples) {
+                if (Main.uniqueSamples.containsKey(hx)) {
+                    Main.uniqueSamples.put(hx, Main.uniqueSamples.get(hx) + 1);
+                } else {
+                    Main.uniqueSamples.put(hx, 1);
+                }
+                }
             curSampleSize++;
         } else if (curSampleSize == K) {
             curTreeRoot = sketch.first();
             if (hx < curTreeRoot) { // get tree root
+                if (Main.countUniqueSamples) {
+                    if (Main.uniqueSamples.containsKey(curTreeRoot)) {
+                        Main.uniqueSamples.put(curTreeRoot, Main.uniqueSamples.get(curTreeRoot) - 1);
+                        if (Main.uniqueSamples.get(curTreeRoot) == 0) {
+                            Main.uniqueSamples.remove(curTreeRoot);
+                        }
+                    } else if (curTreeRoot != Long.MAX_VALUE) {
+                        throw new RuntimeException("Error in Kmin: curTreeRoot not in uniqueSamples");
+                    }
+                }
                 sketch.pollFirst();
                 sketch.add(hx);
+                if (Main.countUniqueSamples) {
+                    if (Main.uniqueSamples.containsKey(hx)) {
+                        Main.uniqueSamples.put(hx, Main.uniqueSamples.get(hx) + 1);
+                    } else {
+                        Main.uniqueSamples.put(hx, 1);
+                    }
+                }
                 curTreeRoot = sketch.first();
             }
         } else {
             if (hx < curTreeRoot) { // get tree root
+                if (Main.countUniqueSamples) {
+                    if (Main.uniqueSamples.containsKey(curTreeRoot)) {
+                        Main.uniqueSamples.put(curTreeRoot, Main.uniqueSamples.get(curTreeRoot) - 1);
+                        if (Main.uniqueSamples.get(curTreeRoot) == 0) {
+                            Main.uniqueSamples.remove(curTreeRoot);
+                        }
+                    } else if (curTreeRoot != Long.MAX_VALUE){
+                        throw new RuntimeException("Error in Kmin: curTreeRoot not in uniqueSamples");
+                    }
+                }
                sketch.pollFirst();
                sketch.add(hx);
+                if (Main.countUniqueSamples) {
+                    if (Main.uniqueSamples.containsKey(hx)) {
+                        Main.uniqueSamples.put(hx, Main.uniqueSamples.get(hx) + 1);
+                    } else {
+                        Main.uniqueSamples.put(hx, 1);
+                    }
+                }
                curTreeRoot = sketch.first();
             }
         }
