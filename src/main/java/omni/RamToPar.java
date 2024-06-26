@@ -114,9 +114,11 @@ public class RamToPar {
         return new double[]{sampleSize};
     }
     private double[] gridSearchAdap(long ram) {
-        // memory usage of aSH sampling is sample size * 32 * numAttrs * 4
-        double sampleSize = (double) ram / (32 * numAttrs * 4);
-        return new double[]{sampleSize};
+        // memory usage of aSH sampling is sample size * 32 * numAttrs * 5
+        //double sampleSize = (double) ram / (32 * numAttrs * 5);
+        double sampleSize = (double) ram / (32 *(numAttrs + 5));
+                // sampleSize * (32 * numAttrs + 32*4);
+        return new double[]{sampleSize/2, sampleSize/2};
     }
 
     private double[] gridSearchCMBaseline(long ram) {
@@ -166,7 +168,6 @@ public class RamToPar {
     private double[] getInfoViaB(long ram, double eps) {
 
         double deltaCM =  Main.delta/2;
-        Main.deltaDS = Main.delta/2;
         int depth = (int) Math.ceil(Math.log(1/deltaCM)/Math.log(Math.exp(1)));
         double epsCMpowD = eps /(1 + eps);
         double epsCM = Math.pow(epsCMpowD, 1.0/depth);
@@ -220,7 +221,6 @@ public class RamToPar {
     }
 
     private double[] getSizeKmin(long ram) {
-        Main.deltaDS = Main.delta/2;
         double[] info = new double[3];
         //int depth = (int) Math.ceil(Math.log(1/deltaCM)/Math.log(Math.exp(1))); // Depth of sketch (number of hash functions)
         DetermineBKmin determineB = new DetermineBKmin(ram);
@@ -252,7 +252,6 @@ public class RamToPar {
     private double[] getSizeSketch(long ram, double eps) {
         double deltaCM = 0.05;
         double deltaDS = 0.05;
-        Main.deltaDS = deltaDS;
         int depth = (int) Math.ceil(Math.log(1/deltaCM)/Math.log(Math.exp(1)));
         //double epsCM = Math.pow((Math.pow(eps, depth)/(1 + Math.pow(eps, depth))), (double) (1/depth));
         double epsCMpowD = eps / (1 + eps);
@@ -346,7 +345,8 @@ public class RamToPar {
         if (ramToAdap.containsKey(ram)) {
             double[] info = ramToAdap.get(ram);
             int sampleSize = (int) info[0];
-            return new int[]{sampleSize};
+            int bufferSize = (int) info[1];
+            return new int[]{sampleSize, bufferSize};
         } else {
             throw new IllegalArgumentException("RAM not found in ramToAdap");
         }

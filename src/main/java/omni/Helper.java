@@ -674,7 +674,8 @@ public class Helper {
                                              long timePassed, int[] estimatedAnswersPointQuery,
                                              int[] SCap, int[] NMax, double[] jaccardEstimates2LHS,
                                              double[] unionEstimates2LHS, int[] witness2LHS, long[] queryExecutionTime,
-                                             long totalQueryExecutionTime) throws IOException {
+                                             long totalQueryExecutionTime,
+                                             int[] numberOfKmins, int[] numberOfKminsExceedingBounds) throws IOException {
        // write string[] result to csvOutputFile using BufferedWriter
         boolean init = false;
         //String currentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
@@ -695,7 +696,8 @@ public class Helper {
                     "relError", "epsError", "withinThreshold",
                     "estTime",  "queryText", "SCap", "NMax","jacEstimate2LHS", "unionEstimate2LHS","witness2LHS",
                     "intersectionSizeOfR","unionSizeOfR",
-                    "meanQueryTime","TwoKmin","numKSamples","KminDeletes","exactInDeletes","exactUnionDeletes","uniqueSamples"};
+                    "meanQueryTime","TwoKmin","numKSamples","KminDeletes","exactInDeletes","exactUnionDeletes","uniqueSamples",
+                    "numKmins","numKminsExceedingBounds"};
             //TODO: add more info to header
             //, "exactTime", "intersectSize"};
             //"bound", "thrm33case2", "case2Estimate", "zeroEstimate",
@@ -706,7 +708,7 @@ public class Helper {
 
 
         for (int i = 0; i < Main.numQueries; i++) {
-            String[] result = new String[38];
+            String[] result = new String[40];
             // Dataset specific info;
             result[0] = String.valueOf(repetition);
             result[1] = String.valueOf(d.dataset.length);
@@ -765,6 +767,8 @@ public class Helper {
                     result[37] = String.valueOf(Main.uniqueSamplesReservoir.size());
                 }
             }
+            result[38] = String.valueOf(numberOfKmins[i]);
+            result[39] = String.valueOf(numberOfKminsExceedingBounds[i]);
             writer.writeNext(result);
         }
 

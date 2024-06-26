@@ -1,14 +1,12 @@
-package omni;
+package omni.deprecated;
 
 import com.opencsv.exceptions.CsvValidationException;
+import omni.*;
 import omni.baseline.SimpleSketch;
 import omni.hydraRefactor.ImpHydraStruct;
-import omni.omniRefactor.OmniSketch;
+import omni.omniTwoLHS.OmniSketch;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 public class CompareBaselinesRefactor {
     //TODO: before testing make sure to replace CompareBaselines in main with CompareBaselinesRefactor
@@ -107,9 +105,9 @@ public class CompareBaselinesRefactor {
             runSynWithoutWarmup(syn);
             time_passed  = numUpdates = d.dataset.size();
         }
-        Main.logger.info("Time passed for updates synopsis " + syn.setting + " is: " + time_passed + " ms, average: " + (double) time_passed / numUpdates + " ms");
-        Main.logger.info("Memory usage synopsis " + syn.setting + ": " + syn.getMemoryUsage());
-        Main.logger.info("Memory usage dataset: " + d.getMemoryUsage());
+//        Main.logger.info("Time passed for updates synopsis " + syn.setting + " is: " + time_passed + " ms, average: " + (double) time_passed / numUpdates + " ms");
+//        Main.logger.info("Memory usage synopsis " + syn.setting + ": " + syn.getMemoryUsage());
+//        Main.logger.info("Memory usage dataset: " + d.getMemoryUsage());
 
         System.out.println("Time passed for updates synopsis " + syn.setting + " is: " + time_passed + " ms, average: " + (double) time_passed / numUpdates + " ms");
         System.out.println("Memory usage synopsis " + syn.setting + ": " + syn.getMemoryUsage());
@@ -129,7 +127,7 @@ public class CompareBaselinesRefactor {
 
         for (long[] r: cd.dataset) {
             if (numUpdates % 1000000 == 0 && !Main.runOnODC) {
-                Main.logger.info("Number of updates: " + numUpdates);
+//                Main.logger.info("Number of updates: " + numUpdates);
                 System.out.println("Number of updates: " + numUpdates);
             }
             syn.add(r);

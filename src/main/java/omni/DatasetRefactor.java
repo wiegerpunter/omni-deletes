@@ -130,7 +130,7 @@ public class DatasetRefactor {
                 }
             }
             default -> {
-                Main.logger.severe("Invalid setting");
+//                Main.logger.severe("Invalid setting");
                 System.out.println("Invalid setting");
                 System.exit(0);
             }
@@ -245,7 +245,7 @@ public class DatasetRefactor {
             } else {
                 throw new RuntimeException("No directories found");
             }
-            Main.logger.info("All files read.");
+//            Main.logger.info("All files read.");
             System.out.println("All files read.");
         } else {
             String smallPath = Main.readFolder + "/SNMP/031101/";
@@ -310,10 +310,10 @@ public class DatasetRefactor {
         }
 
 
-
-        Main.logger.info("Skipped " + totalSkip + " records");
-        Main.logger.info("Read " + totalRead + " records");
-        Main.logger.info("Size: " + dataset.size());
+//
+//        Main.logger.info("Skipped " + totalSkip + " records");
+//        Main.logger.info("Read " + totalRead + " records");
+//        Main.logger.info("Size: " + dataset.size());
         System.out.println("Skipped " + totalSkip + " records");
         System.out.println("Read " + totalRead + " records");
         System.out.println("Size: " + dataset.size());
@@ -332,7 +332,7 @@ public class DatasetRefactor {
             } else {
                 throw new RuntimeException("No directories found");
             }
-            Main.logger.info("All files read.");
+//            Main.logger.info("All files read.");
             System.out.println("All files read.");
         } else {
             String smallPath = Main.readFolder + "/wc98/031101/";
@@ -397,10 +397,10 @@ public class DatasetRefactor {
         }
 
 
-
-        Main.logger.info("Skipped " + totalSkip + " records");
-        Main.logger.info("Read " + totalRead + " records");
-        Main.logger.info("Size: " + dataset.size());
+//
+//        Main.logger.info("Skipped " + totalSkip + " records");
+//        Main.logger.info("Read " + totalRead + " records");
+//        Main.logger.info("Size: " + dataset.size());
         System.out.println("Skipped " + totalSkip + " records");
         System.out.println("Read " + totalRead + " records");
         System.out.println("Size: " + dataset.size());

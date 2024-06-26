@@ -11,8 +11,8 @@ public abstract class SynopsisRefactor {
     public long memUsageSynopsis;
     public int[] parameters;
     public boolean useBetaKmin;
-    public boolean twoLHSFast;
-    public boolean invDistPaper2LHS;
+    public boolean useFastTwoLHS;
+    public boolean useInvDistPaper2LHS;
     public boolean useMinEstimate;
     public int seed;
 

@@ -15,7 +15,7 @@ public class CountMinS0 {
     int maxSize;
     int b;
     int numTwoLHSReps;
-
+    final int seed;
     int attr;
     //final Random rn = new Random(Main.repetition);
 
@@ -23,39 +23,41 @@ public class CountMinS0 {
     private int[] hash_a;
     private int[] hash_b;
     private int[] hash_c;
+    Random rn;
 
-    public CountMinS0(int attr) {
+    public CountMinS0(int attr, int[] parameters, int seed) {
         this.attr = attr;
-        depth = Main.depth;
-        width = Main.width;
+        depth = parameters[0];
+        width = parameters[1];
+        this.seed = seed;
+        rn = new Random(seed);
         initSketch();
     }
 
-    public CountMinS0(int attr, int depth, int width, int numTwoLHSReps, int b) {
-        this.attr = attr;
-        this.depth = depth;
-        this.width = width;
-        this.numTwoLHSReps = numTwoLHSReps;
-
-        this.b = b;
-        initSketch();
-    }
+//    public CountMinS0(int attr, int depth, int width, int numTwoLHSReps, int b) {
+//        this.attr = attr;
+//        this.depth = depth;
+//        this.width = width;
+//        this.numTwoLHSReps = numTwoLHSReps;
+//
+//        this.b = b;
+//        initSketch();
+//    }
 
 
     public void initSketch() {
 
-        int[][] primes = Hash.randomPrimes(depth, attr);
-        hash_a = primes[0];
-        hash_b = primes[1];
-        hash_c = primes[2];
-        System.out.println("hash_a = " + hash_a[0]);
-        System.out.println("hash_b = " + hash_b[0]);
-        System.out.println("hash_c = " + hash_c[0]);
+//        int[][] primes = Hash.randomPrimes(depth, attr);
+//        hash_a = primes[0];
+//        hash_b = primes[1];
+//        hash_c = primes[2];
+//        System.out.println("CMS0: hash_a = " + hash_a[0]);
+//        System.out.println("CMS0: hash_b = " + hash_b[0]);
+//        System.out.println("CMS0: hash_c = " + hash_c[0]);
         CM = new TreeSet[depth][width];
         for (int j = 0; j < depth; j++) {
             for (int i = 0; i < width; i++) {
                 CM[j][i] = new TreeSet<Long>();
-
             }
         }
     }
@@ -66,9 +68,11 @@ public class CountMinS0 {
 //        for (int i = 0; i < depth; i++) hash[i] = rn.nextInt(width);
 //        return hash;
         int[] hashes = new int[depth];
+        rn.setSeed(attrValue + this.seed);
+
         for (int i = 0; i < depth; i++) {
-            hashes[i] = (int) (((hash_a[i] * attrValue + hash_b[i]) % hash_c[i]) % width + width) % width;
-            attrValue = hashes[i];
+            hashes[i] = rn.nextInt(width);//(int) (((hash_a[i] * attrValue + hash_b[i]) % hash_c[i]) % width + width) % width;
+            //attrValue = hashes[i];
         }
         return hashes;
     }

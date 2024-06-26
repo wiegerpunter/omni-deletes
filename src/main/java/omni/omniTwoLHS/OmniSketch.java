@@ -17,7 +17,7 @@ public class OmniSketch extends SynopsisRefactor {
     private final int numTwoLHSReps;
     private final int numStoredAttributes;
     private final int dyadicRangeBits;
-    private final boolean useExactUnion2LHS;
+    private final boolean checkExactUnion2LHS;
     Kmin kminTmp;
     TWOLHS[] TWOLHSTmp;
     boolean rangeQueries;
@@ -25,8 +25,11 @@ public class OmniSketch extends SynopsisRefactor {
     final double BetaKmin;
 
     public OmniSketch(long ram, int numStoredAttributes, int[] parameters, int dyadicBits,
-                      boolean useTwoLHS, boolean useAcrossRows, boolean rangeQueries, boolean useBetaKmin,
-                      boolean twoLHSFast, boolean invDistPaper2LHS, boolean useExactUnion2LHS, boolean useMinEstimate, double BetaKmin, int seed) {
+                      boolean useTwoLHS, boolean useAcrossRows,
+                      boolean rangeQueries, boolean useBetaKmin,
+                      boolean useFastTwoLHS, boolean useInvDistPaper2LHS,
+                      boolean useMinEstimate, boolean checkExactUnion2LHS,
+                      double BetaKmin, int seed) {
         System.out.println("OmniSketch has stored attributes: " + numStoredAttributes);
         this.seed = seed;
         this.parameters = parameters;
@@ -37,10 +40,10 @@ public class OmniSketch extends SynopsisRefactor {
         this.numStoredAttributes = numStoredAttributes;
         this.rangeQueries = rangeQueries;
         this.useBetaKmin = useBetaKmin;
-        this.twoLHSFast = twoLHSFast;
-        this.invDistPaper2LHS = invDistPaper2LHS;
+        this.useFastTwoLHS = useFastTwoLHS;
+        this.useInvDistPaper2LHS = useInvDistPaper2LHS;
         this.useMinEstimate = useMinEstimate;
-        this.useExactUnion2LHS = useExactUnion2LHS;
+        this.checkExactUnion2LHS = checkExactUnion2LHS;
         this.randomHashG = new Random(seed);
         this.BetaKmin = BetaKmin;
 
@@ -54,12 +57,12 @@ public class OmniSketch extends SynopsisRefactor {
             } else {
                 sb.append("PerRow");
             }
-            if (twoLHSFast) {
+            if (useFastTwoLHS) {
                 sb.append("Fast");
             } else {
                 sb.append("Slow");
             }
-            if (invDistPaper2LHS) {
+            if (useInvDistPaper2LHS) {
                 sb.append("InvDist");
             } else {
                 sb.append("Normal");
@@ -113,12 +116,12 @@ public class OmniSketch extends SynopsisRefactor {
         } else {
             CMSketches = new CountMin[numStoredAttributes];
             for (int i = 0; i < numStoredAttributes; i++) {
-                CMSketches[i] = new CountMin(i, parameters, useTwoLHS, useBetaKmin, BetaKmin, twoLHSFast, seed);
+                CMSketches[i] = new CountMin(i, parameters, useTwoLHS, useBetaKmin, BetaKmin, useFastTwoLHS, seed);
             }
-            if (Main.checkConditions) {
+            if (checkExactUnion2LHS) {
                 CMSketchesS0 = new CountMinS0[numStoredAttributes];
                 for (int i = 0; i < numStoredAttributes; i++) {
-                    CMSketchesS0[i] = new CountMinS0(i);
+                    CMSketchesS0[i] = new CountMinS0(i, parameters, seed);
                 }
             }
 
@@ -147,7 +150,7 @@ public class OmniSketch extends SynopsisRefactor {
         if (!useTwoLHS){
             hx = kminTmp.hash(id);
         } else {
-            if (twoLHSFast) {
+            if (useFastTwoLHS) {
                 hashG = hashG(id);
             } else {
                 long hx_i;
@@ -181,7 +184,7 @@ public class OmniSketch extends SynopsisRefactor {
             for (int i = 0; i < numStoredAttributes; i++) {
                 CMSketches[i].ingest(record[i + 1], hx, vals, hashG, sign);
             }
-            if (Main.checkConditions) {
+            if (checkExactUnion2LHS) {
                 for (int i = 0; i < numStoredAttributes; i++) {
                     CMSketchesS0[i].ingest(record[i + 1], hx, sign);
                 }
@@ -222,12 +225,20 @@ public class OmniSketch extends SynopsisRefactor {
     @Override
     public int query(long[] query, int numPreds, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
         // Get estimate per depth. Take minimum of all estimates.
+
         if (useTwoLHS) {
+            int result;
             if (useAcrossRows) {
-                return queryEstAcrossRowsTwoLHS(getSamplesTwoLHSAcrossRows(query, numPreds), queryInfo);
+                result = queryEstAcrossRowsTwoLHS(getSamplesTwoLHSAcrossRows(query, numPreds), queryInfo);
             } else {
-                return queryEstPerRowTwoLHSWithInfo(getSamplesTwoLHSPerRow(query, numPreds), queryInfo);
+                result = queryEstPerRowTwoLHSWithInfo(getSamplesTwoLHSPerRow(query, numPreds), queryInfo);
             }
+            if (checkExactUnion2LHS) {
+                int[] res = checkConditions(query, numPreds, -1, queryInfo);
+                queryInfo.exactUnion = res[0];
+                queryInfo.exactIntersection = res[1];
+            }
+            return result;
         } else {
             return queryKmin(getSamplesKmin(query, numPreds), queryInfo);
         }
@@ -310,14 +321,21 @@ public class OmniSketch extends SynopsisRefactor {
     private int queryKmin(Kmin[] samples, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
         double S_cap = 0;
         int n_max = 0;
+        int exceedBounds = 0;
         TreeSet<Long>[] flatSamples = new TreeSet[samples.length];
         for (int i = 0; i < samples.length; i++) {
+            if (samples[i].exceedsNumberOfDeletes) {
+                exceedBounds++;
+            }
             TreeSet<Long> kmin = samples[i].getSampleToQuery();
             flatSamples[i] = kmin;
         }
         n_max = getNmax(samples);
         S_cap = getAltEstKMV(flatSamples);
         queryInfo.setScap((int) S_cap, n_max);
+        queryInfo.numberOfKmins = samples.length;
+        queryInfo.numberOfKminsExceedingBound = exceedBounds;
+
 
         if (maxSize > Main.streamSize) {
             throw new IllegalArgumentException("maxSize > streamSize");
@@ -374,7 +392,7 @@ public class OmniSketch extends SynopsisRefactor {
         double phat = (double) (count + 1) /(numTwoLHSReps + 1);//samples.length;
         double R = pow(2, index + 1);
         double S = (log(1 - phat)/log(2)) / (log(1 - 1 / R)/log(2));
-        if (twoLHSFast) {
+        if (useFastTwoLHS) {
             return (int) ceil(S) * numTwoLHSReps;
         } else {
             return (int) ceil(S);
@@ -384,7 +402,7 @@ public class OmniSketch extends SynopsisRefactor {
     private int setIntersectEstimator(TWOLHS[][] samples, double unionEstimate, double eps,
                                       int unionSizeExact, AnalysisBaselinesRefactor.QueryInfo CMRow) {
 
-        if (this.invDistPaper2LHS) {
+        if (this.useInvDistPaper2LHS) {
             return setIntersectEstimatorInverseDist(samples, unionEstimate, eps, unionSizeExact, CMRow);
         } else {
             return setIntersectEstimatorTwoLHS(samples, unionEstimate, eps, unionSizeExact, CMRow);
@@ -508,7 +526,7 @@ public class OmniSketch extends SynopsisRefactor {
 
     private int bucketDiffEstimator(TWOLHS[][] samples, double unionEstimate, double eps, int repetition, int unionSizeExact) {
         int index;
-        if (twoLHSFast) {
+        if (useFastTwoLHS) {
             if (Main.useExactUnionSize) {
                 index = (int) ceil(log((2 * unionSizeExact) / (numTwoLHSReps * pow((1 - eps), 2))) / log(2));
             } else {
@@ -643,9 +661,6 @@ public class OmniSketch extends SynopsisRefactor {
         }
         return samples;
     }
-
-
-
 
     private int minEstimate(int[] estimates, double[] unionEstimates, AnalysisBaselinesRefactor.QueryInfo CMRow) {
         int min = Integer.MAX_VALUE;

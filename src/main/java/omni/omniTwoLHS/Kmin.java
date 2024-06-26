@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 
 public class Kmin extends Sample {
     private final double Beta;
+    private final int allowedDeletions;
+    public boolean exceedsNumberOfDeletes = false;
     //PriorityQueue<Integer> sketch;
     public TreeSet<Long> sketch;
     //int sketchSize = 0;
@@ -15,6 +17,7 @@ public class Kmin extends Sample {
     Random rn = new Random();//TODO: test difference with seed
     long maxHash;
     boolean supportDeletes;
+    int deletesFromSample = 0;
     int b;
     long hash(long x) {
         long k;
@@ -32,11 +35,15 @@ public class Kmin extends Sample {
         this.b = b;
         this.seed = seed;
         this.Beta = Beta;
+
+        //TODO: check if deletesFromSample exceeds bound based on Beta and maxSize.
+        // In full omnisketch, check how many of the samples exceed the bound.
         if (supportDeletes) {
             this.KInQuery = (int) (maxSize/Beta);
         } else {
             this.KInQuery = maxSize;
         }
+        allowedDeletions = maxSize - KInQuery;
         this.sketch = new TreeSet<>(Collections.reverseOrder());
         maxHash = Math.min((int) Math.pow(2, b), Integer.MAX_VALUE);
 
@@ -110,6 +117,10 @@ public class Kmin extends Sample {
         n--;
         if (sketch.contains(hx)) {
             Main.kminDeletes++;
+            deletesFromSample++;
+            if (deletesFromSample > allowedDeletions) {
+                exceedsNumberOfDeletes = true;
+            }
             sketch.remove(hx);
             curSampleSize--;
             if (!sketch.isEmpty()) {

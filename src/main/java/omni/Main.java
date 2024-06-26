@@ -2,6 +2,8 @@ package omni;
 
 import com.opencsv.exceptions.CsvValidationException;
 //import omni.deprecated.*;
+//import omni.deprecated.CompareBaselinesRefactor;
+//import omni.deprecated.DeleteStream;
 import org.pcap4j.core.NotOpenException;
 import org.pcap4j.core.PcapNativeException;
 
@@ -11,7 +13,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
-import java.util.logging.*;
+//import java.util.logging.*;
 
 public class Main {
     public static int repetition;
@@ -20,9 +22,6 @@ public class Main {
     // Parameters for sketches
     public static double eps = 0.1;//1;
     public static double delta = 0.1;
-    public static double epsCM;// = eps/(1 + eps);
-    public static double deltaCM;// = delta/2;
-    public static double deltaDS;// = delta/2;
     public static double qTarget = 0.1; // Ratio |A_1 \cap A_2|/|A_1 \cup A_2|
     public static int depth;// = (int) Math.ceil(Math.log(1/deltaCM)/Math.log(Math.exp(1))); // Depth of sketch (number of hash functions)
     public static int width;// = (int) Math.ceil(Math.exp(1)/epsCM); // Width of sketch (number of buckets)
@@ -48,13 +47,13 @@ public class Main {
     public static boolean estPerRow = true; // Estimate per row for 2lhs
     public static boolean minEstimate = true;
     public static boolean useExactUnionSize = false;
-    public static boolean withDeletes = false;
+    public static boolean withDeletes = true;
     public static int kminDeletes = 0;
     public static boolean spreadOutDeletes = false;
     static String setting;
     public static boolean readAllFiles = true; // Set true if all files should be read, false if only the first file should be read
     public static boolean rangeQueries = false;
-    public static boolean checkConditions = false; // Set true if conditions should be checked
+    public static boolean checkConditions = true; // Set true if conditions should be checked
     public static boolean createNewWorkload = true; // Set true if new workload should be created
     public static boolean createNewRangeWorkload = false;
     static boolean useCustomMaxSize = false; // Set true if custom maxsize should be used. Only relevant for sensitivity analysis, not for comparison.
@@ -63,15 +62,11 @@ public class Main {
     public static boolean useDS = false; // True if DS is used, false if Kminwise hashing is used. Should be false by default.
     public static boolean useTwoLHS = true; // True if TwoLHS is used, false if Kminwise hashing is used. Should be false by default.
     public static boolean sanityBound = false; // True if parameter setting is decided by sanity bound. False if decided by how much memory is left for B.
-    public static boolean runOnODC = false; // True if running on ODC, false if running on local machine.
+    public static boolean runOnODC = true; // True if running on ODC, false if running on local machine.
     public static String outputFolder;
     public static String inputFolder;
 
     public static String readFolder;
-    public static Logger logger = Logger.getLogger("logger");
-    // Set logger level to info
-    static {logger.setLevel(Level.INFO);}
-    public static FileHandler fileHandler;
     public static int filesToRead = 5;//5;//5;
     public static Helper h;
     public static boolean useWarmup = false;
@@ -80,7 +75,7 @@ public class Main {
     public static int sensitivityNumberOfRecords = 5000000;
     public static boolean LOO = false;
     public static boolean LTO = false;
-    public static long[] ramVals = {(long) (10*8E6), (long) (25*8E6), (long) (50*8E6), (long) (75*8E6), (long) (100*8E6), (long) (200*8E6), (long) (400*8E6), (long) (600*8E6), (long) (800*8E6), (long) (1600*8E6)}; //(long) (10*8E6), (long) (20*8E6), (long) (50*8E6), (long) (100*8E6),
+    public static long[] ramVals = {(long) (50*8E6), (long) (100*8E6), (long) (150*8E6), (long) (200*8E6)};//, (long) (400*8E6), (long) (600*8E6), (long) (800*8E6), (long) (1600*8E6)}; //(long) (10*8E6), (long) (20*8E6), (long) (50*8E6), (long) (100*8E6),
     //public static long[] ramVals = {(long) (1000*8E6), (long) (1500*8E6)};
 
     public static String currentDate;
@@ -116,49 +111,29 @@ public class Main {
             Main.warmupNumber = (int) 3e5;
         }
         if (runOnODC) {
-            readFolder = "/home/";
-            outputFolder = "/home/exp5/output/";
-            inputFolder = "/home/exp5/input/";
-            LogManager.getLogManager().readConfiguration(
-                    Main.class.getResourceAsStream("/loggingODC.properties")
-            );
+            readFolder = "/app/data/";
+            outputFolder = "/app/data/output/";
+            inputFolder = "/app/data/input/";
         } else {
             readFolder = "./";
             outputFolder = "./output/";
             inputFolder = "./input/";
-            LogManager.getLogManager().readConfiguration(
-                    Main.class.getResourceAsStream("/loggingLocal.properties")
-            );
         }
 
         currentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
 
-        // dt is date and hour and minute
-        //String date_and_time = java.time.LocalDateTime.now().toString().replace(":", "-").replace(".", "-");
-        try {
-            fileHandler = new FileHandler(outputFolder + "logs/myLogs1.log");
-            logger.addHandler(fileHandler);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        logger.info("Starting program");
         Main.workloadFilename = "workload_" + Main.datasetName + "_N" + Integer.toString(Main.filesToRead) + ".csv";
         h = new Helper();
 
-//        if (Objects.equals(setting,"Compare Baselines")) {
-//            CompareBaselines cb = new CompareBaselines(h);
+//        if (Objects.equals(setting,"Compare Baselines Refactor")) {
+//            CompareBaselinesRefactor cb = new CompareBaselinesRefactor(h);
 //            cb.run();
-//        } else
-        if (Objects.equals(setting,"Compare Baselines Refactor")) {
-            CompareBaselinesRefactor cb = new CompareBaselinesRefactor(h);
-            cb.run();
-        } else if (Objects.equals(setting,"Test_two_LHS")) {
+        if (Objects.equals(setting,"Test_two_LHS")) {
             TestTwoLHS tt = new TestTwoLHS(h);
             tt.run();
-        } else if (Objects.equals(setting,"Delete Stream")) {
-            DeleteStream ds = new DeleteStream(h);
-            ds.run();
+//        } else if (Objects.equals(setting,"Delete Stream")) {
+//            DeleteStream ds = new DeleteStream(h);
+//            ds.run();
 //        else if (Objects.equals(setting,"Compare Estimators")) {
 //            CompareEstimators ce = new CompareEstimators(h);
 //            ce.run();
@@ -172,13 +147,11 @@ public class Main {
 //            RangeQueries rq = new RangeQueries(h);
 //            rq.run();
         } else {
-            logger.severe("Invalid argument");
-            logger.severe(setting + " & " + args[1]);
+            throw new IllegalArgumentException("Invalid argument");
+//            logger.severe("Invalid argument");
+//            logger.severe(setting + " & " + args[1]);
         }
-        //h.writeToCSV();
     }
-
-    static Synopsis s;
     static SynopsisRefactor rs;
 
 

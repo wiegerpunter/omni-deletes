@@ -1,9 +1,10 @@
-package omni;
+package omni.deprecated;
 
 import com.opencsv.exceptions.CsvValidationException;
+import omni.*;
 import omni.baseline.SimpleSketch;
 import omni.hydraRefactor.ImpHydraStruct;
-import omni.omniRefactor.OmniSketch;
+import omni.omniTwoLHS.OmniSketch;
 
 import java.io.IOException;
 
@@ -124,7 +125,7 @@ public class DeleteStream {
 
         for (long[] r: cd.noiseUpdates) {
             if (numUpdates % 1000000 == 0 && !Main.runOnODC) {
-                Main.logger.info("Number of updates: " + numUpdates);
+//                Main.logger.info("Number of updates: " + numUpdates);
                 System.out.println("Number of updates: " + numUpdates);
             }
             posSyn.add(r);
@@ -132,7 +133,7 @@ public class DeleteStream {
         }
         for (long[] r: cd.datasetResidu) {
             if (numUpdates % 1000000 == 0 && !Main.runOnODC) {
-                Main.logger.info("Number of updates: " + numUpdates);
+//                Main.logger.info("Number of updates: " + numUpdates);
                 System.out.println("Number of updates: " + numUpdates);
             }
             posSyn.add(r);

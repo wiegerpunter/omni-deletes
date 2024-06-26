@@ -18,6 +18,8 @@ public class AnalysisBaselinesRefactor {
     double[] jaccardEstimates2LHS;
     int[] witness2LHS;
     double[] unionEstimates2LHS;
+    int[] numberOfKmins;
+    int[] numberOfKminsExceedingBounds;
 
     int[] NMax;
     long[] queryExecutionTime;
@@ -49,6 +51,8 @@ public class AnalysisBaselinesRefactor {
         queryExecutionTime = new long[Main.numQueries];
         intersectionOfR = new int[Main.numQueries];
         unionOfR = new int[Main.numQueries];
+        numberOfKmins = new int[Main.numQueries];
+        numberOfKminsExceedingBounds = new int[Main.numQueries];
 
     }
 
@@ -87,7 +91,8 @@ public class AnalysisBaselinesRefactor {
         } else {
             h.setConditionInfo(intersectionOfR, unionOfR);
             h.writeResultsToFilePointQuery(repetition, s, d, ingestionTime, estimatedAnswersPointQuery,
-                    SCap, NMax, jaccardEstimates2LHS, unionEstimates2LHS, witness2LHS, queryExecutionTime, totalQueryExecutionTime);
+                    SCap, NMax, jaccardEstimates2LHS, unionEstimates2LHS, witness2LHS, queryExecutionTime, totalQueryExecutionTime,
+                    numberOfKmins, numberOfKminsExceedingBounds);
         }
         System.out.println("Total queries: " + Main.numQueries);
         System.out.println("Total queries with zero empty or singleton witnesses: " + s.countIsZero);
@@ -95,7 +100,7 @@ public class AnalysisBaselinesRefactor {
     }
 
     public static class QueryInfo {
-        public int CMRow;
+        public int CMRow = 0;
         public int Scap;
         public int nmax;
 
@@ -105,6 +110,11 @@ public class AnalysisBaselinesRefactor {
 
         public double jaccardEstimate = 0;
         public int witness2LHS = 0;
+        public int numberOfKmins = 0;
+        public int numberOfKminsExceedingBound = 0;
+
+        public int exactUnion = 0;
+        public int exactIntersection = 0;
         public QueryInfo() {
         }
         public QueryInfo(int CMRow) {
@@ -139,19 +149,19 @@ public class AnalysisBaselinesRefactor {
         queryInfo = new QueryInfo(0);
         int[] res = new int[2];
         long startTime = System.currentTimeMillis();
-        if (Main.checkConditions ) { //&& s.ram == Main.ramVals[0]
-            estimatedAnswersPointQuery[queryId] = s.query(q, numPreds, unionSize, queryInfo);
-            res = s.checkConditions(q, numPreds, unionSize, queryInfo);
-        } else {
-            estimatedAnswersPointQuery[queryId] = s.query(q, numPreds, queryInfo);
-        }
+//        if (Main.checkConditions ) { //&& s.ram == Main.ramVals[0]
+//            estimatedAnswersPointQuery[queryId] = s.query(q, numPreds, unionSize, queryInfo);
+//            res = s.checkConditions(q, numPreds, unionSize, queryInfo);
+//        } else {
+        estimatedAnswersPointQuery[queryId] = s.query(q, numPreds, queryInfo);
+//        }
         long endTime = System.currentTimeMillis();
         queryExecutionTime[queryId] = endTime - startTime;
         if (estimatedAnswersPointQuery[queryId] == 0) {
             totalEstimatesZero++;
         }
-        unionOfR[queryId] = res[0];
-        intersectionOfR[queryId] = res[1];
+        unionOfR[queryId] = queryInfo.exactUnion;
+        intersectionOfR[queryId] = queryInfo.exactIntersection;
         totalTime = totalTime + queryExecutionTime[queryId];
         totalExecQueries++;
         SCap[queryId] = queryInfo.Scap;
@@ -159,13 +169,15 @@ public class AnalysisBaselinesRefactor {
         jaccardEstimates2LHS[queryId] = queryInfo.jaccardEstimate;
         unionEstimates2LHS[queryId] = queryInfo.unionEstimate;
         witness2LHS[queryId] = queryInfo.witness2LHS;
-        if (s.useTwoLHS) {
-            if (estimatedAnswersPointQuery[queryId] > 0) {
-                System.out.println("Estimated answer: " + estimatedAnswersPointQuery[queryId]);
-                System.out.println("query info: " + queryInfo.CMRow + " union est: " + queryInfo.unionEstimate +
-                        " witness 2lhs: " + queryInfo.witness2LHS + " Jaccard similarity" + queryInfo.jaccardEstimate);
-            }
-        }
+        numberOfKmins[queryId] = queryInfo.numberOfKmins;
+        numberOfKminsExceedingBounds[queryId] = queryInfo.numberOfKminsExceedingBound;
+//        if (s.useTwoLHS) {
+//            if (estimatedAnswersPointQuery[queryId] > 0) {
+//                System.out.println("Estimated answer: " + estimatedAnswersPointQuery[queryId]);
+//                System.out.println("query info: " + queryInfo.CMRow + " union est: " + queryInfo.unionEstimate +
+//                        " witness 2lhs: " + queryInfo.witness2LHS + " Jaccard similarity" + queryInfo.jaccardEstimate);
+//            }
+//        }
     }
 
     public void computeErrorRangeQuery (int queryId, long[][] q, int exactAnswer) {

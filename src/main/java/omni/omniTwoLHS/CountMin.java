@@ -19,16 +19,18 @@ public class CountMin {
     Random rn;
     final int seed;
 
-    private int[] hash_a;
-    private int[] hash_b;
-    private int[] hash_c;
+//    private int[] hash_a;
+//    private int[] hash_b;
+//    private int[] hash_c;
     final boolean useTwoLHS;
     final boolean twoLHSFast;
     final boolean useTwoKmin;
     final double BetaKmin;
 
     public CountMin(int attr, int[] parameters,
-                    boolean useTwoLHS, boolean useTwoKmin, double BetaKmin, boolean twoLHSFast, int seed){//int depth, int width, int numTwoLHSReps, int B, int b) {
+                    boolean useTwoLHS, boolean useTwoKmin, double BetaKmin,
+                    boolean twoLHSFast, int seed){
+        //int depth, int width, int numTwoLHSReps, int B, int b) {
         this.attr = attr;
         this.depth = parameters[0];
         this.width = parameters[1];
@@ -53,10 +55,13 @@ public class CountMin {
 
     public void initSketch() {
 
-        int[][] primes = Hash.randomPrimes(depth, attr);
-        hash_a = primes[0];
-        hash_b = primes[1];
-        hash_c = primes[2];
+//        int[][] primes = Hash.randomPrimes(depth, attr);
+//        hash_a = primes[0];
+//        hash_b = primes[1];
+//        hash_c = primes[2];
+//        System.out.println("CM: hash_a = " + hash_a[0]);
+//        System.out.println("CM: hash_b = " + hash_b[0]);
+//        System.out.println("CM: hash_c = " + hash_c[0]);
 
         if (useTwoLHS) {
             CMTwoLHS = new TWOLHS[depth][width][numTwoLHSReps];
