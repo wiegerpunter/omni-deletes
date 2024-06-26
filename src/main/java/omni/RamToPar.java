@@ -249,41 +249,41 @@ public class RamToPar {
         return info;
     }
 
-    private double[] getSizeSketch(long ram, double eps) {
-        double deltaCM = 0.05;
-        double deltaDS = 0.05;
-        int depth = (int) Math.ceil(Math.log(1/deltaCM)/Math.log(Math.exp(1)));
-        //double epsCM = Math.pow((Math.pow(eps, depth)/(1 + Math.pow(eps, depth))), (double) (1/depth));
-        double epsCMpowD = eps / (1 + eps);
-        double epsCM = Math.pow(epsCMpowD, 1.0/depth);
-        double epsDS = Math.pow(eps, depth);
-        double[] info = new double[7];
-        //int depth = (int) Math.ceil(Math.log(1/deltaCM)/Math.log(Math.exp(1))); // Depth of sketch (number of hash functions)
-        int width =  1 + (int) Math.ceil(Math.exp(1)/epsCM); // Width of sketch (number of buckets)
-        double numerator;
-        double denominator;
-        double ratio = 1/Main.qTarget;
-        int B;
-        int b;
-        long memUsage;
-        if (Main.useTwoLHS) {
-            width = (int) Math.ceil(Math.exp(1)/eps);
-            depth = (int) Math.ceil(Math.log(1/(deltaDS + deltaCM))/Math.log(Math.exp(1)));
-            B = Main.numTwoLHSReps;
-            memUsage = (long) depth*width*B*numAttrs*4;
-        } else {
-            numerator = Math.log(2* numAttrs *depth/deltaDS)/Math.log(Math.exp(1));
-            denominator = Math.pow(epsDS, 2);
-            B = (int) Math.ceil(2 * (numerator / denominator) * ratio);
-            b = (int) Math.ceil(Math.log(4*Math.pow(B, (double) 5/2)/deltaDS));
-            memUsage = (long) (depth * width*(((long) B *b + 3 * 32 + 1) + 32) * numAttrs);
-            // Memory = depth * width * ( sample size * small b size * bits needed for pointers + bits needed for counters ) * number of attributes
-        }
-        if (memUsage < ram) {
-            info = new double[]{memUsage, depth, width, B, eps, epsCM, eps};
-        }
-        return info;
-    }
+//    private double[] getSizeSketch(long ram, double eps) {
+//        double deltaCM = 0.05;
+//        double deltaDS = 0.05;
+//        int depth = (int) Math.ceil(Math.log(1/deltaCM)/Math.log(Math.exp(1)));
+//        //double epsCM = Math.pow((Math.pow(eps, depth)/(1 + Math.pow(eps, depth))), (double) (1/depth));
+//        double epsCMpowD = eps / (1 + eps);
+//        double epsCM = Math.pow(epsCMpowD, 1.0/depth);
+//        double epsDS = Math.pow(eps, depth);
+//        double[] info = new double[7];
+//        //int depth = (int) Math.ceil(Math.log(1/deltaCM)/Math.log(Math.exp(1))); // Depth of sketch (number of hash functions)
+//        int width =  1 + (int) Math.ceil(Math.exp(1)/epsCM); // Width of sketch (number of buckets)
+//        double numerator;
+//        double denominator;
+//        double ratio = 1/Main.qTarget;
+//        int B;
+//        int b;
+//        long memUsage;
+//        if (Main.useTwoLHS) {
+//            width = (int) Math.ceil(Math.exp(1)/eps);
+//            depth = (int) Math.ceil(Math.log(1/(deltaDS + deltaCM))/Math.log(Math.exp(1)));
+//            B = Main.numTwoLHSReps;
+//            memUsage = (long) depth*width*B*numAttrs*4;
+//        } else {
+//            numerator = Math.log(2* numAttrs *depth/deltaDS)/Math.log(Math.exp(1));
+//            denominator = Math.pow(epsDS, 2);
+//            B = (int) Math.ceil(2 * (numerator / denominator) * ratio);
+//            b = (int) Math.ceil(Math.log(4*Math.pow(B, (double) 5/2)/deltaDS));
+//            memUsage = (long) (depth * width*(((long) B *b + 3 * 32 + 1) + 32) * numAttrs);
+//            // Memory = depth * width * ( sample size * small b size * bits needed for pointers + bits needed for counters ) * number of attributes
+//        }
+//        if (memUsage < ram) {
+//            info = new double[]{memUsage, depth, width, B, eps, epsCM, eps};
+//        }
+//        return info;
+//    }
 
     private double[] getSizeHydra(long ram, double eps) {
         double delta = Main.delta/2;

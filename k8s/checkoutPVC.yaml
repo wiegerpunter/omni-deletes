@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: check-pvc
+spec:
+  containers:
+    - name: check-pv-container
+      image: ubuntu
+      command:
+        - /bin/sh
+      args:
+        - -c
+        - while true; do echo hello; sleep 10;done
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        readOnlyRootFilesystem: false
+        runAsGroup: 70
+        runAsNonRoot: true
+        runAsUser: 70
+      resources:
+        limits:
+          cpu: 500m
+          memory: 300Gi
+        requests:
+          cpu: 500m
+          memory: 300Gi
+      volumeMounts:
+        - name: nfs-01
+          mountPath: "/app/data/"
+  volumes:
+    - name: nfs-01
+      persistentVolumeClaim:
+        claimName: nfs-01
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault

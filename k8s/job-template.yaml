@@ -1,0 +1,48 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: omni-{{ID}}
+spec:
+  template:
+    metadata:
+      name: omni-{{ID}}
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: nfs-01
+          persistentVolumeClaim:
+            claimName: nfs-01
+      containers:
+        - name: omni-{{ID}}
+          image: wpunter/omnisketch2lhs:latest
+          command: ["java", "-Xmx450G", "-jar", "/app/DSCM_jar/DSCM.jar",
+                    "{{setting}}","{{dataset}}","{{repetition}}","{{runOnODC}}","{{path}}","{{withDeletes}}",
+          "{{spreadOutDeletes}}", "{{ramVals}}",
+          "{{onlyKmin}}"]
+          resources:
+            limits:
+              cpu: "44"
+              memory: "500Gi"
+              power.intel.com/performance: "44"
+            requests:
+              cpu: "44"
+              memory: "500Gi"
+              power.intel.com/performance: "44"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: false
+            runAsGroup: 70
+            runAsNonRoot: true
+            runAsUser: 70
+          volumeMounts:
+            - name: nfs-01
+              mountPath: "/app/data/"
+      imagePullSecrets:
+        - name: dockerhub-secret
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+  backoffLimit: 4

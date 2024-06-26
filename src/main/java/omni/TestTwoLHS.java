@@ -75,80 +75,87 @@ public class TestTwoLHS {
             System.out.println("Running with " + noiseUpdate + " noise updates");
             cd.setNoiseUpdates(numNoiseUpdates);
             for (long ram : Main.ramVals) {
-                System.out.println("Running sketch with ram " + ram);
+                if (Main.onlyKmin) {
+                    runSketch(ram, rtp, false, false, Main.rangeQueries,
+                            false, false, false,
+                            false, Main.checkConditions, 1, repetition);
+                } else {
 
-                System.out.println("OMNISKETCH");
-                boolean useTwoLHS = true;
-                boolean useBetaKmin = false;
-                if (Main.countUniqueSamples) {
-                    Main.uniqueSamples = new HashMap<>();
-                    Main.uniqueSamplesReservoir = new HashSet<>();
-                }
+                    System.out.println("Running sketch with ram " + ram);
 
-                boolean useTwoLHSAcrossRows = true;
-                boolean useFastTwoLHS = true;
-                boolean useInvDistPaper2LHS = true;
-                boolean useMinEstimate = true;
-                // BetaKmin Vals for every # deletes
-                double[] BetaKminVals = new double[]{1, 2, 4, 10, 100};
+                    System.out.println("OMNISKETCH");
+                    boolean useTwoLHS = true;
+                    boolean useBetaKmin = false;
+                    if (Main.countUniqueSamples) {
+                        Main.uniqueSamples = new HashMap<>();
+                        Main.uniqueSamplesReservoir = new HashSet<>();
+                    }
+
+                    boolean useTwoLHSAcrossRows = true;
+                    boolean useFastTwoLHS = true;
+                    boolean useInvDistPaper2LHS = true;
+                    boolean useMinEstimate = true;
+                    // BetaKmin Vals for every # deletes
+                    double[] BetaKminVals = new double[]{1, 2, 4, 10, 100};
 
 
-//                runSketch(ram, rtp, !useTwoLHS, false, repetition);
-                int combinations = (int) Math.pow(2, 3);
-                for (int comb = 0; comb < combinations; comb++) {
-                    Main.checkConditions = false;
-                    useTwoLHSAcrossRows = (comb & 1) == 1;
-                    useInvDistPaper2LHS = (comb & 2) == 2;
-                    useMinEstimate = (comb & 4) == 4;
-                    if (useInvDistPaper2LHS && useTwoLHSAcrossRows) {
+                    //                runSketch(ram, rtp, !useTwoLHS, false, repetition);
+                    int combinations = (int) Math.pow(2, 3);
+                    for (int comb = 0; comb < combinations; comb++) {
                         Main.checkConditions = false;
+                        useTwoLHSAcrossRows = (comb & 1) == 1;
+                        useInvDistPaper2LHS = (comb & 2) == 2;
+                        useMinEstimate = (comb & 4) == 4;
+                        if (useInvDistPaper2LHS && useTwoLHSAcrossRows) {
+                            Main.checkConditions = false;
+                        }
+                        if (useTwoLHSAcrossRows && !useMinEstimate) {
+                            continue;
+                        }
+                        System.out.println("Running comp " + comb +
+                                " use2LHS: " + useTwoLHS +
+                                " useTwoLHSAcrossRows: " + useTwoLHSAcrossRows +
+                                " useInvDistPaper2LHS: " + useInvDistPaper2LHS +
+                                " useMinEstimate: " + useMinEstimate);
+                        runSketch(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries,
+                                useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
+                                useMinEstimate, Main.checkConditions,
+                                1, repetition);
                     }
-                    if (useTwoLHSAcrossRows && !useMinEstimate) {
-                        continue;
+
+                    Main.checkConditions = false;
+                    useTwoLHS = false;
+                    useTwoLHSAcrossRows = false;
+                    useFastTwoLHS = false;
+                    useInvDistPaper2LHS = false;
+                    useMinEstimate = false;
+                    useBetaKmin = true;
+
+                    for (double BetaKmin_ : BetaKminVals) {
+                        System.out.println("Running betaLKmin_ " + BetaKmin_ +
+                                " use2LHS: " + useTwoLHS +
+                                " useTwoLHSAcrossRows: " + useTwoLHSAcrossRows +
+                                " useInvDistPaper2LHS: " + useInvDistPaper2LHS +
+                                " useMinEstimate: " + useMinEstimate);
+                        runSketch(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries,
+                                useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
+                                useMinEstimate, Main.checkConditions, BetaKmin_, repetition);
                     }
-                    System.out.println("Running comp " + comb +
-                            " use2LHS: " + useTwoLHS +
-                            " useTwoLHSAcrossRows: " + useTwoLHSAcrossRows +
-                            " useInvDistPaper2LHS: " + useInvDistPaper2LHS +
-                            " useMinEstimate: " + useMinEstimate);
-                    runSketch(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries,
-                            useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
-                            useMinEstimate, Main.checkConditions,
-                            1, repetition);
+
+
+                    //runSketch(ram, rtp, !useTwoLHS, true, repetition);
+                    //
+                    //                System.out.println("RESERVOIR SAMPLING");
+                    //                runReservoirSampling(ram, rtp, repetition);
+                    //////
+
+                    System.out.println("Running sketch with ram " + ram);
+                    System.out.println("ADAP SAMPLING");
+                    boolean useBufferInQuery = false;
+                    runAdapSampling(ram, rtp, useBufferInQuery, repetition);
+                    useBufferInQuery = true;
+                    runAdapSampling(ram, rtp, useBufferInQuery, repetition);
                 }
-
-                Main.checkConditions = false;
-                useTwoLHS = false;
-                useTwoLHSAcrossRows = false;
-                useFastTwoLHS = false;
-                useInvDistPaper2LHS = false;
-                useMinEstimate = false;
-                useBetaKmin = true;
-
-                for (double BetaKmin_ : BetaKminVals) {
-                    System.out.println("Running betaLKmin_ " + BetaKmin_ +
-                            " use2LHS: " + useTwoLHS +
-                            " useTwoLHSAcrossRows: " + useTwoLHSAcrossRows +
-                            " useInvDistPaper2LHS: " + useInvDistPaper2LHS +
-                            " useMinEstimate: " + useMinEstimate);
-                    runSketch(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries,
-                            useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
-                            useMinEstimate, Main.checkConditions, BetaKmin_, repetition);
-                }
-
-
-                //runSketch(ram, rtp, !useTwoLHS, true, repetition);
-//
-//                System.out.println("RESERVOIR SAMPLING");
-//                runReservoirSampling(ram, rtp, repetition);
-//////
-
-                System.out.println("Running sketch with ram " + ram);
-                System.out.println("ADAP SAMPLING");
-                boolean useBufferInQuery = false;
-                runAdapSampling(ram, rtp, useBufferInQuery, repetition);
-                useBufferInQuery = true;
-                runAdapSampling(ram, rtp, useBufferInQuery, repetition);
             }
         }
     }

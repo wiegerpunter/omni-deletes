@@ -44,37 +44,26 @@ public class Main {
     public static int warmupNumber;
     public static int dyadicRangeBits = 33;
     public static int numFiles = 1;
-    public static boolean estPerRow = true; // Estimate per row for 2lhs
-    public static boolean minEstimate = true;
-    public static boolean useExactUnionSize = false;
-    public static boolean withDeletes = true;
+    public static boolean useExactUnionSize;
+    public static boolean withDeletes;
     public static int kminDeletes = 0;
-    public static boolean spreadOutDeletes = false;
+    public static boolean spreadOutDeletes;
+    public static boolean onlyKmin;
     static String setting;
     public static boolean readAllFiles = true; // Set true if all files should be read, false if only the first file should be read
     public static boolean rangeQueries = false;
     public static boolean checkConditions = true; // Set true if conditions should be checked
-    public static boolean createNewWorkload = true; // Set true if new workload should be created
-    public static boolean createNewRangeWorkload = false;
-    static boolean useCustomMaxSize = false; // Set true if custom maxsize should be used. Only relevant for sensitivity analysis, not for comparison.
+
     public static boolean useMultNumAttributes = false; // Set true if want to test for multiple number of attributes instead of just all attributes.
-    static boolean useTighterBound = false; // Set true if want to check tighter bound in sensitivity analysis
-    public static boolean useDS = false; // True if DS is used, false if Kminwise hashing is used. Should be false by default.
-    public static boolean useTwoLHS = true; // True if TwoLHS is used, false if Kminwise hashing is used. Should be false by default.
-    public static boolean sanityBound = false; // True if parameter setting is decided by sanity bound. False if decided by how much memory is left for B.
-    public static boolean runOnODC = true; // True if running on ODC, false if running on local machine.
+    public static boolean runOnODC; // True if running on ODC, false if running on local machine.
     public static String outputFolder;
     public static String inputFolder;
 
     public static String readFolder;
     public static int filesToRead = 5;//5;//5;
     public static Helper h;
-    public static boolean useWarmup = false;
     public static boolean writeSNMP = false;
-    public static boolean sensitivityAnalysis = false;
     public static int sensitivityNumberOfRecords = 5000000;
-    public static boolean LOO = false;
-    public static boolean LTO = false;
     public static long[] ramVals = {(long) (50*8E6), (long) (100*8E6), (long) (150*8E6), (long) (200*8E6)};//, (long) (400*8E6), (long) (600*8E6), (long) (800*8E6), (long) (1600*8E6)}; //(long) (10*8E6), (long) (20*8E6), (long) (50*8E6), (long) (100*8E6),
     //public static long[] ramVals = {(long) (1000*8E6), (long) (1500*8E6)};
 
@@ -89,18 +78,22 @@ public class Main {
         // arg[1] = dataset name
         // arg[2] = repetition
         // arg[3] = runOnODC
-        // arg[4] = useWarmup
-        // arg[5] = epsilon
-        // arg[6] = delta
-        // arg[7] = ram
-
-
-
+        // arg[4] = readFolder
+        // arg[5] = withDeletes
+        // arg[6] = spreadOutDeletes
+        // arg[7] = useExactUnionSize
 
         //setParameters(eps: 0.1, delta: 0.05, maxLevel: 32, seed: 1, numAttributes: 2, qTarget: 0.01);
         setting = args[0];
         Main.datasetName = args[1];
         Main.repetition = Integer.parseInt(args[2]);
+        Main.runOnODC= Boolean.parseBoolean(args[3]);
+        Main.readFolder = args[4];
+        Main.withDeletes = Boolean.parseBoolean(args[5]);
+        Main.spreadOutDeletes = Boolean.parseBoolean(args[6]);
+        Main.useExactUnionSize = Boolean.parseBoolean(args[7]);
+        Main.ramVals = parseRamVals(args[8]);
+        Main.onlyKmin = Boolean.parseBoolean(args[9]);
         //Main.useExactUnionSize = Boolean.parseBoolean(args[3]);
 
         if (Main.datasetName.equals("CAIDA")) {
@@ -110,16 +103,18 @@ public class Main {
         } else {
             Main.warmupNumber = (int) 3e5;
         }
-        if (runOnODC) {
-            readFolder = "/app/data/";
-            outputFolder = "/app/data/output/";
-            inputFolder = "/app/data/input/";
-        } else {
-            readFolder = "./";
-            outputFolder = "./output/";
-            inputFolder = "./input/";
-        }
+//        if (runOnODC) {
+//            readFolder = "/app/data/";
+//            outputFolder = "/app/data/output/";
+//            inputFolder = "/app/data/input/";
+//        } else {
+//            readFolder = "./";
+//            outputFolder = "./output/";
+//            inputFolder = "./input/";
+//        }
 
+        outputFolder = readFolder + "output/";
+        inputFolder = readFolder + "input/";
         currentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
 
         Main.workloadFilename = "workload_" + Main.datasetName + "_N" + Integer.toString(Main.filesToRead) + ".csv";
@@ -152,6 +147,16 @@ public class Main {
 //            logger.severe(setting + " & " + args[1]);
         }
     }
+
+    private static long[] parseRamVals(String arg) {
+        String[] vals = arg.split(",");
+        long[] res = new long[vals.length];
+        for (int i = 0; i < vals.length; i++) {
+            res[i] = (long) (Long.parseLong(vals[i]) * 8E6);
+        }
+        return res;
+    }
+
     static SynopsisRefactor rs;
 
 

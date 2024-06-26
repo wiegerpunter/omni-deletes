@@ -162,11 +162,7 @@ public class DatasetRefactor {
 
     public void CAIDADataset() throws RuntimeException {
         String dir;
-        if (Main.runOnODC) {
-            dir = "/home/CAIDA/csv/";
-        } else {
-            dir = Main.inputFolder + "/data/" + Main.datasetName;
-        }
+        dir = Main.inputFolder + "/data/" + Main.datasetName;
         loadCAIDAFile(dir);
     }
 
