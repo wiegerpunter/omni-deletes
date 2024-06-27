@@ -71,6 +71,8 @@ public class Main {
     public static boolean countUniqueSamples = false;
     public static HashMap<Long, Integer> uniqueSamples = new HashMap<>();
     public static HashSet<long[]> uniqueSamplesReservoir = new HashSet<>();
+    public static int[] widthOptionsGridSearch;
+    public static int[] depthOptionsGridSearch;
 
     public static void main(String[] args) throws IOException, NotOpenException, PcapNativeException, CsvValidationException {
         // Args
@@ -82,6 +84,10 @@ public class Main {
         // arg[5] = withDeletes
         // arg[6] = spreadOutDeletes
         // arg[7] = useExactUnionSize
+        // arg[8] = ramVals
+        // arg[9] = onlyKmin
+        // arg[10] = widthOptionsGridSearch
+        // arg[11] = depthOptionsGridSearch
 
         //setParameters(eps: 0.1, delta: 0.05, maxLevel: 32, seed: 1, numAttributes: 2, qTarget: 0.01);
         setting = args[0];
@@ -92,8 +98,10 @@ public class Main {
         Main.withDeletes = Boolean.parseBoolean(args[5]);
         Main.spreadOutDeletes = Boolean.parseBoolean(args[6]);
         Main.useExactUnionSize = Boolean.parseBoolean(args[7]);
-        Main.ramVals = parseRamVals(args[8]);
+        Main.ramVals = parseLongArray(args[8]);
         Main.onlyKmin = Boolean.parseBoolean(args[9]);
+        Main.widthOptionsGridSearch = parseIntArray(args[10]);
+        Main.depthOptionsGridSearch = parseIntArray(args[11]);
         //Main.useExactUnionSize = Boolean.parseBoolean(args[3]);
 
         if (Main.datasetName.equals("CAIDA")) {
@@ -103,21 +111,11 @@ public class Main {
         } else {
             Main.warmupNumber = (int) 3e5;
         }
-//        if (runOnODC) {
-//            readFolder = "/app/data/";
-//            outputFolder = "/app/data/output/";
-//            inputFolder = "/app/data/input/";
-//        } else {
-//            readFolder = "./";
-//            outputFolder = "./output/";
-//            inputFolder = "./input/";
-//        }
-
         outputFolder = readFolder + "output/";
         inputFolder = readFolder + "input/";
         currentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
 
-        Main.workloadFilename = "workload_" + Main.datasetName + "_N" + Integer.toString(Main.filesToRead) + ".csv";
+        Main.workloadFilename = "workload_" + Main.datasetName + "_N" + Main.filesToRead + ".csv";
         h = new Helper();
 
 //        if (Objects.equals(setting,"Compare Baselines Refactor")) {
@@ -148,11 +146,20 @@ public class Main {
         }
     }
 
-    private static long[] parseRamVals(String arg) {
+    private static long[] parseLongArray(String arg) {
         String[] vals = arg.split(",");
         long[] res = new long[vals.length];
         for (int i = 0; i < vals.length; i++) {
             res[i] = (long) (Long.parseLong(vals[i]) * 8E6);
+        }
+        return res;
+    }
+
+    private static int[] parseIntArray(String arg) {
+        String[] vals = arg.split(",");
+        int[] res = new int[vals.length];
+        for (int i = 0; i < vals.length; i++) {
+            res[i] = Integer.parseInt(vals[i]);
         }
         return res;
     }

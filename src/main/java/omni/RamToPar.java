@@ -1,6 +1,5 @@
 package omni;
 
-import java.text.Normalizer;
 import java.util.HashMap;
 
 public class RamToPar {
@@ -22,6 +21,7 @@ public class RamToPar {
             .81, .82, .83, .84, .85, .86, .87, .88, .89, .9, .91, .92, .93, .94, .95, .96, .97, .98, .99};
     HashMap<Long, double[]> ramToSketchTwoLHSParams = new HashMap<>();
     HashMap<Long, double[]> ramToSketchKminParams = new HashMap<>();
+    HashMap<Long, HashMap<Integer, HashMap<Integer, double[]>>> ramToSketchKminParamsGridSearch = new HashMap<>();
     HashMap<Long, double[]> ramToKminParams = new HashMap<>();
 
     HashMap<Long, double[]> ramToCMBaseline = new HashMap<>();
@@ -36,53 +36,58 @@ public class RamToPar {
         run();
     }
 
-    public RamToPar(int numAttrsToUse, double eps, double delta) {
-        this.numAttrs = numAttrsToUse;
-
-        Main.eps = eps;
-        Main.delta = delta;
-        for (long r: Main.ramVals) {
-            double[] pars = getInfoViaB(r, eps);
-            //System.out.println("Info, Ram: " +  r + " usedRAM: "+ pars[0] + " B: " + pars[3] + " b: " + pars[4] + " width: " + pars[2] + " depth: " + pars[1]);
-            ramToSketchKminParams.put(r, pars);
-        }
-
-        for (long r: Main.ramVals) {
-            double[] pars = getInfoViaB(r/2, eps);
-            //System.out.println("Info, Ram: " +  r + " usedRAM: "+ pars[0] + " B: " + pars[3] + " b: " + pars[4] + " width: " + pars[2] + " depth: " + pars[1]);
-            ramToSketchKminParams.put(r/2, pars);
-        }
-
-        // Add params for hydra to ramToHydra based on main eps main delta
-        for (long r: Main.ramVals) {
-            double[] pars = gridSearchHydra(r);
-            ramToHydra.put(r, pars);
-        }
-        for (long r: Main.ramVals) {
-            double[] pars = gridSearchKmin(r);
-            ramToKminParams.put(r, pars);
-        }
-    }
+//    public RamToPar(int numAttrsToUse, double eps, double delta) {
+//        this.numAttrs = numAttrsToUse;
+//
+//        Main.eps = eps;
+//        Main.delta = delta;
+//        for (long r: Main.ramVals) {
+//            double[] pars = compParamsKmin(r, eps);
+//            //System.out.println("Info, Ram: " +  r + " usedRAM: "+ pars[0] + " B: " + pars[3] + " b: " + pars[4] + " width: " + pars[2] + " depth: " + pars[1]);
+//            ramToSketchKminParams.put(r, pars);
+//        }
+//
+//        for (long r: Main.ramVals) {
+//            double[] pars = compParamsKmin(r/2, eps);
+//            //System.out.println("Info, Ram: " +  r + " usedRAM: "+ pars[0] + " B: " + pars[3] + " b: " + pars[4] + " width: " + pars[2] + " depth: " + pars[1]);
+//            ramToSketchKminParams.put(r/2, pars);
+//        }
+//
+//        // Add params for hydra to ramToHydra based on main eps main delta
+//        for (long r: Main.ramVals) {
+//            double[] pars = compParamsHydra(r);
+//            ramToHydra.put(r, pars);
+//        }
+//        for (long r: Main.ramVals) {
+//            double[] pars = compParamsSingleKmin(r);
+//            ramToKminParams.put(r, pars);
+//        }
+//    }
 
     public void run() {
         for (long ram : Main.ramVals) {
 
-            double[] parsTwoLHS = gridSearchSketch(ram, true);
+            double[] parsTwoLHS = compParamsOmniSketch(ram, true);
             ramToSketchTwoLHSParams.put(ram, parsTwoLHS);
-            double[] parsOmniKmin = gridSearchSketch(ram, false);
+            double[] parsOmniKmin = compParamsOmniSketch(ram, false);
+            HashMap<Integer, HashMap<Integer, double[]>> paramsOmniKminGridSearch = compParamsOmniSketchKmin(ram,
+                    Main.widthOptionsGridSearch, Main.depthOptionsGridSearch);
             ramToSketchKminParams.put(ram, parsOmniKmin);
-            double[] parsCM = gridSearchCMBaseline(ram);
+            ramToSketchKminParamsGridSearch.put(ram, paramsOmniKminGridSearch);
+
+            double[] parsCM = compParamsCMBaseline(ram);
             ramToCMBaseline.put(ram, parsCM);
-            double[] parsHydra = gridSearchHydra(ram);
+
+            double[] parsHydra = compParamsHydra(ram);
             ramToHydra.put(ram, parsHydra);
 
-            double[] parsKmin = gridSearchKmin(ram);
+            double[] parsKmin = compParamsSingleKmin(ram);
             ramToKminParams.put(ram , parsKmin);
 
-            double[] parsReservoir = gridSearchReservoir(ram);
+            double[] parsReservoir = getParamsReservoir(ram);
             ramToReservoir.put(ram, parsReservoir);
 
-            double[] parsAdap = gridSearchAdap(ram);
+            double[] parsAdap = getParamsASH(ram);
             ramToAdap.put(ram, parsAdap);
 
         }
@@ -108,12 +113,12 @@ public class RamToPar {
 
     }
 
-    private double[] gridSearchReservoir(long ram) {
+    private double[] getParamsReservoir(long ram) {
         // memory usage of reservoir sampling is sample size * 32 * numAttrs
         double sampleSize = (double) ram / (32 * numAttrs);
         return new double[]{sampleSize};
     }
-    private double[] gridSearchAdap(long ram) {
+    private double[] getParamsASH(long ram) {
         // memory usage of aSH sampling is sample size * 32 * numAttrs * 5
         //double sampleSize = (double) ram / (32 * numAttrs * 5);
         double sampleSize = (double) ram / (32 *(numAttrs + 5));
@@ -121,7 +126,7 @@ public class RamToPar {
         return new double[]{sampleSize/2, sampleSize/2};
     }
 
-    private double[] gridSearchCMBaseline(long ram) {
+    private double[] compParamsCMBaseline(long ram) {
         int maxSize = 0;
         double[] currentInfo = new double[4];
         for (double eps : epsVals) {
@@ -134,12 +139,12 @@ public class RamToPar {
         return currentInfo;
     }
 
-    private double[] gridSearchSketch(long ram, boolean useTwoLHS) {
+    private double[] compParamsOmniSketch(long ram, boolean useTwoLHS) {
         double[] currentInfo;
        if (useTwoLHS) {
-           currentInfo = getInfoTwoLHS(ram,Main.eps);
+           currentInfo = compParams2LHS(ram,Main.eps);
        } else {
-           currentInfo = getInfoViaB(ram, Main.eps);
+           currentInfo = compParamsKmin(ram, Main.eps);
        }
        if (currentInfo[0] == 0) {
             System.out.println("No sketch found for ram " + ram + " and eps" + currentInfo[5] + " and depth " + currentInfo[1] + " and width " + currentInfo[2]);
@@ -147,7 +152,7 @@ public class RamToPar {
        return currentInfo;
     }
 
-    private double[] getInfoTwoLHS(long ram, double eps) {
+    private double[] compParams2LHS(long ram, double eps) {
         int depth = (int) Math.ceil(Math.log(1/(Main.delta))/Math.log(Math.exp(1)));
 
         int width = (int) Math.ceil(Math.exp(1)/eps);
@@ -165,7 +170,7 @@ public class RamToPar {
         return info;
     }
 
-    private double[] getInfoViaB(long ram, double eps) {
+    private double[] compParamsKmin(long ram, double eps) {
 
         double deltaCM =  Main.delta/2;
         int depth = (int) Math.ceil(Math.log(1/deltaCM)/Math.log(Math.exp(1)));
@@ -194,7 +199,41 @@ public class RamToPar {
        return info;
     }
 
-    private double[] gridSearchHydra(long ram) {
+    private HashMap<Integer, HashMap<Integer, double[]>> compParamsOmniSketchKmin(long ram,
+                                                                                                    int[] w_values,
+                                                                                                    int[] d_values) {
+        HashMap<Integer, HashMap<Integer, double[]>> currentRamMap = new HashMap<>();
+        double epsCM;
+        double eps;
+        double epsDS;
+        for (int d_ : d_values) {
+            DetermineB determineB = new DetermineB(ram);
+            HashMap<Integer, double[]> currentDepthMap = new HashMap<>();
+            for (int w_ : w_values) {
+                epsCM = Math.exp(1)/(w_ - 1);
+                eps = Math.pow(epsCM, d_) / (1 - Math.pow(epsCM, d_));
+                epsDS = Math.pow(eps, d_);
+                int B = determineB.determineB(d_, w_, numAttrs, Main.delta);
+                int b = Formulas.smallb(B, Main.delta);// ()int) Math.ceil(Math.log(4*Math.pow(B, (double) 5/2)/Main.delta));
+
+                double memUsage;
+                if (Main.rangeQueries) {
+                    memUsage = Main.dyadicRangeBits / Math.log(2) * Formulas.ramOmniKmin(numAttrs, d_, w_, B, b);// * depth * width * numAttrs * (B * (b + 3 * 32 + 1) + 32);
+                } else {
+                    memUsage = Formulas.ramOmniKmin(numAttrs, d_, w_, B, b);
+                    //(double) depth * width * numAttrs * (B * (b + 3 * 32 + 1) + 32);
+                }
+
+                if (memUsage < ram) {
+                   currentDepthMap.put(w_, new double[]{memUsage, d_, w_, B, b, eps, epsCM, epsDS});
+                }
+            }
+            currentRamMap.put(d_, currentDepthMap);
+        }
+        return currentRamMap;
+    }
+
+    private double[] compParamsHydra(long ram) {
         int maxSize = 0;
         double[] currentInfo = new double[8];
         for (double eps : epsVals) {
@@ -207,9 +246,7 @@ public class RamToPar {
         return currentInfo;
     }
 
-
-
-    private double[] gridSearchKmin(long ram) {
+    private double[] compParamsSingleKmin(long ram) {
         int maxSize = 0;
         double[] currentInfo = new double[3];
         double[] info = getSizeKmin(ram);
@@ -307,7 +344,7 @@ public class RamToPar {
         return info;
     }
 
-    public int[] getParamsSketchTwoLHS(long ram) {
+    public int[] getParamsOmniSketch2LHS(long ram) {
         if (ramToSketchTwoLHSParams.containsKey(ram)) {
             double[] info = ramToSketchTwoLHSParams.get(ram);
             int d = (int) info[1];
@@ -318,7 +355,7 @@ public class RamToPar {
             throw new IllegalArgumentException("RAM not found in ramToSketchParams");
         }
     }
-    public int[] getParamsSketchKmin(long ram) {
+    public int[] getParamsOmniSketchKmin(long ram) {
         if (ramToSketchKminParams.containsKey(ram)) {
             double[] info = ramToSketchKminParams.get(ram);
             int d = (int) info[1];
@@ -326,6 +363,29 @@ public class RamToPar {
             int B = (int) info[3];
             int b = (int) info[4];
             return new int[]{d, w, B, b};
+        } else {
+            throw new IllegalArgumentException("RAM not found in ramToSketchParams");
+        }
+    }
+
+    public int[] getParamsOmniSketchGridSearch(long ram, int width, int depth) {
+        if (ramToSketchKminParamsGridSearch.containsKey(ram)) {
+            HashMap<Integer, HashMap<Integer, double[]>> depthMap = ramToSketchKminParamsGridSearch.get(ram);
+            if (depthMap.containsKey(depth)) {
+                HashMap<Integer, double[]> widthMap = depthMap.get(depth);
+                if (widthMap.containsKey(width)) {
+                    double[] info = widthMap.get(width);
+                    int d = (int) info[1];
+                    int w = (int) info[2];
+                    int B = (int) info[3];
+                    int b = (int) info[4];
+                    return new int[]{d, w, B, b};
+                } else {
+                    throw new IllegalArgumentException("Width not found in ramToSketchParamsGridSearch");
+                }
+            } else {
+                throw new IllegalArgumentException("Depth not found in ramToSketchParamsGridSearch");
+            }
         } else {
             throw new IllegalArgumentException("RAM not found in ramToSketchParams");
         }
@@ -351,7 +411,7 @@ public class RamToPar {
             throw new IllegalArgumentException("RAM not found in ramToAdap");
         }
     }
-    public double[] getParamsKmin(long ram) {
+    public double[] getParamsSingleKmin(long ram) {
         //HashMap<Integer, double[]> ramToParams;
         if (ramToKminParams.containsKey(ram)) {
             double[] info = ramToKminParams.get(ram);
@@ -417,4 +477,5 @@ public class RamToPar {
             return new double[]{dRoot, wRoot, dCM, wCM};
         }
     }
+
 }

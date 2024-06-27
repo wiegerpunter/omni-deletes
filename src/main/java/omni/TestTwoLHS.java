@@ -76,9 +76,12 @@ public class TestTwoLHS {
             cd.setNoiseUpdates(numNoiseUpdates);
             for (long ram : Main.ramVals) {
                 if (Main.onlyKmin) {
-                    runSketch(ram, rtp, false, false, Main.rangeQueries,
-                            false, false, false,
-                            false, Main.checkConditions, 1, repetition);
+                    for (int d_ : Main.depthOptionsGridSearch) {
+                        for (int w_ : Main.widthOptionsGridSearch) {
+                            runOmniSketchGridSearch(ram, rtp, w_, d_, repetition);
+                        }
+                    }
+
                 } else {
 
                     System.out.println("Running sketch with ram " + ram);
@@ -117,7 +120,7 @@ public class TestTwoLHS {
                                 " useTwoLHSAcrossRows: " + useTwoLHSAcrossRows +
                                 " useInvDistPaper2LHS: " + useInvDistPaper2LHS +
                                 " useMinEstimate: " + useMinEstimate);
-                        runSketch(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries,
+                        runOmniSketch(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries,
                                 useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
                                 useMinEstimate, Main.checkConditions,
                                 1, repetition);
@@ -137,7 +140,7 @@ public class TestTwoLHS {
                                 " useTwoLHSAcrossRows: " + useTwoLHSAcrossRows +
                                 " useInvDistPaper2LHS: " + useInvDistPaper2LHS +
                                 " useMinEstimate: " + useMinEstimate);
-                        runSketch(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries,
+                        runOmniSketch(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries,
                                 useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
                                 useMinEstimate, Main.checkConditions, BetaKmin_, repetition);
                     }
@@ -160,22 +163,22 @@ public class TestTwoLHS {
         }
     }
 
-    public void runSketch(long ram, RamToPar rtp, boolean useTwoLHS,
-                          boolean use2LHSAcrossRows, boolean rangeQueries,
-                          boolean useBetaKmin, boolean useFastTwoLHS,
-                          boolean useInvDistPaper2LHS,
-                          boolean useMinEstimate, boolean checkExactUnion2LHS,
-                          double BetaKmin, int repetition) throws IOException {
+    public void runOmniSketch(long ram, RamToPar rtp, boolean useTwoLHS,
+                              boolean use2LHSAcrossRows, boolean rangeQueries,
+                              boolean useBetaKmin, boolean useFastTwoLHS,
+                              boolean useInvDistPaper2LHS,
+                              boolean useMinEstimate, boolean checkExactUnion2LHS,
+                              double BetaKmin, int repetition) throws IOException {
         int[] params;
 
         if (useTwoLHS) {
             if (useBetaKmin) {
                 throw new RuntimeException("Cannot use both TwoLHS and BetaKmin");
             }
-            params = rtp.getParamsSketchTwoLHS(ram);
+            params = rtp.getParamsOmniSketch2LHS(ram);
             Main.numTwoLHSReps = params[2];
         } else {
-            params = rtp.getParamsSketchKmin(ram);
+            params = rtp.getParamsOmniSketchKmin(ram);
             Main.maxSize = params[2];
             Main.b =  params[3];
         }
@@ -191,6 +194,26 @@ public class TestTwoLHS {
                 useFastTwoLHS, useInvDistPaper2LHS,
                 useMinEstimate, checkExactUnion2LHS,
                 BetaKmin, repetition);
+        ((OmniSketch) Main.rs).printParams();
+        runSynopsisRamBased(Main.rs, repetition);
+    }
+
+    public void runOmniSketchGridSearch(long ram, RamToPar rtp, int width, int depth, int repetition) throws IOException {
+        int[] params;
+        params = rtp.getParamsOmniSketchGridSearch(ram, width, depth);
+        Main.depth =  params[0];
+        Main.width = params[1];
+        Main.maxSize = params[2];
+        Main.b =  params[3];
+        for (int i = 0; i < params.length; i++) {
+            System.out.println("params[" + i + "] = " + params[i]);
+        }
+        Main.rs = new OmniSketch(ram, Main.numStoredAttributes, params, Main.dyadicRangeBits,
+                false, false,
+                false, false,
+                false, false,
+                false, false,
+                1, repetition);
         ((OmniSketch) Main.rs).printParams();
         runSynopsisRamBased(Main.rs, repetition);
     }

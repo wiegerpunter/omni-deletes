@@ -22,8 +22,8 @@ public class CleanDataset {
     long[][] datasetNegUpdates;
     long[][] datasetResidu;
     long[][] noiseUpdates;
-    long[][] ingestionDataset;
-    long[][] warmupDataset;
+//    long[][] ingestionDataset;
+//    long[][] warmupDataset;
 
     long[][][] rangeQueries;
     long[][] pointQueries;
@@ -73,8 +73,8 @@ public class CleanDataset {
     }
 
     private int splitDeletes(double percToDelete) {
-        warmupDataset = Arrays.copyOfRange(dataset, 0, Math.min(Main.warmupNumber, dataset.length));
-        ingestionDataset = Arrays.copyOfRange(dataset, Math.min(Main.warmupNumber, dataset.length), dataset.length);
+//        warmupDataset = Arrays.copyOfRange(dataset, 0, Math.min(Main.warmupNumber, dataset.length));
+//        ingestionDataset = Arrays.copyOfRange(dataset, Math.min(Main.warmupNumber, dataset.length), dataset.length);
 
         int numToKeep=0;
         long time_start = System.currentTimeMillis();
@@ -238,7 +238,7 @@ public class CleanDataset {
         System.out.println("Num queried records: " + potDataset.size());
         // Add noise
         //int numNoiseRecords = (int) Math.pow(2, numBins*2) * 2;
-        int numNoiseRecords = (int) Math.pow(2, numBins*2) * 2;
+        int numNoiseRecords = (int) Math.pow(2, numBins*2);
 
         System.out.println("Num noise records: " + numNoiseRecords);
         for (int i = 0; i < numNoiseRecords; i++) {

@@ -15,10 +15,28 @@ spec:
       containers:
         - name: omni-{{ID}}
           image: wpunter/omnisketch2lhs:latest
-          command: ["java", "-Xmx450G", "-jar", "/app/DSCM_jar/DSCM.jar",
-                    "{{setting}}","{{dataset}}","{{repetition}}","{{runOnODC}}","{{path}}","{{withDeletes}}",
-          "{{spreadOutDeletes}}", "{{ramVals}}",
-          "{{onlyKmin}}"]
+          command:
+            - java
+            - -Xmx450G
+            - -jar
+            - /app/DSCM_jar/DSCM.jar
+            - "{{setting}}"
+            - "{{dataset}}"
+            - "{{repetition}}"
+            - "{{runOnODC}}"
+            - "{{path}}"
+            - "{{withDeletes}}"
+            - "{{spreadOutDeletes}}"
+            - "{{useExactUnionSize}}"
+            - "{{ramVals}}"
+            - "{{onlyKmin}}"
+            - "{{widthOptionsGridSearch}}"
+            - "{{depthOptionsGridSearch}}"
+
+#          command: ["java", "-Xmx450G", "-jar", "/app/DSCM_jar/DSCM.jar",
+#                    "{{setting}}","{{dataset}}","{{repetition}}","{{runOnODC}}","{{path}}","{{withDeletes}}",
+#          "{{spreadOutDeletes}}", "{{ramVals}}",
+#          "{{onlyKmin}}"]
           resources:
             limits:
               cpu: "44"
