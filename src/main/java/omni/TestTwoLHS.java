@@ -16,10 +16,12 @@ public class TestTwoLHS {
     //ExpWorkload ew;
     RamToPar rtp;
     String[] conditions;
+    int sizeFactor;
 
     int numNoiseUpdates;
-    public TestTwoLHS(Helper h) {
+    public TestTwoLHS(Helper h, int sizeFactor) {
         this.h = h;
+        this.sizeFactor = sizeFactor;
     }
 
     public void run() throws IOException, CsvValidationException {
@@ -40,14 +42,14 @@ public class TestTwoLHS {
                 if (Main.useMultNumAttributes) {
                     for (int j = 2; j < cd.cleanIds.length; j++) {
                             Main.numStoredAttributes = j;
-                            readDataset(i, perc, maxPercent);
+                            readDataset(i, perc, maxPercent, sizeFactor);
                             for (int repetition = 0; repetition < numRepetitions; repetition++) {
                                 runSyns(i, repetition);
                             }
                     }
                 } else {
                     Main.numStoredAttributes = cd.cleanIds.length;
-                    readDataset(i, perc, maxPercent);
+                    readDataset(i, perc, maxPercent, sizeFactor);
                     for (int repetition = 0; repetition < numRepetitions; repetition++) {
                         runSyns(i, repetition);
                     }
@@ -62,9 +64,9 @@ public class TestTwoLHS {
         this.rtp = new RamToPar(Main.numStoredAttributes);
         int numPotNeg = cd.datasetNegUpdates.length;
         int[] noiseUpdates;
-        if (Main.withDeletes && !Main.spreadOutDeletes) {
+        if (Main.withDeletes) {
             // Noise updates should make (0, 25, 50, 75, 90, 99) % deletes.
-            noiseUpdates = new int[]{0, (int) (cd.datasetResidu.length * 0.5),
+            noiseUpdates = new int[]{0,(int) (cd.datasetResidu.length * 0.5),
                     cd.datasetResidu.length, cd.datasetResidu.length * 3, numPotNeg};
             //enumPotNeg/4, numPotNeg/2, 3*numPotNeg/4, numPotNeg};//{numPotNeg / 100, numPotNeg / 50, numPotNeg / 10, numPotNeg / 5, numPotNeg / 2, numPotNeg};
         } else {
@@ -236,7 +238,7 @@ public class TestTwoLHS {
 
     public void runSynopsisRamBased(SynopsisRefactor syn, int repetition) throws IOException {
         long time_passed;
-        if (Main.spreadOutDeletes) {
+        if (Main.withDeletes && Main.spreadOutDeletes) {
             time_passed= runSynWithSpreadDeletes(syn);
         } else {
             time_passed = runSynWithoutWarmup(syn);
@@ -337,23 +339,20 @@ public class TestTwoLHS {
         System.out.println("Running synopsis");
         int numUpdates = 0;
         int numDeletes = 0;
+
         long startTime = System.currentTimeMillis();
-        for (int i = 0; i < cd.dataset.length; i++) {
+        for (int i = 0; i < cd.datasetAllSpreadOut.length; i++) {
             // always add to synopsis
-            syn.add(cd.dataset[i]);
-
-            // check if toDelete contains something at position i. If so, delete it.
-            if (cd.toDelete[i] != null) {
-                for (int j = 0; j < cd.toDelete[i].size(); j++) {
-                    syn.delete(cd.dataset[cd.toDelete[i].get(j)]);
-                    numDeletes++;
-                    if (numDeletes != 0 && numDeletes % 10000000 == 0 && !Main.runOnODC) {
-                        System.out.println("Number of deletes: " + numDeletes);
-                    }
-                }
+            if (cd.isDelete[i]) {
+                syn.delete(cd.datasetAllSpreadOut[i]);
+                numDeletes++;
+            } else {
+                syn.add(cd.datasetAllSpreadOut[i]);
             }
-
-            if (numUpdates % 10000000 == 0 && !Main.runOnODC) {
+            if (numDeletes != 0 && numDeletes % 1000000 == 0) {
+                System.out.println("Number of deletes: " + numDeletes);
+            }
+            if (numUpdates % 1000000 == 0) {
                 System.out.println("Number of updates: " + numUpdates);
             }
             numUpdates++;
@@ -365,7 +364,7 @@ public class TestTwoLHS {
         return endTime - startTime;
     }
 
-    public void readDataset(int i, double perc, double maxPerc) throws IOException, CsvValidationException {
+    public void readDataset(int i, double perc, double maxPerc, int sizeFactor) throws IOException, CsvValidationException {
         if (Main.datasetName.equals("SNMP")) {
             Main.fileStartCondition = conditions[i];
         } else {
@@ -375,7 +374,7 @@ public class TestTwoLHS {
 
         //cd.cleanDataset(d);
         if (Main.datasetName.equals("synthEquiDepthBins")) {
-            cd.cleanDatasetEquiDepthBins(perc, maxPerc);
+            cd.cleanDatasetEquiDepthBins(perc, maxPerc, sizeFactor);
         } else {
             d = new DatasetRefactor(Main.datasetName, h);
             cd.cleanDataset(d, perc, maxPerc);

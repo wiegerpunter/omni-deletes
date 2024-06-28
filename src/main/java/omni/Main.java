@@ -73,6 +73,7 @@ public class Main {
     public static HashSet<long[]> uniqueSamplesReservoir = new HashSet<>();
     public static int[] widthOptionsGridSearch;
     public static int[] depthOptionsGridSearch;
+    private static int sizeFactor;
 
     public static void main(String[] args) throws IOException, NotOpenException, PcapNativeException, CsvValidationException {
         // Args
@@ -102,6 +103,7 @@ public class Main {
         Main.onlyKmin = Boolean.parseBoolean(args[9]);
         Main.widthOptionsGridSearch = parseIntArray(args[10]);
         Main.depthOptionsGridSearch = parseIntArray(args[11]);
+        Main.sizeFactor = Integer.parseInt(args[12]);
         //Main.useExactUnionSize = Boolean.parseBoolean(args[3]);
 
         if (Main.datasetName.equals("CAIDA")) {
@@ -122,7 +124,7 @@ public class Main {
 //            CompareBaselinesRefactor cb = new CompareBaselinesRefactor(h);
 //            cb.run();
         if (Objects.equals(setting,"Test_two_LHS")) {
-            TestTwoLHS tt = new TestTwoLHS(h);
+            TestTwoLHS tt = new TestTwoLHS(h, sizeFactor);
             tt.run();
 //        } else if (Objects.equals(setting,"Delete Stream")) {
 //            DeleteStream ds = new DeleteStream(h);

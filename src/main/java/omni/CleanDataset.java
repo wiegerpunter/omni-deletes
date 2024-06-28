@@ -38,6 +38,10 @@ public class CleanDataset {
     int[] cleanIds;
     boolean[] neverDeleted;
     public ArrayList<Integer>[] toDelete;
+    public long[][] datasetInsertsSpreadOut;
+    public boolean[] isDelete;
+    public long[][] datasetAllSpreadOut;
+
     public CleanDataset(Helper h) {
         this.h = h;
         this.name = Main.datasetName;
@@ -78,39 +82,39 @@ public class CleanDataset {
 
         int numToKeep=0;
         long time_start = System.currentTimeMillis();
-        if (Main.spreadOutDeletes) {
-            neverDeleted = new boolean[dataset.length];
-            toDelete = new ArrayList[dataset.length];
+//        if (Main.spreadOutDeletes) {
+//            neverDeleted = new boolean[dataset.length];
+//            toDelete = new ArrayList[dataset.length];
+//
+//            Random rn = new Random(1);
+//            for (int i = 0; i < dataset.length; i++) {
+//                toDelete[i] = new ArrayList<Integer>();
+//            }
+//            for (int i = 0; i < dataset.length; i++) {
+//                rn.setSeed(i);
+//                int rand = rn.nextInt(100);
+//
+//                if (rand < percToDelete * 100) {
+//                    // add to deletion queue to be deleted at certain i in future of loop.
+//                    int rand2 = rn.nextInt(dataset.length - i);
+//                    toDelete[i + rand2].add(i);
+//                } else {
+//                    // never delete
+//                    neverDeleted[i] = true;
+//                }
+//
+//            }
+//            numToKeep = setDatasets(neverDeleted);
+//        } else {
+        numToKeep = (int) Math.ceil((1 - percToDelete) * dataset.length);
+        datasetNegUpdates = new long[dataset.length - numToKeep][]; // datasetNegUpdates is a subset of dataset, first numToDelete records.
+        datasetResidu = new long[numToKeep][]; // datasetAfterDeletes is a subset of dataset, all records except first numToDelete records.
 
-            Random rn = new Random(1);
-            for (int i = 0; i < dataset.length; i++) {
-                toDelete[i] = new ArrayList<Integer>();
-            }
-            for (int i = 0; i < dataset.length; i++) {
-                rn.setSeed(i);
-                int rand = rn.nextInt(100);
-
-                if (rand < percToDelete * 100) {
-                    // add to deletion queue to be deleted at certain i in future of loop.
-                    int rand2 = rn.nextInt(dataset.length - i);
-                    toDelete[i + rand2].add(i);
-                } else {
-                    // never delete
-                    neverDeleted[i] = true;
-                }
-
-            }
-            numToKeep = setDatasets(neverDeleted);
-        } else {
-            numToKeep = (int) Math.ceil((1 - percToDelete) * dataset.length);
-            datasetNegUpdates = new long[dataset.length - numToKeep][]; // datasetNegUpdates is a subset of dataset, first numToDelete records.
-            datasetResidu = new long[numToKeep][]; // datasetAfterDeletes is a subset of dataset, all records except first numToDelete records.
-
-            // fill datasetNegUpdates with first numToDelete records from dataset.
-            System.arraycopy(dataset, 0, datasetNegUpdates, 0, dataset.length - numToKeep);
-            // fill datasetAfterDeletes with records from dataset after numToDelete records.
-            System.arraycopy(dataset, dataset.length - numToKeep, datasetResidu, 0, numToKeep);
-        }
+        // fill datasetNegUpdates with first numToDelete records from dataset.
+        System.arraycopy(dataset, 0, datasetNegUpdates, 0, dataset.length - numToKeep);
+        // fill datasetAfterDeletes with records from dataset after numToDelete records.
+        System.arraycopy(dataset, dataset.length - numToKeep, datasetResidu, 0, numToKeep);
+//        }
         long time_end = System.currentTimeMillis();
         System.out.println("Time to set deletes: " + (time_end - time_start)/1000 + " s");
         Main.streamSize = numToKeep;
@@ -130,11 +134,11 @@ public class CleanDataset {
         list.toArray(array);
     }
 
-    private boolean queryFileExists(String deletes) throws CsvValidationException, IOException {
+    private boolean queryFileExists(String deletes, int sizeFactor) throws CsvValidationException, IOException {
         String queriesDir = Main.inputFolder + "pointQueries/" + Main.datasetName + "/";
         // num Queries unknown beforehand
         String filenameToMatch = "queries_" + deletes + Main.datasetName  +
-                "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain +
+                "_numStoredAttrs_" + Main.numStoredAttributes + "_sizeFactor_" + sizeFactor + "_queriesFromDomain_" + Main.queriesFromDomain +
                 "_numQueries_";
         int numQueries = 0;
         // check if there exists a file where first part of name matches filenameToMatch
@@ -152,7 +156,7 @@ public class CleanDataset {
         }
         return false;
     }
-    public void cleanDatasetEquiDepthBins(double percToDelete, double maxPercToDelete) throws IOException, CsvValidationException {
+    public void cleanDatasetEquiDepthBins(double percToDelete, double maxPercToDelete, int sizeFactor) throws IOException, CsvValidationException {
         // This will be a queries first -> dataset later approach.
         // We have queries in 10 bins of 100 queries each.
         // All queries in different bins are on distinct domains. No overlap.
@@ -183,9 +187,9 @@ public class CleanDataset {
         Random domainRng = new Random(1);
         pointQueryBinNumber = new int[numQueries];
 
-        if (queryFileExists(deletes(percToDelete, maxPercToDelete))) {
+        if (queryFileExists(deletes(percToDelete, maxPercToDelete), sizeFactor)) {
             // read queries and read dataset.
-            readDatasetFromFile(deletes(percToDelete, maxPercToDelete));
+            readDatasetFromFile(deletes(percToDelete, maxPercToDelete), sizeFactor);
             int numToKeep = splitDeletes(percToDelete);
             return;
         }
@@ -217,7 +221,7 @@ public class CleanDataset {
         long id = 0;
         for (int i = 0; i < numBins; i++) {
             // Generate dataset for each bin.
-            int numRecords = (int) ((int) Math.pow(2, i*2)); //10
+            int numRecords = (int) ((int) Math.pow(2, i*2) * sizeFactor); //10
             // go over queries in bin i and add numRecords times.
             for (int j = 0; j < queriesPerBin; j++) {
                 for (int k = 0; k < numRecords; k++) {
@@ -238,7 +242,7 @@ public class CleanDataset {
         System.out.println("Num queried records: " + potDataset.size());
         // Add noise
         //int numNoiseRecords = (int) Math.pow(2, numBins*2) * 2;
-        int numNoiseRecords = (int) Math.pow(2, numBins*2);
+        int numNoiseRecords = (int) Math.pow(2, numBins*2) * sizeFactor;
 
         System.out.println("Num noise records: " + numNoiseRecords);
         for (int i = 0; i < numNoiseRecords; i++) {
@@ -266,6 +270,7 @@ public class CleanDataset {
 
         shuffleArray(dataset);
         int numToKeep = splitDeletes(percToDelete);
+
         computeExactPoint(datasetResidu);
 
         // Check for every point query the number of attributes that are not -1.
@@ -281,16 +286,15 @@ public class CleanDataset {
             }
         }
 
-        writePointQueriesToFile(numToKeep, percToDelete, maxPercToDelete);
-        writeDatasetToFile(numToKeep, percToDelete, maxPercToDelete);
-
+        writePointQueriesToFile(numToKeep, percToDelete, maxPercToDelete, sizeFactor);
+        writeDatasetToFile(numToKeep, percToDelete, maxPercToDelete, sizeFactor);
     }
 
-    private void writeDatasetToFile(int numToKeep, double percToDelete, double maxPercToDelete) {
+    private void writeDatasetToFile(int numToKeep, double percToDelete, double maxPercToDelete, int sizeFactor) {
         String deletes = deletes(numToKeep, percToDelete, maxPercToDelete);
         String datasetDir = Main.inputFolder + "data/" + Main.datasetName + "/";
         String datasetName = datasetDir + "dataset_" + deletes + Main.datasetName +
-                "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain + ".csv";
+                "_numStoredAttrs_" + Main.numStoredAttributes + "_sizeFactor_" + sizeFactor + "_queriesFromDomain_" + Main.queriesFromDomain + ".csv";
         writeDataset(datasetName);
     }
 
@@ -310,11 +314,12 @@ public class CleanDataset {
         }
     }
 
-    private void readDatasetFromFile(String deletes) {
+    private void readDatasetFromFile(String deletes, int sizeFactor) {
         // read dataset
         String datasetDir = Main.inputFolder + "data/" + Main.datasetName + "/";
         String datasetName = datasetDir + "dataset_" + deletes + Main.datasetName +
-                "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain + ".csv";
+                "_numStoredAttrs_" + Main.numStoredAttributes + "_sizeFactor_" + sizeFactor +
+                "_queriesFromDomain_" + Main.queriesFromDomain + ".csv";
         File f = new File(datasetName);
         if (!f.exists()) {
             throw new RuntimeException("Dataset file does not exist.");
@@ -423,7 +428,7 @@ public class CleanDataset {
             computeExactPoint(datasetResidu);
             // recompute exact answers based on neverDeleted
 
-            writePointQueriesToFile(numToKeep, percToDelete, maxPercToDelete);
+            writePointQueriesToFile(numToKeep, percToDelete, maxPercToDelete, 1);
         }
     }
 
@@ -472,15 +477,17 @@ public class CleanDataset {
     }
     // Generate queries on the clean dataset.
 
-    private void writePointQueriesToFile(int numToKeep, double percToDelete, double maxPercToDelete) throws IOException {
+    private void writePointQueriesToFile(int numToKeep, double percToDelete, double maxPercToDelete, int sizeFactor) throws IOException {
         String deletes = deletes(numToKeep, percToDelete, maxPercToDelete);
         boolean init = false;
         String queriesDir = Main.inputFolder + "pointQueries/" + Main.datasetName + "/";
         String queriesWithExactName = queriesDir + "queries_" + deletes + Main.datasetName +
-                "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain +
+                "_numStoredAttrs_" + Main.numStoredAttributes + "_sizeFactor_" + sizeFactor +
+                "_queriesFromDomain_" + Main.queriesFromDomain +
                 "_numQueries_" + Main.numQueries + ".csv";
         String queriesWithoutExactName = queriesDir + "queries_" + deletes + Main.datasetName +
-                "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain + "_numQueries_" +
+                "_numStoredAttrs_" + Main.numStoredAttributes + "_sizeFactor_" + sizeFactor +
+                "_queriesFromDomain_" + Main.queriesFromDomain + "_numQueries_" +
                 Main.numQueries +".csv";
 
         File f = new File(queriesWithExactName);
@@ -967,7 +974,7 @@ public class CleanDataset {
         } else {
             computeExactPoint(dataset);
         }
-        writePointQueriesToFile(numToKeep, percToDelete, maxPercToDelete);
+        writePointQueriesToFile(numToKeep, percToDelete, maxPercToDelete,1);
 
     }
 
@@ -1008,7 +1015,51 @@ public class CleanDataset {
                 - numNoiseUpdates, noiseUpdates, 0, numNoiseUpdates);
         System.out.println("Noise updates size: " + noiseUpdates.length);
         computeGroundTruth(noiseUpdates, pointQueryAnswersDeletes, pointQueryUnionDeletes);
+        if (Main.spreadOutDeletes) {
+            // Add all recs to datasetInsertsSpreadOut, shuffle, and decide when we can delete all noiseUpdates.
+            // make array with indices of noiseUpdates
+            long[] noiseIndices = new long[noiseUpdates.length];
+            for (int i = 0; i < noiseUpdates.length; i++) {
+                noiseIndices[i] = noiseUpdates[i][0];
+            }
+            // sort noiseIndices
+            Arrays.sort(noiseIndices);
 
+            this.datasetInsertsSpreadOut = new long[noiseUpdates.length + datasetResidu.length][];
+            System.arraycopy(datasetResidu, 0, datasetInsertsSpreadOut, 0, datasetResidu.length);
+            System.arraycopy(noiseUpdates, 0, datasetInsertsSpreadOut, datasetResidu.length, noiseUpdates.length);
+            // shuffle datasetInsertsSpreadOut
+            shuffleArray(datasetInsertsSpreadOut);
+            datasetAllSpreadOut = new long[datasetResidu.length + 2 * noiseUpdates.length][];
+            isDelete = new boolean[datasetResidu.length + 2 * noiseUpdates.length];
+            Arrays.fill(isDelete, false);
+            ArrayList<long[]> deleteQueue = new ArrayList<>();
+            int c = 0;
+            Random r = new Random(0);
+            for (int i = 0; i < datasetInsertsSpreadOut.length; i++) {
+                datasetAllSpreadOut[c] = datasetInsertsSpreadOut[i];
+                // check if datasetInsertsSpreadOut[i] is in noiseUpdates
+                if (Arrays.binarySearch(noiseIndices, datasetInsertsSpreadOut[i][0]) >= 0) {
+                    deleteQueue.add(datasetInsertsSpreadOut[i]);
+                }
+                isDelete[c] = false;
+                c++;
+
+                if (!deleteQueue.isEmpty()) {
+                  if (r.nextDouble() < 0.5) {
+                    isDelete[c] = true;
+                    datasetAllSpreadOut[c] = deleteQueue.remove(r.nextInt(0,deleteQueue.size()));
+                    c++;
+                  }
+                }
+            }
+            // add remaining deletes
+            while (!deleteQueue.isEmpty()) {
+                datasetAllSpreadOut[c] = deleteQueue.remove(r.nextInt(0,deleteQueue.size()));
+                isDelete[c] = true;
+                c++;
+            }
+        }
     }
 
     public int setDatasets(boolean[] neverDeleted) {

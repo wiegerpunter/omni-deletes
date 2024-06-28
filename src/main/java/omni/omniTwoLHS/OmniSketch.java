@@ -669,14 +669,10 @@ public class OmniSketch extends SynopsisRefactor {
                 CMRow.setCMRow(i);
                 min = estimates[i];
                 if (CMRow.jaccardEstimates.isEmpty() && useTwoLHS) {
-                    System.out.println("Jaccard estimates not set");
                     throw new IllegalArgumentException("Jaccard estimates not set");
                 }
                 double jaccardEstimate = CMRow.jaccardEstimates.get(i);
                 int witnessEstimate = CMRow.witnessEstimates.get(i);
-                if (jaccardEstimate > 0) {
-                    System.out.println("Jaccard estimate at OmniSketch.minEstimate: " + jaccardEstimate);
-                }
                 CMRow.set2LHS(unionEstimates[i], witnessEstimate, jaccardEstimate);
 
             }

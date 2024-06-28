@@ -32,11 +32,7 @@ spec:
             - "{{onlyKmin}}"
             - "{{widthOptionsGridSearch}}"
             - "{{depthOptionsGridSearch}}"
-
-#          command: ["java", "-Xmx450G", "-jar", "/app/DSCM_jar/DSCM.jar",
-#                    "{{setting}}","{{dataset}}","{{repetition}}","{{runOnODC}}","{{path}}","{{withDeletes}}",
-#          "{{spreadOutDeletes}}", "{{ramVals}}",
-#          "{{onlyKmin}}"]
+            - "{{sizeFactor}}"
           resources:
             limits:
               cpu: "44"
@@ -64,3 +60,6 @@ spec:
         seccompProfile:
           type: RuntimeDefault
   backoffLimit: 4
+
+# - -XX:+FlightRecorder
+#            - -XX:StartFlightRecording=dumponexit=true,maxsize=1G,filename=/app/data/output/profiler/recording-{{ID}}.jfr
