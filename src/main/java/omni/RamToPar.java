@@ -121,9 +121,9 @@ public class RamToPar {
     private double[] getParamsASH(long ram) {
         // memory usage of aSH sampling is sample size * 32 * numAttrs * 5
         //double sampleSize = (double) ram / (32 * numAttrs * 5);
-        double sampleSize = (double) ram / (32 *(numAttrs + 5));
+        double sampleSize = (double) ram / (32 * (numAttrs + 5));
                 // sampleSize * (32 * numAttrs + 32*4);
-        return new double[]{sampleSize/2, sampleSize/2};
+        return new double[]{sampleSize};
     }
 
     private double[] compParamsCMBaseline(long ram) {
@@ -165,20 +165,20 @@ public class RamToPar {
 
         double[] info = new double[5];
         if (memUsage < ram) {
-            info = new double[]{memUsage, depth, width, numTwoLHSReps, eps}; // Main.TODO: make sure its below ram
+            info = new double[]{memUsage, depth, width, numTwoLHSReps, eps};
         }
         return info;
     }
 
     private double[] compParamsKmin(long ram, double eps) {
-
+        //TODO: Adjust depth and width to grid search results.
         double deltaCM =  Main.delta/2;
-        int depth = (int) Math.ceil(Math.log(1/deltaCM)/Math.log(Math.exp(1)));
+        int depth = 3;//(int) Math.ceil(Math.log(1/deltaCM)/Math.log(Math.exp(1)));
         double epsCMpowD = eps /(1 + eps);
         double epsCM = Math.pow(epsCMpowD, 1.0/depth);
         double epsDS = Math.pow(eps, depth);
         double[] info = new double[7];
-        int width =  1 + (int) Math.ceil(Math.exp(1)/epsCM);
+        int width = 8;// 1 + (int) Math.ceil(Math.exp(1)/epsCM);
         double factor = (double) ram / Main.ramVals[0];
         //int width = (int) (Math.pow(factor, 0.75) * (1 + (int) Math.ceil(Math.exp(1)/epsCM)));
         DetermineB determineB = new DetermineB(ram);
@@ -337,7 +337,7 @@ public class RamToPar {
         int widthRoot = (int) Math.pow(Math.sqrt(memLeft) * 2000, 0.66);
         long memUsage = (long) depthCM*widthCM*depthRoot*widthRoot*32;
         if (memUsage < ram) {
-            info = new double[]{memUsage, depthCM, widthCM, depthRoot, widthRoot, eps};
+            info = new double[]{memUsage, depthRoot, widthRoot, depthCM, widthCM, eps};
         } else {
             System.out.println("memUsage: " + memUsage + " ram: " + ram);
         }
@@ -401,12 +401,12 @@ public class RamToPar {
         }
     }
 
-    public int[] getParamsAdapSampling(long ram) {
+    public int[] getParamsAdapSampling(long ram, double ingestBuffer) {
         if (ramToAdap.containsKey(ram)) {
             double[] info = ramToAdap.get(ram);
             int sampleSize = (int) info[0];
-            int bufferSize = (int) info[1];
-            return new int[]{sampleSize, bufferSize};
+            int bufferSize = (int) Math.max((ingestBuffer * sampleSize), 1);
+            return new int[]{sampleSize - bufferSize, bufferSize, (int) (10*ingestBuffer)};
         } else {
             throw new IllegalArgumentException("RAM not found in ramToAdap");
         }
@@ -458,24 +458,37 @@ public class RamToPar {
 
     }
 
-    public double[] getParamsHydra(long ram) {
+
+    public int[] getParamsHydra(long ram) {
         if (ramToHydra.containsKey(ram)) {
             double[] info = ramToHydra.get(ram);
-            double dRoot = info[1];
-            double wRoot = info[2];
-            double dCM = info[3];
-            double wCM = info[4];
-            System.out.println("d Root: " + dRoot + " w Root: " + wRoot + " d CM: " + dCM + " w CM: " + wCM);
-            return new double[]{dRoot, wRoot, dCM, wCM};
+            int depthRoot = (int) info[1];
+            int widthRoot = (int) info[2];
+            int depthCS = (int) info[3];
+            int widthCS = (int) info[4];
+            return new int[]{depthRoot, widthRoot, depthCS, widthCS};
         } else {
-            long closestKey = getClosestKey(ram, ramToHydra);
-            double[] info = ramToHydra.get(closestKey);
-            double dRoot = info[1];
-            double wRoot = info[2];
-            double dCM = info[3];
-            double wCM = info[4];
-            return new double[]{dRoot, wRoot, dCM, wCM};
+            throw new RuntimeException("Parameters not found for Hydra");
         }
     }
+//    public double[] getParamsHydra(long ram) {
+//        if (ramToHydra.containsKey(ram)) {
+//            double[] info = ramToHydra.get(ram);
+//            double dRoot = info[1];
+//            double wRoot = info[2];
+//            double dCM = info[3];
+//            double wCM = info[4];
+//            System.out.println("d Root: " + dRoot + " w Root: " + wRoot + " d CM: " + dCM + " w CM: " + wCM);
+//            return new double[]{dRoot, wRoot, dCM, wCM};
+//        } else {
+//            long closestKey = getClosestKey(ram, ramToHydra);
+//            double[] info = ramToHydra.get(closestKey);
+//            double dRoot = info[1];
+//            double wRoot = info[2];
+//            double dCM = info[3];
+//            double wCM = info[4];
+//            return new double[]{dRoot, wRoot, dCM, wCM};
+//        }
+//    }
 
 }

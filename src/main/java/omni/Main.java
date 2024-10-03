@@ -17,6 +17,8 @@ import java.util.Objects;
 
 public class Main {
     public static int repetition;
+    public static int numRepetitions;
+    public static String experiment_name;
 
 
     // Parameters for sketches
@@ -36,7 +38,7 @@ public class Main {
     public static int maxSize;// = (int) Math.ceil(Math.log(1/deltaDS)/Math.log(Math.exp(1))/(qTarget * Math.pow(epsDS, 2))* (1 + epsB));
     public static int b;
     public static String datasetName;
-    public static int numQueries =1000;//1000;
+    public static int numQueries;//1000;
     public static boolean queriesFromDomain = true;
 
     public static String workloadFilename;
@@ -49,12 +51,15 @@ public class Main {
     public static int kminDeletes = 0;
     public static boolean spreadOutDeletes;
     public static boolean onlyKmin;
+    public static boolean expaSH;
+    public static boolean expHydra;
+    public static boolean exp2LHS;
     static String setting;
     public static boolean readAllFiles = true; // Set true if all files should be read, false if only the first file should be read
     public static boolean rangeQueries = false;
-    public static boolean checkConditions = true; // Set true if conditions should be checked
+    public static boolean checkConditions = false; // Set true if conditions should be checked
 
-    public static boolean useMultNumAttributes = false; // Set true if want to test for multiple number of attributes instead of just all attributes.
+    public static boolean useMultNumAttributes; // Set true if want to test for multiple number of attributes instead of just all attributes.
     public static boolean runOnODC; // True if running on ODC, false if running on local machine.
     public static String outputFolder;
     public static String inputFolder;
@@ -74,6 +79,11 @@ public class Main {
     public static int[] widthOptionsGridSearch;
     public static int[] depthOptionsGridSearch;
     private static int sizeFactor;
+    public static int numBins;
+    public static int[] numPredicates;
+    static double[] noiseUpdateFractions;
+    public static String sizeFactorOptions;
+    static double[] bufferValuesOmni;
 
     public static void main(String[] args) throws IOException, NotOpenException, PcapNativeException, CsvValidationException {
         // Args
@@ -93,17 +103,26 @@ public class Main {
         //setParameters(eps: 0.1, delta: 0.05, maxLevel: 32, seed: 1, numAttributes: 2, qTarget: 0.01);
         setting = args[0];
         Main.datasetName = args[1];
-        Main.repetition = Integer.parseInt(args[2]);
+        Main.numRepetitions = Integer.parseInt(args[2]);
         Main.runOnODC= Boolean.parseBoolean(args[3]);
         Main.readFolder = args[4];
         Main.withDeletes = Boolean.parseBoolean(args[5]);
         Main.spreadOutDeletes = Boolean.parseBoolean(args[6]);
         Main.useExactUnionSize = Boolean.parseBoolean(args[7]);
         Main.ramVals = parseLongArray(args[8]);
-        Main.onlyKmin = Boolean.parseBoolean(args[9]);
-        Main.widthOptionsGridSearch = parseIntArray(args[10]);
-        Main.depthOptionsGridSearch = parseIntArray(args[11]);
-        Main.sizeFactor = Integer.parseInt(args[12]);
+        Main.noiseUpdateFractions = getDoubleArray(args[9]);
+        Main.bufferValuesOmni = getDoubleArray(args[10]);
+        Main.numBins = Integer.parseInt(args[11]);
+        Main.numPredicates = parseIntArray(args[12]);
+        Main.exp2LHS = Boolean.parseBoolean(args[13]);
+        Main.expaSH = Boolean.parseBoolean(args[14]);
+        Main.expHydra = Boolean.parseBoolean(args[15]);
+        Main.onlyKmin = Boolean.parseBoolean(args[16]);
+        Main.widthOptionsGridSearch = parseIntArray(args[17]);
+        Main.depthOptionsGridSearch = parseIntArray(args[18]);
+        Main.sizeFactorOptions = args[19];
+        Main.experiment_name = args[20];
+        Main.useMultNumAttributes = Boolean.parseBoolean(args[21]);
         //Main.useExactUnionSize = Boolean.parseBoolean(args[3]);
 
         if (Main.datasetName.equals("CAIDA")) {
@@ -146,6 +165,17 @@ public class Main {
 //            logger.severe("Invalid argument");
 //            logger.severe(setting + " & " + args[1]);
         }
+    }
+
+    private static double[] getDoubleArray(String arg) {
+        // remove the brackets
+        arg = arg.substring(1, arg.length() - 1);
+        String[] vals = arg.split(",");
+        double[] res = new double[vals.length];
+        for (int i = 0; i < vals.length; i++) {
+            res[i] = Double.parseDouble(vals[i]);
+        }
+        return res;
     }
 
     private static long[] parseLongArray(String arg) {

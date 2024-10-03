@@ -210,7 +210,7 @@ public class TWOLHS extends Sample {
     private int[] randomPrimes() {
         // generate 3 random primes
         int[] primes = new int[3];
-        Random rand = new Random(this.repetition); // + (int) Math.pow(10,seed)); //TODO: we need a 'random seed' based on the seed for each repetition.
+        Random rand = new Random(this.repetition + 10L *seed); // + (int) Math.pow(10,seed)); //TODO: we need a 'random seed' based on the seed for each repetition.
         for (int i = 0; i < 3; i++) {
             int prime = 0;
             int cnt = 0;

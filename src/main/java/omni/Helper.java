@@ -680,7 +680,7 @@ public class Helper {
         boolean init = false;
         //String currentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
         String CSV_FILE_NAME = Main.outputFolder + "/pointQueries/" + Main.datasetName + "/results_"
-                + Main.setting + "_" + Main.datasetName +
+                + Main.setting + "_" + Main.experiment_name + "_dataset_" + Main.datasetName +
                 "_" + Main.currentDate +".csv";
         if (!new File(CSV_FILE_NAME).exists()) {
             init = true;

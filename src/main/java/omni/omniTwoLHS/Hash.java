@@ -71,26 +71,26 @@ public class Hash {
 
 
 
-    public static int[][] randomPrimes(int depth, int attr) {
-        // generate 3 random primes
-        int[][] primes = new int[3][depth];
-        Random rand = new Random(Main.repetition + attr);
-        for (int j = 0; j < depth; j++) {
-            int prime = 0;
-            int cnt = 0;
-            while (!Hash.isPrime(prime) && cnt < 1000) {
-                prime = rand.nextInt();
-                cnt++;
-            }
-            primes[2][j] = prime;
-        }
-        for (int i = 0; i < 2; i++) {
-            for (int j = 0; j < depth; j++) {
-                int constant = 0;
-                constant = rand.nextInt(primes[2][j]);
-                primes[i][j] = constant;
-            }
-        }
-        return primes;
-    }
+//    public static int[][] randomPrimes(int depth, int attr) {
+//        // generate 3 random primes
+//        int[][] primes = new int[3][depth];
+//        Random rand = new Random(Main.repetition + attr);
+//        for (int j = 0; j < depth; j++) {
+//            int prime = 0;
+//            int cnt = 0;
+//            while (!Hash.isPrime(prime) && cnt < 1000) {
+//                prime = rand.nextInt();
+//                cnt++;
+//            }
+//            primes[2][j] = prime;
+//        }
+//        for (int i = 0; i < 2; i++) {
+//            for (int j = 0; j < depth; j++) {
+//                int constant = 0;
+//                constant = rand.nextInt(primes[2][j]);
+//                primes[i][j] = constant;
+//            }
+//        }
+//        return primes;
+//    }
 }

@@ -1052,7 +1052,7 @@ public class OmniSketch extends SynopsisRefactor {
         // Empty ns;
         ns = new int[numStoredAttributes][depth];
 
-        for (int i = 0; i < Main.numAttributes; i++) {
+        for (int i = 0; i < numStoredAttributes; i++) { // Used to be Main.numAttributes.
             //long[][] ranges = getLogRanges(q.lower[i], q.upper[i]);
             ArrayList<long[]> rangesList = wrapLogRanges(minranges[i + 1], minranges[i + 1]);
             TreeSet<Long>[] set = new TreeSet[depth];

@@ -14,14 +14,14 @@ public class Kmin extends Sample {
     //int sketchSize = 0;
     int K; // number of lowest values to store
     int KInQuery; // number of lowest values to store
-    Random rn = new Random();//TODO: test difference with seed
+    Random rn = new Random();
     long maxHash;
     boolean supportDeletes;
     int deletesFromSample = 0;
     int b;
     long hash(long x) {
         long k;
-        rn.setSeed(x + Main.repetition);
+        rn.setSeed(x + seed);
         // Hash function hashing x to [0, 1]^b with base = log(2m^2/delta)
 
         k = rn.nextLong(maxHash);

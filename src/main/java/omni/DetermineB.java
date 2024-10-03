@@ -23,7 +23,7 @@ public class DetermineB {
         if (B <= 1) {
             return B;
         }
-        if (iters > 1000){
+        if (iters > 100){
             if (compRam(prevB) < ram) {
                 System.out.println("Returned after " + iters + " iterations with ram = " + compRam(prevB) +
                         " Could have used " + ram + " delta is " + (compRam(prevB) - ram));

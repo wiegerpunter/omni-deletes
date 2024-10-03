@@ -9,7 +9,7 @@ public class aSH extends SynopsisRefactor{
     // Adaptive Sample and Hold. Sketch for estimating count of elements in a stream.
     int numAttrs;
     HashMap<long[], Double[]> sketch; // Double[] is of form c_i, tau_i, u_i, z_i
-    HashMap<long[], Double[]> buffer; // Double[] is of form c_i, tau_i, u_i, z_i
+    //HashMap<long[], Double[]> buffer; // Double[] is of form c_i, tau_i, u_i, z_i
     int count;
 
     int size; // The number of records seen so far.
@@ -20,6 +20,8 @@ public class aSH extends SynopsisRefactor{
     Random rn;
     Random rn1;
     boolean useBufferInQuery;
+
+    public int numRemovals = 0;
 
     public aSH(long ram, int numAttributes, int[] parameters, int repetition, boolean useBufferInQuery) {
         setting = "aSH";
@@ -35,10 +37,9 @@ public class aSH extends SynopsisRefactor{
         this.ram = ram;
         this.sketch = new HashMap<long[], Double[]>(parameters[0] + parameters[1]);
         //this.buffer = new HashMap<long[], Double[]>(parameters[1]);
-        //this.memUsageSynopsis = ram; // TODO: make function.
         this.seed = repetition;
         this.useBufferInQuery = useBufferInQuery;
-        int firstSeed = 10 +  seed;
+        int firstSeed = 12 +  seed;
         int secondSeed = 10 + seed;
         System.out.println("Seed: " + firstSeed + " secondSeed: " + secondSeed);
         rn = new Random(firstSeed);
@@ -52,39 +53,40 @@ public class aSH extends SynopsisRefactor{
         count++;
     }
 
+
     public void ingest(long[] record, int sign) {
         // check if the record is already in the sketch
 //        Long[] recordKey = new Long[record.length];
 //        for (int i = 0; i < record.length; i++) {
 //            recordKey[i] = record[i];
 //        }
-        if (sketch.containsKey(record)) {
+        // Ignore the RID in aSH.
+        long[] sampleRecord = new long[record.length - 1];
+        System.arraycopy(record, 1, sampleRecord, 0, record.length - 1);
+
+        if (sketch.containsKey(sampleRecord) && sketch.get(sampleRecord) != null) {
             // increment the count of the record
-            Double[] recordValue = sketch.get(record);
+            Double[] recordValue = sketch.get(sampleRecord);
             recordValue[0] += sign;
             if (recordValue[0] <= 0) {
-                sketch.remove(record);
+                sketch.remove(sampleRecord);
                 size--;
+                numRemovals++;
             } else {
-                sketch.put(record, recordValue);
+                sketch.put(sampleRecord, recordValue);
             }
         } else {
             if (sign > 0) {
                 // add the record to the sketch
-                Double[] recordValue = new Double[5];
+                Double[] recordValue = new Double[4];
                 recordValue[0] = (double) sign; // c_i
                 recordValue[1] = (double) 0; // tau_i
-                do {
-                    recordValue[2] = rn.nextDouble();
-                } while (recordValue[2] == 0.0);
-                do {
-                    recordValue[3] = Math.log(rn.nextDouble());
-                } while (recordValue[3] == Math.log(0.0));
+
 //                recordValue[2] = rn.nextDouble(); // u_i see page 347, u is rv uniformly distributed in (0, 1].
 //                recordValue[3] = Math.log(rn1.nextDouble()); // z_i. z is rv uniformly distributed in (0, 1].
-                recordValue[4] = Math.max(recordValue[1] / recordValue[2], recordValue[0] / (-recordValue[3]));
+                //recordValue[4] = Math.max(recordValue[1] / recordValue[2], recordValue[0] / (-recordValue[3]));
                 // u_i and z_i are not set here, but in EjectOne(S)
-                sketch.put(record, recordValue);
+                sketch.put(sampleRecord, recordValue);
                 size++;
                 if (size >= maxSize) {
                     eject();
@@ -94,6 +96,8 @@ public class aSH extends SynopsisRefactor{
     }
 
 
+    // Where is the sample[0] and sample[1] increased in this function?
+    //
     private void eject() {
         double tstar;// = Double.MAX_VALUE;
         //Set<long[]> keys = sketch.keySet();
@@ -103,11 +107,13 @@ public class aSH extends SynopsisRefactor{
         int i = 0;
         Iterator<Double[]> iterator = sketch.values().iterator();//Set().iterator();
         int numToEject = size - sketchSize;
-
+        // TODO: Are iterator and iterator1 iterating in same order?
         TreeSet<Double> bs_minvalues = new TreeSet<>();//Ascending: we want the min values to eject. Comparator.reverseOrder());
 
         while (iterator.hasNext()) {
             Double[] sample = iterator.next();//sketch.get(key);
+            sample[2] = rn.nextDouble(0, 1);
+            sample[3] = Math.log(rn1.nextDouble(0, 1));
             Tis[i] = Math.max(sample[1] / sample[2], sample[0] / (-sample[3]));
             bs_minvalues.add(Tis[i]);
             if (bs_minvalues.size() > numToEject) { // We only want to eject numToEject records with the smallest values. If we have more, we eject the largest ones.
@@ -131,9 +137,11 @@ public class aSH extends SynopsisRefactor{
                 Double[] sample = sketch.get(key);
                 if (sample[1] <= tstar) {
                     if (tstar * sample[2] > sample[1]) {
-                        sketch.get(key)[0] += tstar * sample[3];
+                        //sketch.get(key)[0] += tstar * sample[3];
+                        sample[0] += tstar * sample[3];
                     }
-                    sketch.get(key)[1] = tstar; // Try if it should be here.
+                    sample[1] = tstar;
+                    sketch.put(key, sample);
                 }
             }
             i++;
@@ -166,23 +174,29 @@ public class aSH extends SynopsisRefactor{
             eject();
         }
 
-        int queryResultCount = 0;
+        double queryResultCount = 0;
         Set<long[]> keys = sketch.keySet();
         for (long[] key : keys) {
             boolean match = true;
             for (int j = 0; j < query.length; j++) {
-                if (query[j] != -1 && query[j] != key[j + 1]) {
+                if (query[j] != -1 && query[j] != key[j]) {
                     match = false;
                     break;
                 }
             }
             if (match) {
-                queryResultCount+= (int) (sketch.get(key)[0] + sketch.get(key)[1]);
+                // check if queryResultCount is not overflow of max int.
+                if (Integer.MAX_VALUE - queryResultCount < (int) (sketch.get(key)[0] + sketch.get(key)[1])) {
+                    queryResultCount = Integer.MAX_VALUE;
+                    System.out.println("OVERFLOW IN ASH");
+                    break;
+                }
+                queryResultCount+= sketch.get(key)[0] + sketch.get(key)[1];
                 // sketch.get(key)[0] is c_i and sketch.get(key)[1] is tau_i
             }
         }
         // scale result by the size of the reservoir
-        return (int) (queryResultCount); //* (Math.max((double) count /size, 1)));
+        return (int) queryResultCount; //* (Math.max((double) count /size, 1)));
     }
 
     @Override

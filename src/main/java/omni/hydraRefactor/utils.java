@@ -58,6 +58,16 @@ public class utils {
         return generator;
     }
 
+    public static Random setHSSeed(int rep) {
+        Random generator = new Random(rep);
+        return generator;
+    }
+
+    public static Random setUMSeed(int rep) {
+        Random generator = new Random(rep);
+        return generator;
+    }
+
     public static Random setHSeed() {
         Random generator = new Random(25);
         return generator;

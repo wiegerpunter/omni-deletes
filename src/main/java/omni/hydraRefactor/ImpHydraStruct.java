@@ -17,7 +17,7 @@ import java.util.Random;
 /** Structure for storing the statistics in a Hydra Sketch. */
 // implements KryoSerializable
 public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
-
+    private final int numStoredAttributes;
     //public ImpUnivMonStruct[][] hydraSketch;
     public ImpCountSketchStruct[][] hydraSketch;
     public int totalAdded = 0;
@@ -72,11 +72,13 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
     ArrayList<Integer> attrsIdx;
     //ArrayList<boolean[]> validSubpop;// = new ArrayList<boolean[]>();
     ArrayList<ArrayList<Integer>> validSubpop;
-    public ImpHydraStruct(long ram, int depthRoot, int widthRoot, int depthCS, int widthCS) {
+    public ImpHydraStruct(long ram, int numStoredAttributes, int depthRoot, int widthRoot, int depthCS, int widthCS, int repetition) {
         this.ram = ram;
         this.setting = "Hydra";
         this.attrsIdx = new ArrayList<Integer>();
-        for (int i = 0; i < Main.numStoredAttributes; i++) {
+        this.seed = repetition;
+        this.numStoredAttributes = numStoredAttributes;
+        for (int i = 0; i < numStoredAttributes; i++) {
             attrsIdx.add(i + 1);
         }
         d = depthRoot;
@@ -99,11 +101,11 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
 
         total_HH_size = 0;
 
-        Random hsGenerator = utils.setHSSeed();
+        Random hsGenerator = utils.setHSSeed(seed);
         this.hs_seed = utils.getSeedRandom(hsGenerator);
 
         // init UM seed
-        Random umGenerator = utils.setUMSeed();
+        Random umGenerator = utils.setUMSeed(seed);
         this.um_seed = utils.getSeedRandom(umGenerator);
 
 
@@ -137,7 +139,7 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
         }
     }
     */
-    public void updateOne(String key, String value) {
+    public void updateOne(String key, String value, int val) {
     //public void updateOne(String sp, String key, String value) {
         /*if (spark_init) {
             spark_init = false;
@@ -170,7 +172,7 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
             //ImpUnivMonStruct umSketch = hydraSketch[d_indx][hash];
             ImpCountSketchStruct umSketch = hydraSketch[d_indx][hash];
             //umSketch.update(insert, pos, sign, bottom_layer_num);
-            umSketch.add(pos, sign);
+            umSketch.add(pos, sign, val);
             /*{ // to test speed up of one big hash
                 // final Boolean Many_Hash = true;
                 final boolean Many_Hash = false;
@@ -467,16 +469,24 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
 
     @Override
     public void add(long[] record) {
-        for (int k = 1; k < Math.pow(2, Main.numStoredAttributes); k++) {
-            long[] recToAdd = new long[Main.numStoredAttributes];
+        insert(record, 1);
+    }
+    @Override
+    public void delete(long[] r) {
+        insert(r, -1);
+    }
+
+    public void insert(long[] record, int value) {
+        for (int k = 1; k < Math.pow(2, numStoredAttributes); k++) {
+            long[] recToAdd = new long[numStoredAttributes];
             // Convert k to binary string.
             StringBuilder binaryString = new StringBuilder(Integer.toBinaryString(k));
             // Pad with zeros.
-            while (binaryString.length() < Main.numStoredAttributes) {
+            while (binaryString.length() < numStoredAttributes) {
                 binaryString.insert(0, "0");
             }
             // Make rec to add.
-            for (int l = 0; l < Main.numStoredAttributes; l++) {
+            for (int l = 0; l < numStoredAttributes; l++) {
                 if (binaryString.charAt(l) == '1') {
                     recToAdd[l] = record[l + 1];
                 } else {
@@ -486,7 +496,7 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
 
             String insert = binaryString + "-" + Arrays.toString(recToAdd);
             totalAdded++;
-            updateOne(insert, "1");
+            updateOne(insert, "1", value);
         }
 
         /*
@@ -504,8 +514,9 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
             //updateOne(Integer.toString(sp), keyString, "1");
             updateOne(insert, "1");
         }*/
-
     }
+
+
 
     @Override
     public int query(long[] query, int numPreds) {
@@ -548,7 +559,7 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
     }
     @Override
     public int query(long[] query, int numPreds, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
-        throw new UnsupportedOperationException();
+        return query(query, numPreds);
     }
 
 
@@ -571,13 +582,13 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
        return memoryUsage;
     }
 
-    @Override
-    public void delete(long[] r) {
-        throw new UnsupportedOperationException();
-    }
 
     @Override
     public int getFilledKSamples() {
         return 0;
+    }
+
+    public void printParams() {
+        System.out.println("Hydra with depthRoot: " + d + "widthRoot: " + w + " depthCS: " + numRows + " widthCS: " + countersPerRow);
     }
 }

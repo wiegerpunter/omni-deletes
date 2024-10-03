@@ -1,6 +1,8 @@
 package omni.omniTwoLHS;
-import omni.Main;
+import net.jpountz.xxhash.XXHash64;
+import net.jpountz.xxhash.XXHashFactory;
 
+import java.nio.ByteBuffer;
 import java.util.Random;
 
 public class CountMin {
@@ -18,6 +20,7 @@ public class CountMin {
     int attr;
     Random rn;
     final int seed;
+    public static XXHash64 hashFunc = XXHashFactory.fastestInstance().hash64();
 
 //    private int[] hash_a;
 //    private int[] hash_b;
@@ -82,11 +85,21 @@ public class CountMin {
         }
     }
 
+    public byte[] longToBytes(long attrValue) {
+        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+        buffer.putLong(attrValue);
+        return buffer.array();
+    }
+
     int[] hash(long attrValue, int depth, int width) {
         int[] hashes = new int[depth];
-        rn.setSeed(attrValue + this.seed);
-        for (int i = 0; i < depth; i++) hashes[i] = rn.nextInt(width);
-        return hashes;
+        byte[] byte_key = longToBytes(attrValue);
+        //byte[] byte_key = utils.StringToByte(sp);
+        long hash_key_long = hashFunc.hash(byte_key, 0, byte_key.length, this.seed);
+        return getHashArray(hash_key_long, depth, width);
+//        rn.setSeed(attrValue + this.seed);
+//        for (int i = 0; i < depth; i++) hashes[i] = rn.nextInt(width);
+//        return hashes; // is hash function okay.
 //        int[] hashes = new int[depth];
 //        for (int i = 0; i < depth; i++) {
 //            hashes[i] = (int) ((((hash_a[i] * attrValue + hash_b[i]) % hash_c[i]) % width + width) % width);
@@ -204,5 +217,17 @@ public class CountMin {
                 }
             }
         return filledKSamples;
+    }
+
+    public static int[] getHashArray(final long hash_long, int depth, int width) {
+        int[] hashes = new int[depth];
+        for (int i = 0; i < depth; i++) {
+            if (i<4){
+                hashes[i] = (int) ((hash_long >> (16 * i)) & 0xffff) % width;
+            } else {
+                hashes[i] = (int) ((hash_long >> (16 * (i) - 1)) & 0xffff) % width;
+            }
+        }
+        return hashes;
     }
 }

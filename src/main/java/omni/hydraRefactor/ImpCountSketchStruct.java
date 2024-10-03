@@ -32,12 +32,12 @@ public class ImpCountSketchStruct implements Serializable {
     }*/
 
     // add value to counters, return median
-    public void add(int[] pos, int[] sign) { // add was initially int not void
+    public void add(int[] pos, int[] sign, int val) { // add was initially int not void
         if (this.cs == null) allocate_cs();
 
         //int[] counters = new int[row];
         for (int r = 0; r < row; r++) {
-            cs[r * col + pos[r]] += sign[r];
+            cs[r * col + pos[r]] += val * sign[r];
             //counters[r] = sign[r] * cs[r * col + pos[r]];
         }
 
@@ -48,7 +48,11 @@ public class ImpCountSketchStruct implements Serializable {
 
     public int inspectValue(int[] pos, int[] sign) {
         int[] counters = new int[row];
+        if (this.cs == null) {
+            return 0;
+        }
         for (int r = 0; r < row; r++) {
+
             cs[r * col + pos[r]] += sign[r];
             counters[r] = sign[r] * cs[r * col + pos[r]];
         }
