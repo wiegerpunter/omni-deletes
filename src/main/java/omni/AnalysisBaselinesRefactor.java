@@ -1,5 +1,7 @@
 package omni;
 
+import omni.omniTwoLHS.OmniSketch;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -57,6 +59,8 @@ public class AnalysisBaselinesRefactor {
     }
 
     public void run() throws IOException {
+        // Count number of collisions in Omnisketch.
+
         error = new ArrayList<>();
         long startTime = System.currentTimeMillis();
         if (Main.rangeQueries) {
@@ -83,6 +87,7 @@ public class AnalysisBaselinesRefactor {
         System.out.println("Difference between total time and execution time per query: "
                 + (totalQueryExecutionTime - totalExecTime));
 
+
         // Write results to file
         if (Main.rangeQueries) {
             h.writeResultsToFileRangeQuery(s, d, ingestionTime, estimatedAnswersRangeQuery,
@@ -98,6 +103,39 @@ public class AnalysisBaselinesRefactor {
         System.out.println("Total queries with zero empty or singleton witnesses: " + s.countIsZero);
         System.out.println("Total queries with zero estimate: " + totalEstimatesZero);
     }
+
+    private void printmaxB() {
+
+        // Look at sample and print the max K value in each cell, plus its potential signature size
+        // signature size is number of bits needed to express this number
+        int maxSigsize = 0;
+        int minSigsize = Integer.MAX_VALUE;
+        long maxK = 0;
+        long minK = 0;
+        for (int i = 0; i < ((OmniSketch) s).numStoredAttributes; i++) {
+            for (int j = 0; j < ((OmniSketch) s).width; j++) {
+                for (int r = 0; r < ((OmniSketch) s).depth; r++) {
+                    long K = ((OmniSketch) s).CMSketches[i].CMKmin[r][j].curTreeRoot;
+                    int sigSize = (int) Math.ceil(Math.log(K) / Math.log(2)); // number of bits needed to express this number
+                    //System.out.println("K for attribute " + i + " in cell " + j + " in row " + r + ": " + K + " with signature size: " + sigSize);
+                    if (sigSize > maxSigsize) {
+                        maxSigsize = sigSize;
+                        maxK = K;
+                    }
+                    if (sigSize < minSigsize) {
+                        minSigsize = sigSize;
+                        minK = K;
+                    }
+                    if (((OmniSketch) s).CMSketches[i].CMKmin[r][j].K > K) {
+                        System.out.println("K exceeds bound in cell " + j + " in row " + r + " for attribute " + i + ": " + K);
+                    }
+                }
+            }
+        }
+        System.out.println("Max K: " + maxK + " with signature size: " + maxSigsize);
+        System.out.println("Min K: " + minK + " with signature size: " + minSigsize);
+    }
+
 
     public static class QueryInfo {
         public int CMRow = 0;

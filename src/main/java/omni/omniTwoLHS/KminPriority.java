@@ -1,20 +1,19 @@
 package omni.omniTwoLHS;
 
 import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 import omni.Formulas;
 import omni.Main;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
-import com.google.common.hash.Hashing;
-
-public class Kmin extends Sample {
+public class KminPriority extends Sample {
     private final double Beta;
     private final int allowedDeletions;
     public boolean exceedsNumberOfDeletes = false;
     //PriorityQueue<Integer> sketch;
     public TreeSet<Long> sketch;
+    public PriorityQueue<Long> sketchPQ;
     //int sketchSize = 0;
     public int K; // number of lowest values to store
     int KInQuery; // number of lowest values to store
@@ -30,7 +29,7 @@ public class Kmin extends Sample {
         return ((xx.hashLong(x).asInt() % maxHash) + maxHash) % maxHash;
     }
 
-    public Kmin(int maxSize, int b, boolean supportDeletes, double Beta, int seed) {
+    public KminPriority(int maxSize, int b, boolean supportDeletes, double Beta, int seed) {
         this.supportDeletes = supportDeletes;
         this.K = maxSize;
         this.b = b;
@@ -46,6 +45,7 @@ public class Kmin extends Sample {
         }
         allowedDeletions = maxSize - KInQuery;
         this.sketch = new TreeSet<>(Collections.reverseOrder());
+        this.sketchPQ = new PriorityQueue<>(Collections.reverseOrder());
         maxHash = (long) Math.pow(2,b);
         xx = Hashing.murmur3_32_fixed(seed);
         //System.out.println("Kmin: maxHash = " + maxHash);
@@ -57,7 +57,8 @@ public class Kmin extends Sample {
     public void add(long hx) {
         n++;
         if (curSampleSize < K - 1) {
-            sketch.add(hx);
+            sketchPQ.add(hx);
+            //sketch.add(hx);
             if (Main.countUniqueSamples) {
                 if (Main.uniqueSamples.containsKey(hx)) {
                     Main.uniqueSamples.put(hx, Main.uniqueSamples.get(hx) + 1);
@@ -67,31 +68,34 @@ public class Kmin extends Sample {
                 }
             curSampleSize++;
         } else if (curSampleSize == K) {
-            curTreeRoot = sketch.first();
+            //curTreeRoot = sketch.first();
+            curTreeRoot = sketchPQ.peek();
             if (hx < curTreeRoot) { // get tree root
-                if (Main.countUniqueSamples) {
-                    if (Main.uniqueSamples.containsKey(curTreeRoot)) {
-                        Main.uniqueSamples.put(curTreeRoot, Main.uniqueSamples.get(curTreeRoot) - 1);
-                        if (Main.uniqueSamples.get(curTreeRoot) == 0) {
-                            Main.uniqueSamples.remove(curTreeRoot);
-                        }
-                    } else if (curTreeRoot != Long.MAX_VALUE) {
-                        throw new RuntimeException("Error in Kmin: curTreeRoot not in uniqueSamples");
-                    }
-                }
-                sketch.pollFirst();
-                if (sketch.add(hx)) {
-                    curTreeRoot = sketch.first();
+//                if (Main.countUniqueSamples) {
+//                    if (Main.uniqueSamples.containsKey(curTreeRoot)) {
+//                        Main.uniqueSamples.put(curTreeRoot, Main.uniqueSamples.get(curTreeRoot) - 1);
+//                        if (Main.uniqueSamples.get(curTreeRoot) == 0) {
+//                            Main.uniqueSamples.remove(curTreeRoot);
+//                        }
+//                    } else if (curTreeRoot != Long.MAX_VALUE) {
+//                        throw new RuntimeException("Error in Kmin: curTreeRoot not in uniqueSamples");
+//                    }
+//                }
+                sketchPQ.poll();
+                //sketch.pollFirst();
+                if (sketchPQ.add(hx)) {
+                    curTreeRoot = sketchPQ.peek();
                 } else {
+                    curTreeRoot = sketchPQ.peek();
                     collissions++;
                 }
-                if (Main.countUniqueSamples) {
-                    if (Main.uniqueSamples.containsKey(hx)) {
-                        Main.uniqueSamples.put(hx, Main.uniqueSamples.get(hx) + 1);
-                    } else {
-                        Main.uniqueSamples.put(hx, 1);
-                    }
-                }
+//                if (Main.countUniqueSamples) {
+//                    if (Main.uniqueSamples.containsKey(hx)) {
+//                        Main.uniqueSamples.put(hx, Main.uniqueSamples.get(hx) + 1);
+//                    } else {
+//                        Main.uniqueSamples.put(hx, 1);
+//                    }
+//                }
             }
         }
             // check if hx is in the sketch already, if so, do nothing
@@ -99,9 +103,9 @@ public class Kmin extends Sample {
                 // Only proceed if hx is smaller than the current root (curTreeRoot)
                 if (hx < curTreeRoot) {
                     // Try to add hx directly, avoid a separate contains() check
-                    if (sketch.add(hx)) {  // Add hx to the set, returns false if already present
-                        sketch.pollFirst();  // Remove the smallest element (previous curTreeRoot)
-                        curTreeRoot = sketch.first();  // Update curTreeRoot to the new smallest element
+                    if (sketchPQ.add(hx)) {  // Add hx to the set, returns false if already present
+                        sketchPQ.poll();  // Remove the smallest element (previous curTreeRoot)
+                        curTreeRoot = sketchPQ.peek();  // Update curTreeRoot to the new smallest element
                     } else {
                         // Collision of signatures.
                         collissions++;

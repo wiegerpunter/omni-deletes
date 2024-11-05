@@ -43,7 +43,7 @@ public class DetermineBKmin {
     }
 
     public double compRam(int B) {
-        int smallb = Formulas.smallb(B, delta);//int) Math.ceil(Math.log(4*Math.pow(B, (double) 5/2)/delta));
+        int smallb = Formulas.smallb(B, delta, 1);//int) Math.ceil(Math.log(4*Math.pow(B, (double) 5/2)/delta));
 
         //return (double) depth * width*(B * (smallb) + 32) * numAttrsToUse;
 

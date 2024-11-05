@@ -1,16 +1,18 @@
 package omni.omniTwoLHS;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 import net.jpountz.xxhash.XXHash64;
 import net.jpountz.xxhash.XXHashFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Random;
 
-public class CountMin {
+public class AttributeSketch {
 
     //ArrayList<ArrayList<Sample>> CM = new ArrayList<>();
 
     TWOLHS[][][] CMTwoLHS;
-    Kmin[][] CMKmin;
+    public Kmin[][] CMKmin;
     final int depth;
     final int width;
     final int maxSize;
@@ -30,9 +32,9 @@ public class CountMin {
     final boolean useTwoKmin;
     final double BetaKmin;
 
-    public CountMin(int attr, int[] parameters,
-                    boolean useTwoLHS, boolean useTwoKmin, double BetaKmin,
-                    boolean twoLHSFast, int seed){
+    public AttributeSketch(int attr, int[] parameters,
+                           boolean useTwoLHS, boolean useTwoKmin, double BetaKmin,
+                           boolean twoLHSFast, int seed){
         //int depth, int width, int numTwoLHSReps, int B, int b) {
         this.attr = attr;
         this.depth = parameters[0];
@@ -92,11 +94,12 @@ public class CountMin {
     }
 
     int[] hash(long attrValue, int depth, int width) {
-        int[] hashes = new int[depth];
-        byte[] byte_key = longToBytes(attrValue);
+        //int[] hashes = new int[depth];
+        //byte[] byte_key = longToBytes(attrValue);
         //byte[] byte_key = utils.StringToByte(sp);
-        long hash_key_long = hashFunc.hash(byte_key, 0, byte_key.length, this.seed);
-        return getHashArray(hash_key_long, depth, width);
+        //long hash_key_long = hashFunc.hash(byte_key, 0, byte_key.length, this.seed);
+        return getHashArray(attrValue, depth, width);
+        //return getHashArray(hash_key_long, depth, width);
 //        rn.setSeed(attrValue + this.seed);
 //        for (int i = 0; i < depth; i++) hashes[i] = rn.nextInt(width);
 //        return hashes; // is hash function okay.
@@ -219,15 +222,41 @@ public class CountMin {
         return filledKSamples;
     }
 
-    public static int[] getHashArray(final long hash_long, int depth, int width) {
+    Random rn_cm_hash = new Random();
+
+
+    HashFunction xx = Hashing.murmur3_32_fixed();
+    public int[] getHashArray(final long hash_long, int depth, int width) {
         int[] hashes = new int[depth];
+//        for (int i = 0; i < depth; i++) {
+//            if (i<4){
+//                hashes[i] = (int) ((hash_long >> (16 * i)) & 0xffff) % width;
+//            } else {
+//                hashes[i] = (int) ((hash_long >> (16 * (i) - 1)) & 0xffff) % width;
+//            }
+//        }
+//        return hashes;
+
+        // Make new hash function based on Random rn
+//        rn_cm_hash.setSeed(this.seed + 18 + hash_long);
         for (int i = 0; i < depth; i++) {
-            if (i<4){
-                hashes[i] = (int) ((hash_long >> (16 * i)) & 0xffff) % width;
-            } else {
-                hashes[i] = (int) ((hash_long >> (16 * (i) - 1)) & 0xffff) % width;
-            }
+            xx = Hashing.murmur3_32_fixed(i);
+            hashes[i] = ((xx.hashLong(hash_long)).asInt() % width + width) % width;// rn_cm_hash.nextInt(width);
         }
         return hashes;
+    }
+
+    public int getCollisions() {
+        int collissions = 0;
+        for (int j = 0; j < depth; j++) {
+            for (int i = 0; i < width; i++) {
+                if (useTwoLHS) {
+                    continue;
+                } else {
+                    collissions += CMKmin[j][i].collissions;
+                }
+            }
+        }
+        return collissions;
     }
 }

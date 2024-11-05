@@ -679,9 +679,9 @@ public class Helper {
        // write string[] result to csvOutputFile using BufferedWriter
         boolean init = false;
         //String currentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-        String CSV_FILE_NAME = Main.outputFolder + "/pointQueries/" + Main.datasetName + "/results_"
-                + Main.setting + "_" + Main.experiment_name + "_dataset_" + Main.datasetName +
-                "_" + Main.currentDate +".csv";
+        String CSV_FILE_NAME = Main.outputFolder + "/pointQueries/" + Main.datasetName + "/" + Main.currentDate + "_" + Main.experiment_name + "_"
+                + Main.setting + "_dataset_" + Main.datasetName +
+                ".csv";
         if (!new File(CSV_FILE_NAME).exists()) {
             init = true;
         }

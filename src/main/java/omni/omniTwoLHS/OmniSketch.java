@@ -7,15 +7,15 @@ import java.util.*;
 import static java.lang.Math.*;
 
 public class OmniSketch extends SynopsisRefactor {
-    CountMin[] CMSketches;
+    public AttributeSketch[] CMSketches;
     CountMinDyad[][] CMSketchesRange;
     CountMinS0[] CMSketchesS0;
-    private final int depth;
-    private final int width;
+    public final int depth;
+    public final int width;
     private final int maxSize;
     private final int b;
     private final int numTwoLHSReps;
-    private final int numStoredAttributes;
+    public final int numStoredAttributes;
     private final int dyadicRangeBits;
     private final boolean checkExactUnion2LHS;
     Kmin kminTmp;
@@ -114,9 +114,9 @@ public class OmniSketch extends SynopsisRefactor {
             }
 
         } else {
-            CMSketches = new CountMin[numStoredAttributes];
+            CMSketches = new AttributeSketch[numStoredAttributes];
             for (int i = 0; i < numStoredAttributes; i++) {
-                CMSketches[i] = new CountMin(i, parameters, useTwoLHS, useBetaKmin, BetaKmin, useFastTwoLHS, seed);
+                CMSketches[i] = new AttributeSketch(i, parameters, useTwoLHS, useBetaKmin, BetaKmin, useFastTwoLHS, seed);
             }
             if (checkExactUnion2LHS) {
                 CMSketchesS0 = new CountMinS0[numStoredAttributes];
@@ -142,6 +142,11 @@ public class OmniSketch extends SynopsisRefactor {
 
     public void ingest(long[] record, int sign) {
         long id = record[0];
+
+        // test where the id is coming from record[1] - record[record.length -1]
+        //long[] attrRecord = new long[record.length - 1];
+        //System.arraycopy(record, 1, attrRecord, 0, record.length - 1);
+        //long id = Arrays.hashCode(attrRecord);
         long hx = id;
         long[] hx_2lhs = null;
         long[][] vals = null;
@@ -240,7 +245,12 @@ public class OmniSketch extends SynopsisRefactor {
             }
             return result;
         } else {
-            return queryKmin(getSamplesKmin(query, numPreds), queryInfo);
+            if (useAcrossRows) {
+                return queryKmin(getSamplesKmin(query, numPreds), queryInfo);
+            } else {
+                // return median of rows
+                return queryEstPerRowKmin(getSamplesPerRowKmin(query, numPreds), queryInfo);
+            }
         }
     }
 
@@ -275,6 +285,19 @@ public class OmniSketch extends SynopsisRefactor {
                 }
             } else {
                 attrWithoutPred++;
+            }
+        }
+        return samples;
+    }
+
+    public Kmin[][] getSamplesPerRowKmin(long[] q, int numPreds) {
+        Kmin[][] samples = new Kmin[depth][numPreds];
+        for (int i = 0; i < q.length; i++) {
+            if (q[i] != -1) {
+                Kmin[] temp = CMSketches[i].queryKmin(q[i]);
+                for (int j = 0; j < depth; j++) {
+                    samples[j][i] = temp[j];
+                }
             }
         }
         return samples;
@@ -318,7 +341,29 @@ public class OmniSketch extends SynopsisRefactor {
     }
 
 
+    private int queryEstPerRowKmin(Kmin[][] samplesPerRowKmin, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
+        // Do queryKmin per row and take median.
+        int[] estimates = new int[depth];
+        int min_nmax = Integer.MAX_VALUE;
+        int final_SCap = 0;
+        int final_nmax = 0;
+        int estimate = 0;
+        for (int i = 0; i < depth; i++) {
+            estimates[i] = queryKmin(samplesPerRowKmin[i], queryInfo);
+            if (queryInfo.nmax < min_nmax) { // Return estimate with lowest nmax.
+                min_nmax = queryInfo.nmax;
+                estimate = estimates[i];
+                final_SCap = queryInfo.Scap;
+                final_nmax = queryInfo.nmax;
+            }
+        }
+        queryInfo.setScap(final_SCap, final_nmax);
+        return estimate;
+
+    }
+
     private int queryKmin(Kmin[] samples, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
+
         double S_cap = 0;
         int n_max = 0;
         int exceedBounds = 0;
@@ -337,9 +382,9 @@ public class OmniSketch extends SynopsisRefactor {
         queryInfo.numberOfKminsExceedingBound = exceedBounds;
 
 
-        if (maxSize > Main.streamSize) {
-            throw new IllegalArgumentException("maxSize > streamSize");
-        }
+//        if (maxSize > Main.streamSize) {
+//            throw new IllegalArgumentException("maxSize > streamSize");
+//        }
         if (useBetaKmin) {
             return (int) ceil(S_cap * n_max / ((double) maxSize /BetaKmin)); // K/2 because we have deletes.
         } else {

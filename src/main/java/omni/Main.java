@@ -54,6 +54,15 @@ public class Main {
     public static boolean expaSH;
     public static boolean expHydra;
     public static boolean exp2LHS;
+    public static boolean expResSample;
+    public static boolean expCM;
+    public static int[] bGridSearch;
+    public static int[] dGridSearch;
+    public static int[] wGridSearch;
+    public static int[] BGridSearch;
+    public static double[] densityGridSearch;
+    public static int numZipfianAttrs;
+
     static String setting;
     public static boolean readAllFiles = true; // Set true if all files should be read, false if only the first file should be read
     public static boolean rangeQueries = false;
@@ -76,14 +85,16 @@ public class Main {
     public static boolean countUniqueSamples = false;
     public static HashMap<Long, Integer> uniqueSamples = new HashMap<>();
     public static HashSet<long[]> uniqueSamplesReservoir = new HashSet<>();
-    public static int[] widthOptionsGridSearch;
-    public static int[] depthOptionsGridSearch;
+    //public static int[] widthOptionsGridSearch;
+    //public static int[] depthOptionsGridSearch;
     private static int sizeFactor;
     public static int numBins;
     public static int[] numPredicates;
     static double[] noiseUpdateFractions;
     public static String sizeFactorOptions;
     static double[] bufferValuesOmni;
+    static double[] ingestBuffers;
+    static int[] sizeNoise;
 
     public static void main(String[] args) throws IOException, NotOpenException, PcapNativeException, CsvValidationException {
         // Args
@@ -112,17 +123,24 @@ public class Main {
         Main.ramVals = parseLongArray(args[8]);
         Main.noiseUpdateFractions = getDoubleArray(args[9]);
         Main.bufferValuesOmni = getDoubleArray(args[10]);
-        Main.numBins = Integer.parseInt(args[11]);
-        Main.numPredicates = parseIntArray(args[12]);
-        Main.exp2LHS = Boolean.parseBoolean(args[13]);
-        Main.expaSH = Boolean.parseBoolean(args[14]);
-        Main.expHydra = Boolean.parseBoolean(args[15]);
-        Main.onlyKmin = Boolean.parseBoolean(args[16]);
-        Main.widthOptionsGridSearch = parseIntArray(args[17]);
-        Main.depthOptionsGridSearch = parseIntArray(args[18]);
-        Main.sizeFactorOptions = args[19];
-        Main.experiment_name = args[20];
-        Main.useMultNumAttributes = Boolean.parseBoolean(args[21]);
+        Main.ingestBuffers = getDoubleArray(args[11]);
+        Main.densityGridSearch = getDoubleArray(args[12]);
+        Main.dGridSearch = parseIntArray(args[13]);
+        Main.bGridSearch = parseIntArray(args[14]);
+        Main.wGridSearch = parseIntArray(args[15]);
+        Main.BGridSearch = parseIntArray(args[16]);
+        Main.numBins = Integer.parseInt(args[17]);
+        Main.numPredicates = parseIntArray(args[18]);
+        Main.exp2LHS = Boolean.parseBoolean(args[19]);
+        Main.expaSH = Boolean.parseBoolean(args[20]);
+        Main.expHydra = Boolean.parseBoolean(args[21]);
+        Main.expResSample = Boolean.parseBoolean(args[22]);
+        Main.expCM = Boolean.parseBoolean(args[23]);
+        Main.sizeFactorOptions = args[24];
+        Main.sizeNoise = parseIntArray(args[25]);
+        Main.experiment_name = args[26];
+        Main.useMultNumAttributes = Boolean.parseBoolean(args[27]);
+        Main.numZipfianAttrs = Integer.parseInt(args[28]);
         //Main.useExactUnionSize = Boolean.parseBoolean(args[3]);
 
         if (Main.datasetName.equals("CAIDA")) {
@@ -143,7 +161,7 @@ public class Main {
 //            CompareBaselinesRefactor cb = new CompareBaselinesRefactor(h);
 //            cb.run();
         if (Objects.equals(setting,"Test_two_LHS")) {
-            TestTwoLHS tt = new TestTwoLHS(h, sizeFactor);
+            RunExperiments tt = new RunExperiments(h, sizeFactor);
             tt.run();
 //        } else if (Objects.equals(setting,"Delete Stream")) {
 //            DeleteStream ds = new DeleteStream(h);

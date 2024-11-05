@@ -7,9 +7,7 @@ import com.opencsv.exceptions.CsvException;
 import com.opencsv.exceptions.CsvValidationException;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class CleanDataset {
 
@@ -109,7 +107,11 @@ public class CleanDataset {
         } else if (Objects.equals(name, "wc98")) {
             throw new RuntimeException("Not implemented");
         } else if (name.contains("synth")) {
-            cleanIds = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8}; //,5,6,7,8,9,10,11};
+            // cleanIds based on number of attributes:
+            cleanIds = new int[Main.numAttributes];
+            for (int i = 0; i < Main.numAttributes; i++) {
+                cleanIds[i] = i;
+            }
             return; // no need to shuffle cleanIds, as already synthetic data.
         }else {
             throw new RuntimeException("Unknown dataset name");
@@ -214,8 +216,113 @@ public class CleanDataset {
         }
         return false;
     }
+
+    public void synthZipf(double percToDelete, double sizeFactor, int noiseSize) {
+        this.sizeFactor = sizeFactor;
+
+        // Generate dataset
+        // First make queries
+        // Then generate dataset in zipf distribution.
+
+        // Generate queries
+        Main.numQueries = 1000;
+        int numQueries = Main.numQueries;
+        int numAttrs = Main.numAttributes;
+        int largeQueryDomainSize = 1000000;
+        int smallQueryDomainSize = 100;
+        pointQueries = new long[numQueries][];
+        Random rng = new Random(1);
+        for (int i = 0; i < numQueries; i++) {
+            pointQueries[i] = new long[numAttrs];
+            for (int j = 0; j < numPredicates; j++) {
+                if (j % 2 == 0) {
+                    pointQueries[i][j] = (long) (rng.nextDouble() * smallQueryDomainSize);
+                } else {
+                    pointQueries[i][j] = (long) (smallQueryDomainSize + 1 + rng.nextDouble() * largeQueryDomainSize);
+                }
+            }
+            for (int j = numPredicates; j < numAttrs; j++) {
+                pointQueries[i][j] = -1;
+            }
+        }
+
+        // Find number of records for each query based on zipf distribution.
+        int totalRecords = (int) Math.pow(2, sizeFactor);
+        int[] numRecords = new int[numQueries];
+        int actualTotal = 0;
+        double H = 0;
+        for (int j = 1; j <= numQueries; j++) {
+            H += 1.0 / j;
+        }
+        for (int i = 0; i < numQueries; i++) {
+            // H = sum(1/i) from 1 to numQueries
+            double term = 1.0/H;
+            numRecords[i] = (int) (term / (i + 1) * totalRecords);
+            actualTotal += numRecords[i];
+        }
+
+        System.out.println("Total number of records is " + actualTotal + ", expected " + totalRecords);
+        // Generate dataset
+        ArrayList<long[]> potDataset = new ArrayList<>();
+
+        // Go over queries and add numRecords times.
+        for (int i = 0; i < numQueries; i++) {
+            int numExact = numRecords[i];
+            for (int j = 0; j < numExact; j++) {
+                long[] record = new long[numAttrs];
+                for (int k = 0; k < numAttrs; k++) {
+                    if (pointQueries[i][k] != -1) {
+                        record[k] = pointQueries[i][k];
+                    } else {
+                        double rand = rng.nextDouble();
+                        record[k] = (long) (largeQueryDomainSize + rand * (double) (largeQueryDomainSize * 3));
+                    }
+                }
+                potDataset.add(record);
+            }
+        }
+
+        Collections.shuffle(potDataset);
+
+
+        dataset = new long[potDataset.size()][];
+        for (int i = 0; i < potDataset.size(); i++) {
+            dataset[i] = new long[numAttrs + 1];
+            dataset[i][0] = i; // ID after shuffling
+            if (numAttrs >= 0) System.arraycopy(potDataset.get(i), 0, dataset[i], 1, numAttrs);
+            potDataset.set(i, null); // Clear memory.
+        }
+
+        potDataset.clear();
+        // dump dataset.
+        System.gc();
+        splitDeletes(percToDelete);
+
+        computeExactPoint(datasetResidu);
+
+        // Check for every point query the number of attributes that are not -1.
+        pointQueriesNumAttrs = new int[pointQueries.length];
+        pointQueryBinNumber = new int[pointQueries.length];
+
+        for (int i = 0; i < pointQueries.length; i++) {
+            for (int j = 0; j < numAttrs; j++) {
+                if (pointQueries[i] == null) {
+                    continue;
+                }
+                if (pointQueries[i][j] != -1) {
+                    pointQueriesNumAttrs[i]++;
+                }
+            }
+            pointQueryBinNumber[i] = i;
+        }
+
+
+
+
+    }
+
     public void cleanDatasetEquiDepthBins(double percToDelete,
-                                          double sizeFactor) throws IOException, CsvValidationException {
+                                          double sizeFactor, int noiseSize) throws IOException, CsvValidationException {
         // This will be a queries first -> dataset later approach.
         // We have queries in 10 bins of 100 queries each.
         // All queries in different bins are on distinct domains. No overlap.
@@ -232,26 +339,20 @@ public class CleanDataset {
         int queriesPerBin = numQueries / numBins;
         int[] binStartDomain = new int[numBins];
         int[] binEndDomain = new int[numBins];
-
-        for (int i = 0; i < numBins; i++) {
-            binStartDomain[i] = i * 1000;
-            binEndDomain[i] = (i + 1) * 1000;
+        int domainSize = 100000;
+        binStartDomain[0] = 0;
+        binEndDomain[0] = domainSize;
+        for (int i = 1; i < numBins; i++) {
+            binStartDomain[i] = binEndDomain[i]+1;
+            binEndDomain[i] = binStartDomain[i] + domainSize;
         }
         int noiseDomainStart=binEndDomain[numBins-1] + 1000;
-        int noiseDomainEnd=binEndDomain[numBins-1] + 2000;
+        int noiseDomainEnd=binEndDomain[numBins-1] + 3*domainSize;
 
         pointQueries = new long[numQueries][];
 
-        Random predRng = new Random(this.repetition);
         Random domainRng = new Random(this.repetition + 1);
         pointQueryBinNumber = new int[numQueries];
-
-        /*if (queryFileExists()) {
-            // read queries and read dataset.
-            readDatasetFromFile();
-            int numToKeep = splitDeletes(percToDelete);
-            return;
-        }*/
 
         // Generate queries for each bin within the domain.
         for (int i = 0; i < numBins; i++) {
@@ -261,79 +362,70 @@ public class CleanDataset {
                 for (int k = 0; k < numAttrs; k++) {
                     pointQueries[i * queriesPerBin + j][k] = -1;
                 }
-
                 for (int p = 0; p < numPredicates; p++) {
                     pointQueries[i * queriesPerBin + j][p] = (long) (binStartDomain[i] +
                             (domainRng.nextDouble()) * (double) (binEndDomain[i] - binStartDomain[i]));
                 }
-//                int hasPredicate = 0;
-//                while (hasPredicate < numPredicates) {
-//                    int attr = predRng.nextInt(numAttrs);
-//                    if (pointQueries[i * queriesPerBin + j][attr] == -1) {
-//                        pointQueries[i * queriesPerBin + j][attr] = (long) (binStartDomain[i] +
-//                                (domainRng.nextDouble()) * (double) (binEndDomain[i] - binStartDomain[i]));
-//                        hasPredicate++;
-//                    }
-//                    }
                 pointQueryBinNumber[i * queriesPerBin + j] = i;
             }
         }
 
 
         // Generate dataset
-        ArrayList<Long[]> potDataset = new ArrayList<>();
-        long id = 0;
+        ArrayList<long[]> potDataset = new ArrayList<>();
+        //long id = 0;
+        Random randomNumExact = new Random(this.repetition + 2);
         for (int i = 0; i < numBins; i++) {
             // Generate dataset for each bin.
-            int numRecords = (int) ((int) Math.pow(2, i*8) * this.sizeFactor); //10
+            double norm_bin = (double) i / (double) numBins;
+            int numRecords = (int) (Math.pow(2, norm_bin * sizeFactor)) + 5;
+            System.out.println("Num records in bin " + i + ": " + numRecords);
             // go over queries in bin i and add numRecords times.
             for (int j = 0; j < queriesPerBin; j++) {
-                for (int k = 0; k < numRecords; k++) {
-                    Long[] record = new Long[numAttrs + 1];
-                    record[0] = id;
+                int numExact = randomNumExact.nextInt(Math.max(numRecords - 50, 1), numRecords + 50);
+                for (int k = 0; k < numExact; k++) {
+                    long[] record = new long[numAttrs];
                     for (int l = 0; l < numAttrs; l++) {
                         if (pointQueries[i * queriesPerBin + j][l] != -1) {
-                            record[l + 1] = pointQueries[i * queriesPerBin + j][l];
+                            record[l] = pointQueries[i * queriesPerBin + j][l];
                         } else {
-                            record[l + 1] = (long) (noiseDomainStart + (domainRng.nextDouble()) * (double) (noiseDomainEnd - noiseDomainStart));
+                            double rand = domainRng.nextDouble();
+                            record[l] = (long) (noiseDomainStart + rand * (double) (noiseDomainEnd - noiseDomainStart));
                         }
                     }
                     potDataset.add(record);
-                    id++;
                 }
             }
         }
         System.out.println("Num queried records: " + potDataset.size());
         // Add noise
-        //int numNoiseRecords = (int) Math.pow(2, numBins*2) * 2;
-        int numNoiseRecords = (int) ((int) Math.pow(2, numBins*8) * this.sizeFactor);
+        int numNoiseRecords = ((int) Math.pow(2, sizeFactor) * noiseSize);
 
         System.out.println("Num never queried records: " + numNoiseRecords);
         for (int i = 0; i < numNoiseRecords; i++) {
-            Long[] record = new Long[numAttrs + 1];
-            record[0] = id;
+            long[] record = new long[numAttrs];
             for (int j = 0; j < numAttrs; j++) {
-                record[j + 1] = (long) (noiseDomainStart + (domainRng.nextDouble()) * (double) (noiseDomainEnd - noiseDomainStart));
+                double rand = domainRng.nextDouble();
+                record[j] = (long) (noiseDomainStart + rand * (double) (noiseDomainEnd - noiseDomainStart));
             }
             potDataset.add(record);
-            id++;
         }
+        // shuffle potDataset
+        Collections.shuffle(potDataset);
+
 
         dataset = new long[potDataset.size()][];
         for (int i = 0; i < potDataset.size(); i++) {
             dataset[i] = new long[numAttrs + 1];
-            for (int j = 0; j < numAttrs + 1; j++) {
-                dataset[i][j] = potDataset.get(i)[j];
-            }
+            dataset[i][0] = i; // ID after shuffling
+            if (numAttrs >= 0) System.arraycopy(potDataset.get(i), 0, dataset[i], 1, numAttrs);
             potDataset.set(i, null); // Clear memory.
         }
 
         potDataset.clear();
         // dump dataset.
         System.gc();
-
-        shuffleArray(dataset);
-        int numToKeep = splitDeletes(percToDelete);
+        splitDeletes(percToDelete);
 
         computeExactPoint(datasetResidu);
 
@@ -349,8 +441,6 @@ public class CleanDataset {
                 }
             }
         }
-        //writePointQueriesToFile();
-        //writeDatasetToFile();
     }
 
     private void writeDatasetToFile() {
@@ -1234,4 +1324,115 @@ public class CleanDataset {
         return numToKeep;
     }
 
+    public void synthDev(double perc, double sizeFactor, int noiseSize, int numZipfianAttrs) {
+        this.sizeFactor = sizeFactor;
+        int numAttrs = Main.numAttributes;
+        Main.numQueries = 1000;
+        // Process: for each attribute, decide from which distribution to sample.
+        // Generate records for dataset according to distributions.
+        // Query generation: Draw 1000 queries from dataset with same distributions
+        // Randomly mask some attributes in queries with -1
+        // Compute exact answers for queries.
+        // Write queries to file.
+        // Write dataset to file.
+        
+        // Generate dataset
+        generateSynthDataset(numAttrs, perc, sizeFactor, noiseSize, numZipfianAttrs);
+        // Generate queries
+        generateSynthQueries(numAttrs, perc);
+        
+    }
+
+    private void generateSynthQueries(int numAttrs, double percToDelete) {
+        // draw 1000 records from dataset
+        Random random = new Random(0);
+        pointQueries = new long[Main.numQueries][];
+        for (int i = 0; i < Main.numQueries; i++) {
+            int index = random.nextInt(dataset.length);
+            pointQueries[i] = dataset[index];
+        }
+
+        // mask some attributes with -1 such that number of predicates is numPredicates
+
+        for (int i = 0; i < Main.numQueries; i++) {
+            int curNumPreds = 0;
+            for (int j = 0; j < numAttrs; j++) {
+                if (curNumPreds == (numAttrs - numPredicates)) {
+                    break;
+                }
+                int index = random.nextInt(numAttrs);
+                if (pointQueries[i][index] != -1) {
+                    pointQueries[i][index] = -1;
+                    curNumPreds++;
+                }
+            }
+        }
+
+        splitDeletes(percToDelete);
+
+        computeExactPoint(datasetResidu);
+
+        // Check for every point query the number of attributes that are not -1.
+        pointQueriesNumAttrs = new int[pointQueries.length];
+        pointQueryBinNumber = new int[pointQueries.length];
+
+        for (int i = 0; i < pointQueries.length; i++) {
+            for (int j = 0; j < numAttrs; j++) {
+                if (pointQueries[i] == null) {
+                    continue;
+                }
+                if (pointQueries[i][j] != -1) {
+                    pointQueriesNumAttrs[i]++;
+                }
+            }
+            pointQueryBinNumber[i] = i;
+        }
+
+
+
+
+    }
+
+    private void generateSynthDataset(int numAttrs, double perc, double sizeFactor, int noiseSize, int numZipfianAttrs) {
+        int totalRecords = (int) Math.pow(2, sizeFactor);
+        int zipfAlpha = 2;
+        int domain = 1000000;
+        // for each attribute, decide from which distribution to sample.
+        boolean[] zipfianData = new boolean[numAttrs];
+        for (int i = 0; i < numZipfianAttrs; i++) {
+            zipfianData[i] = true;
+        }
+
+        long[][] zipfData = new long[0][];
+        long[][] unifData = new long[0][];
+
+        if (numZipfianAttrs>0){
+            zipfData=ZipfGenerator.zipfData(totalRecords,  numZipfianAttrs, domain, zipfAlpha);
+        }
+        if (Main.numAttributes - numZipfianAttrs > 0) {
+            unifData = new long[totalRecords][numAttrs - numZipfianAttrs];
+        }
+        Random random = new Random(1);
+        if (numAttrs - numZipfianAttrs > 0) {
+            for (int i = 0; i < totalRecords; i++) {
+                for (int j = 0; j < numAttrs - numZipfianAttrs; j++) {
+                    unifData[i][j] = (long) (random.nextLong(domain));
+                }
+            }
+        }
+        int rec_id = 0;
+
+        this.dataset = new long[totalRecords][];
+        // merge zipfData and unifData with id
+        for (int i=0; i < totalRecords;i++) {
+            this.dataset[i] = new long[numAttrs + 1];
+            this.dataset[i][0] = i;
+            if (numZipfianAttrs > 0) System.arraycopy(zipfData[i], 0, this.dataset[i], 1, numZipfianAttrs);
+            if (Main.numAttributes - numZipfianAttrs > 0) {
+                System.arraycopy(unifData[i], 0, this.dataset[i], numZipfianAttrs + 1, numAttrs - numZipfianAttrs);
+            }
+        }
+
+        System.out.println("Dataset size Synthetic set: " + dataset.length);
+    }
 }

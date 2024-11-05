@@ -8,7 +8,7 @@ import java.util.*;
 public class aSH extends SynopsisRefactor{
     // Adaptive Sample and Hold. Sketch for estimating count of elements in a stream.
     int numAttrs;
-    HashMap<long[], Double[]> sketch; // Double[] is of form c_i, tau_i, u_i, z_i
+    HashMap<List<Long>, Double[]> sketch; // Double[] is of form c_i, tau_i, u_i, z_i
     //HashMap<long[], Double[]> buffer; // Double[] is of form c_i, tau_i, u_i, z_i
     int count;
 
@@ -16,14 +16,15 @@ public class aSH extends SynopsisRefactor{
     final int maxSize; // The maximum size of the sketch.
     int sketchSize; // The size of the sketch.
 //    int bufferSize; // The size of the buffer.
-
+    double bufferFactor; // The factor by which the buffer is smaller than the sketch.
     Random rn;
     Random rn1;
     boolean useBufferInQuery;
 
     public int numRemovals = 0;
+    public int sameRecCounter = 0;
 
-    public aSH(long ram, int numAttributes, int[] parameters, int repetition, boolean useBufferInQuery) {
+    public aSH(long ram, int numAttributes, int[] parameters, int repetition, boolean useBufferInQuery, double ingestBuffer) {
         setting = "aSH";
         if (useBufferInQuery) {
             setting += "useBuffer";
@@ -35,8 +36,9 @@ public class aSH extends SynopsisRefactor{
 //        this.bufferSize = parameters[1];
         this.parameters = parameters;
         this.ram = ram;
-        this.sketch = new HashMap<long[], Double[]>(parameters[0] + parameters[1]);
+        this.sketch = new HashMap<List<Long>, Double[]>(parameters[0] + parameters[1]);
         //this.buffer = new HashMap<long[], Double[]>(parameters[1]);
+        this.bufferFactor = ingestBuffer;
         this.seed = repetition;
         this.useBufferInQuery = useBufferInQuery;
         int firstSeed = 12 +  seed;
@@ -44,6 +46,7 @@ public class aSH extends SynopsisRefactor{
         System.out.println("Seed: " + firstSeed + " secondSeed: " + secondSeed);
         rn = new Random(firstSeed);
         rn1 = new Random(secondSeed);
+        this.sameRecCounter = 0;
 
     }
 
@@ -61,10 +64,16 @@ public class aSH extends SynopsisRefactor{
 //            recordKey[i] = record[i];
 //        }
         // Ignore the RID in aSH.
-        long[] sampleRecord = new long[record.length - 1];
-        System.arraycopy(record, 1, sampleRecord, 0, record.length - 1);
+        //long[] sampleRecord = new long[record.length - 1];
+        List<Long> sampleRecord = new ArrayList<>();
+        for (int i = 1; i < record.length; i++) {
+            //sampleRecord[i - 1] = record[i];
+            sampleRecord.add(record[i]);
+        }
+        //System.arraycopy(record, 1, sampleRecord, 0, record.length - 1);
 
         if (sketch.containsKey(sampleRecord) && sketch.get(sampleRecord) != null) {
+            sameRecCounter++;
             // increment the count of the record
             Double[] recordValue = sketch.get(sampleRecord);
             recordValue[0] += sign;
@@ -107,7 +116,7 @@ public class aSH extends SynopsisRefactor{
         int i = 0;
         Iterator<Double[]> iterator = sketch.values().iterator();//Set().iterator();
         int numToEject = size - sketchSize;
-        // TODO: Are iterator and iterator1 iterating in same order?
+
         TreeSet<Double> bs_minvalues = new TreeSet<>();//Ascending: we want the min values to eject. Comparator.reverseOrder());
 
         while (iterator.hasNext()) {
@@ -127,9 +136,9 @@ public class aSH extends SynopsisRefactor{
             throw new RuntimeException("Error in ejecting records from aSH");
         }
         i = 0;
-        Iterator<long[]> iterator1 = sketch.keySet().iterator();
+        Iterator<List<Long>> iterator1 = sketch.keySet().iterator();
         while (iterator1.hasNext()) {
-            long[] key = iterator1.next();
+            List<Long> key = iterator1.next();
             if (Tis[i] <= tstar) { // tstar is threshold for ejection.
                 iterator1.remove();
                 size--;
@@ -139,6 +148,9 @@ public class aSH extends SynopsisRefactor{
                     if (tstar * sample[2] > sample[1]) {
                         //sketch.get(key)[0] += tstar * sample[3];
                         sample[0] += tstar * sample[3];
+                        if (tstar * sample[3] > 0) {
+                            System.out.println("Error in aSH eject");
+                        }
                     }
                     sample[1] = tstar;
                     sketch.put(key, sample);
@@ -175,11 +187,11 @@ public class aSH extends SynopsisRefactor{
         }
 
         double queryResultCount = 0;
-        Set<long[]> keys = sketch.keySet();
-        for (long[] key : keys) {
+        Set<List<Long>> keys = sketch.keySet();
+        for (List<Long> key : keys) {
             boolean match = true;
             for (int j = 0; j < query.length; j++) {
-                if (query[j] != -1 && query[j] != key[j]) {
+                if (query[j] != -1 && query[j] != key.get(j)) {
                     match = false;
                     break;
                 }
@@ -211,7 +223,7 @@ public class aSH extends SynopsisRefactor{
 
     @Override
     public void reset() {
-        sketch = new HashMap<long[], Double[]>(parameters[0] + parameters[1]);
+        sketch = new HashMap<List<Long>, Double[]>(parameters[0] + parameters[1]);
         size = 0;
         count = 0;
     }
@@ -228,7 +240,8 @@ public class aSH extends SynopsisRefactor{
     }
 
     public long getMemoryUsage() {
-        return (long) size * 32 * (numAttrs + 5); // size * (size of record + size of Double array + Tis array)
+        //double v = 1 / (1 - bufferFactor);
+        return (long) maxSize * 32 * (numAttrs + 5); // size * (size of record + size of Double array + Tis array)
     }
 
     public void printParams() {
