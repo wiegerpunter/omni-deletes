@@ -144,9 +144,9 @@ public class OmniSketch extends SynopsisRefactor {
         long id = record[0];
 
         // test where the id is coming from record[1] - record[record.length -1]
-        //long[] attrRecord = new long[record.length - 1];
-        //System.arraycopy(record, 1, attrRecord, 0, record.length - 1);
-        //long id = Arrays.hashCode(attrRecord);
+//        long[] attrRecord = new long[record.length - 1];
+//        System.arraycopy(record, 1, attrRecord, 0, record.length - 1);
+//        long id = Arrays.hashCode(attrRecord);
         long hx = id;
         long[] hx_2lhs = null;
         long[][] vals = null;
@@ -292,12 +292,14 @@ public class OmniSketch extends SynopsisRefactor {
 
     public Kmin[][] getSamplesPerRowKmin(long[] q, int numPreds) {
         Kmin[][] samples = new Kmin[depth][numPreds];
+        int numPredsFound = 0;
         for (int i = 0; i < q.length; i++) {
             if (q[i] != -1) {
                 Kmin[] temp = CMSketches[i].queryKmin(q[i]);
                 for (int j = 0; j < depth; j++) {
-                    samples[j][i] = temp[j];
+                    samples[j][numPredsFound] = temp[j];
                 }
+                numPredsFound++;
             }
         }
         return samples;

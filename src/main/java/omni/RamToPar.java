@@ -37,6 +37,7 @@ public class RamToPar {
     int b;
     int B;
     int w;
+    double parFactor;
     double density;
     long[] ramVals;
 
@@ -54,6 +55,15 @@ public class RamToPar {
         for (int i = 0; i < ramValsToUse.size(); i++) {
             ramVals[i] = ramValsToUse.get(i);
         }
+        run();
+    }
+    public RamToPar(int numAttrsToUse, int d, int b, double parFactor) {
+        this.numAttrs = numAttrsToUse;
+        this.d = d;
+        this.b = b;
+        this.parFactor = parFactor;
+        //this.ramVals = ramValsToUse;
+        ramVals = Main.ramVals;
         run();
     }
 
@@ -179,7 +189,8 @@ public class RamToPar {
            currentInfo = compParams2LHS(ram,Main.eps);
        } else {
            //currentInfo = compParamsKmin(ram, Main.eps);
-           currentInfo = compParamsMinwise(ram, density, w, B);
+           //currentInfo = compParamsMinwise(ram, density, w, B);
+           currentInfo = compParamsKminParFactor(ram, parFactor);
        }
        if (currentInfo[0] == 0) {
             System.out.println("No sketch found for ram " + ram + " and depth " + currentInfo[1] + " and width " + currentInfo[2]);
@@ -219,6 +230,26 @@ public class RamToPar {
         return info;
 
     }
+
+    private double[] compParamsKminParFactor(long ram, double parFactor) {
+        int depth = this.d;
+        double[] info = new double[8];
+        // ParFactor is B / W, so B = parFactor * W
+        double temp = parFactor * ram / (depth * numAttrs);
+        int B = (int) (-32 + Math.sqrt(1024 + 4*b * parFactor * ram / (depth * numAttrs)) / (2 * b));
+        //int B = (int) (b * Math.sqrt((b * temp + 256) / b * b) - 16) /b;
+
+        int width = (int) Math.ceil(B / parFactor);
+        double memUsage = Formulas.ramOmniKmin(numAttrs, depth, width, B, b);
+
+        if (memUsage < ram) {
+            info = new double[]{memUsage, depth, width, B, b, parFactor};
+        }
+        // throw exception if info is not set
+        return info;
+    }
+
+
     private double[] compParamsKmin(long ram, double eps) {
         //double deltaCM =  Main.delta/2;
         int depth = this.d;//3;//(int) Math.ceil(Math.log(1/deltaCM)/Math.log(Math.exp(1)));

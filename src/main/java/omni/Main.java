@@ -60,8 +60,11 @@ public class Main {
     public static int[] dGridSearch;
     public static int[] wGridSearch;
     public static int[] BGridSearch;
+
+    public static double[] parFactorGridSearch;
     public static double[] densityGridSearch;
     public static int numZipfianAttrs;
+    public static double zipfAlpha;
 
     static String setting;
     public static boolean readAllFiles = true; // Set true if all files should be read, false if only the first file should be read
@@ -124,23 +127,25 @@ public class Main {
         Main.noiseUpdateFractions = getDoubleArray(args[9]);
         Main.bufferValuesOmni = getDoubleArray(args[10]);
         Main.ingestBuffers = getDoubleArray(args[11]);
-        Main.densityGridSearch = getDoubleArray(args[12]);
-        Main.dGridSearch = parseIntArray(args[13]);
-        Main.bGridSearch = parseIntArray(args[14]);
-        Main.wGridSearch = parseIntArray(args[15]);
-        Main.BGridSearch = parseIntArray(args[16]);
-        Main.numBins = Integer.parseInt(args[17]);
-        Main.numPredicates = parseIntArray(args[18]);
-        Main.exp2LHS = Boolean.parseBoolean(args[19]);
-        Main.expaSH = Boolean.parseBoolean(args[20]);
-        Main.expHydra = Boolean.parseBoolean(args[21]);
-        Main.expResSample = Boolean.parseBoolean(args[22]);
-        Main.expCM = Boolean.parseBoolean(args[23]);
-        Main.sizeFactorOptions = args[24];
-        Main.sizeNoise = parseIntArray(args[25]);
-        Main.experiment_name = args[26];
-        Main.useMultNumAttributes = Boolean.parseBoolean(args[27]);
-        Main.numZipfianAttrs = Integer.parseInt(args[28]);
+//        Main.densityGridSearch = getDoubleArray(args[12]);
+        Main.dGridSearch = parseIntArray(args[12]);
+        Main.bGridSearch = parseIntArray(args[13]);
+        Main.parFactorGridSearch = getDoubleArray(args[14]);
+//        Main.wGridSearch = parseIntArray(args[15]);
+//        Main.BGridSearch = parseIntArray(args[16]);
+        Main.numBins = Integer.parseInt(args[15]);
+        Main.numPredicates = parseIntArray(args[16]);
+        Main.exp2LHS = Boolean.parseBoolean(args[17]);
+        Main.expaSH = Boolean.parseBoolean(args[18]);
+        Main.expHydra = Boolean.parseBoolean(args[19]);
+        Main.expResSample = Boolean.parseBoolean(args[20]);
+        Main.expCM = Boolean.parseBoolean(args[21]);
+        Main.sizeFactorOptions = args[22];
+        Main.sizeNoise = parseIntArray(args[23]);
+        Main.experiment_name = args[24];
+        Main.useMultNumAttributes = Boolean.parseBoolean(args[25]);
+        Main.numZipfianAttrs = Integer.parseInt(args[26]);
+        Main.zipfAlpha = Double.parseDouble(args[27]);
         //Main.useExactUnionSize = Boolean.parseBoolean(args[3]);
 
         if (Main.datasetName.equals("CAIDA")) {

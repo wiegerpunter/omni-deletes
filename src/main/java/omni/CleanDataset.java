@@ -8,6 +8,7 @@ import com.opencsv.exceptions.CsvValidationException;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CleanDataset {
 
@@ -28,6 +29,7 @@ public class CleanDataset {
     long[][] pointQueries;
     int[] pointQueryBinNumber;
     public int[] pointQueriesNumAttrs; // number of attributes in each point query.
+    public int[] pointQueriesNumZipfian; // number of zipfian predicates in each point query.
     int[] pointQueryAnswers;
     int[] pointQueryAnswersDeletes;
     int[] rangeQueryAnswers;
@@ -1071,6 +1073,29 @@ public class CleanDataset {
         for (int i = 0; i < Main.numStoredAttributes; i++) {
             System.out.println("Attribute with index " + i + " ," + parseIndex(i + 1) + " has " + unique[i].size() + " unique values.");
         }
+//
+//        // For each attribute, print count for each unique value
+//        for (int i = 0; i < Main.numStoredAttributes; i++) {
+//            HashMap<Long, Integer> count = new HashMap<>();
+//            for (int j = 0; j < dataset.length; j++) {
+//                if (dataset[j][i + 1] != -1) {
+//                    count.put(dataset[j][i + 1], count.getOrDefault(dataset[j][i + 1], 0) + 1);
+//                }
+//            }
+//            System.out.println("Attribute with index " + i + " ," + parseIndex(i + 1) + " has the following distribution:");
+//            // sort on count, descending
+//            count = count.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+//            //count = count.entrySet().stream().sorted(Map.Entry.comparingByValue()).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+//            // make sure we don't print more than 10 values, values sorted on count
+//            int numPrinted = 0;
+//            for (Map.Entry<Long, Integer> entry : count.entrySet()) {
+//                System.out.println("Value: " + entry.getKey() + " has count: " + entry.getValue());
+//                numPrinted++;
+//                if (numPrinted == 10) {
+//                    break;
+//                }
+//            }
+//        }
     }
 
 
@@ -1324,10 +1349,10 @@ public class CleanDataset {
         return numToKeep;
     }
 
-    public void synthDev(double perc, double sizeFactor, int noiseSize, int numZipfianAttrs) {
+    public void synthDev(double perc, double sizeFactor, int noiseSize, int numZipfianAttrs, double zipfAlpha) {
         this.sizeFactor = sizeFactor;
         int numAttrs = Main.numAttributes;
-        Main.numQueries = 1000;
+        Main.numQueries = 100;
         // Process: for each attribute, decide from which distribution to sample.
         // Generate records for dataset according to distributions.
         // Query generation: Draw 1000 queries from dataset with same distributions
@@ -1337,33 +1362,49 @@ public class CleanDataset {
         // Write dataset to file.
         
         // Generate dataset
-        generateSynthDataset(numAttrs, perc, sizeFactor, noiseSize, numZipfianAttrs);
+        generateSynthDataset(numAttrs, perc, sizeFactor, noiseSize, numZipfianAttrs, zipfAlpha);
         // Generate queries
-        generateSynthQueries(numAttrs, perc);
+        generateSynthQueries(numAttrs, perc, numZipfianAttrs);
         
     }
 
-    private void generateSynthQueries(int numAttrs, double percToDelete) {
+    private void generateSynthQueries(int numAttrs, double percToDelete, int numZipfianAttrs) {
         // draw 1000 records from dataset
-        Random random = new Random(0);
-        pointQueries = new long[Main.numQueries][];
-        for (int i = 0; i < Main.numQueries; i++) {
-            int index = random.nextInt(dataset.length);
-            pointQueries[i] = dataset[index];
+        Random random = new Random(repetition);
+        pointQueries = new long[Main.numQueries * numPredicates][];
+        for (int p = 0; p < numPredicates; p++) {
+            for (int i = p * Main.numQueries; i < (p + 1) * Main.numQueries; i++) {
+                int index = random.nextInt(dataset.length);
+                // pointQueries[i] = last numAttrs of dataset[index]
+                pointQueries[i] = new long[numAttrs];
+                System.arraycopy(dataset[index], 1, pointQueries[i], 0, numAttrs);
+                if (pointQueries[i] == null) {
+                    throw new RuntimeException("pointQueries[i] is null");
+                }
+            }
         }
+
+
+//        for (int i = 0; i < Main.numQueries; i++) {
+//            int index = random.nextInt(dataset.length);
+//            // pointQueries[i] = last numAttrs of dataset[index]
+//            pointQueries[i] = new long[numAttrs];
+//            System.arraycopy(dataset[index], 1, pointQueries[i], 0, numAttrs);
+//        }
 
         // mask some attributes with -1 such that number of predicates is numPredicates
 
-        for (int i = 0; i < Main.numQueries; i++) {
-            int curNumPreds = 0;
-            for (int j = 0; j < numAttrs; j++) {
-                if (curNumPreds == (numAttrs - numPredicates)) {
-                    break;
-                }
-                int index = random.nextInt(numAttrs);
-                if (pointQueries[i][index] != -1) {
-                    pointQueries[i][index] = -1;
-                    curNumPreds++;
+        Random randomQueries = new Random(repetition);
+
+        for (int p = 0; p < numPredicates; p++) {
+            for (int i = p * Main.numQueries; i < (p + 1) * Main.numQueries; i++) {
+                int curNumPreds = 0;
+                while (curNumPreds < numAttrs - (p + 1)) {
+                    int index = randomQueries.nextInt(numAttrs);
+                    if (pointQueries[i][index] != -1) {
+                        pointQueries[i][index] = -1;
+                        curNumPreds++;
+                    }
                 }
             }
         }
@@ -1375,6 +1416,7 @@ public class CleanDataset {
         // Check for every point query the number of attributes that are not -1.
         pointQueriesNumAttrs = new int[pointQueries.length];
         pointQueryBinNumber = new int[pointQueries.length];
+        pointQueriesNumZipfian = new int[pointQueries.length];
 
         for (int i = 0; i < pointQueries.length; i++) {
             for (int j = 0; j < numAttrs; j++) {
@@ -1383,6 +1425,12 @@ public class CleanDataset {
                 }
                 if (pointQueries[i][j] != -1) {
                     pointQueriesNumAttrs[i]++;
+                    if (pointQueriesNumAttrs[i] > numPredicates) {
+                        throw new RuntimeException("More than numPredicates attributes in query.");
+                    }
+                    if (j < numZipfianAttrs) {
+                        pointQueriesNumZipfian[i]++;
+                    }
                 }
             }
             pointQueryBinNumber[i] = i;
@@ -1393,10 +1441,9 @@ public class CleanDataset {
 
     }
 
-    private void generateSynthDataset(int numAttrs, double perc, double sizeFactor, int noiseSize, int numZipfianAttrs) {
+    private void generateSynthDataset(int numAttrs, double perc, double sizeFactor, int noiseSize, int numZipfianAttrs, double zipfAlpha) {
         int totalRecords = (int) Math.pow(2, sizeFactor);
-        int zipfAlpha = 2;
-        int domain = 1000000;
+        int domain = 100000;
         // for each attribute, decide from which distribution to sample.
         boolean[] zipfianData = new boolean[numAttrs];
         for (int i = 0; i < numZipfianAttrs; i++) {
@@ -1412,11 +1459,13 @@ public class CleanDataset {
         if (Main.numAttributes - numZipfianAttrs > 0) {
             unifData = new long[totalRecords][numAttrs - numZipfianAttrs];
         }
+
+        int domainUniform = 1000;
         Random random = new Random(1);
         if (numAttrs - numZipfianAttrs > 0) {
             for (int i = 0; i < totalRecords; i++) {
                 for (int j = 0; j < numAttrs - numZipfianAttrs; j++) {
-                    unifData[i][j] = (long) (random.nextLong(domain));
+                    unifData[i][j] = (long) (random.nextLong(domainUniform));
                 }
             }
         }

@@ -671,7 +671,7 @@ public class Helper {
     }
 
     public void writeResultsToFilePointQuery(int repetition, SynopsisRefactor s, CleanDataset d,
-                                             long timePassed, int[] estimatedAnswersPointQuery,
+                                             long timePassed, int collisions, int[] estimatedAnswersPointQuery,
                                              int[] SCap, int[] NMax, double[] jaccardEstimates2LHS,
                                              double[] unionEstimates2LHS, int[] witness2LHS, long[] queryExecutionTime,
                                              long totalQueryExecutionTime,
@@ -691,13 +691,13 @@ public class Helper {
             String[] header = new String[]{"repetition","totalStreamSize", "noiseUpdates", "streamSizeAfterDeletes",
                     "numAttributes", "memUsageDataset", "RAM", "setting", "sampleType",
                     "Avg Update Time", "memUsageSynopsis", "parameters", "numAttributesInWorkload",
-                    "queryID", "numPredicates","binNumber",
+                    "queryID", "numPredicates","numZipfianPredicates","binNumber",
                     "exactAnswer", "estimate", "absError",
                     "relError", "epsError", "withinThreshold",
                     "estTime",  "queryText", "SCap", "NMax","jacEstimate2LHS", "unionEstimate2LHS","witness2LHS",
                     "intersectionSizeOfR","unionSizeOfR",
-                    "meanQueryTime","TwoKmin","numKSamples","KminDeletes","exactInDeletes","exactUnionDeletes","uniqueSamples",
-                    "numKmins","numKminsExceedingBounds"};
+                    "meanQueryTime","BetaKmin","numKSamples","KminDeletes","exactInDeletes","exactUnionDeletes","uniqueSamples",
+                    "numKmins","numKminsExceedingBounds","measuredSignatureCollisions","zipfAlpha"};
             //TODO: add more info to header
             //, "exactTime", "intersectSize"};
             //"bound", "thrm33case2", "case2Estimate", "zeroEstimate",
@@ -707,8 +707,8 @@ public class Helper {
 
 
 
-        for (int i = 0; i < Main.numQueries; i++) {
-            String[] result = new String[40];
+        for (int i = 0; i < d.pointQueries.length; i++) {
+            String[] result = new String[43];
             // Dataset specific info;
             result[0] = String.valueOf(repetition);
             result[1] = String.valueOf(d.dataset.length);
@@ -730,45 +730,48 @@ public class Helper {
             result[12] = String.valueOf(Main.numStoredAttributes);
             result[13] = String.valueOf(i);
             result[14] = String.valueOf(d.pointQueriesNumAttrs[i]);
-            result[15] = String.valueOf(d.pointQueryBinNumber[i]);
-            result[16] = String.valueOf(d.pointQueryAnswers[i]);
-            result[17] = String.valueOf(estimatedAnswersPointQuery[i]);
-            result[18] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]));
-            result[19] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) / d.pointQueryAnswers[i]);
-            result[20] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) / d.datasetResidu.length);
-            result[21] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) <= Main.eps * d.datasetResidu.length);
-            result[22] = String.valueOf(queryExecutionTime[i]);
-            result[23] = d.parsePointQueryToString(d.pointQueries[i]);
-            result[24] = String.valueOf(SCap[i]);
-            result[25] = String.valueOf(NMax[i]);
-            result[26] = String.valueOf(jaccardEstimates2LHS[i]);
-            result[27] = String.valueOf(unionEstimates2LHS[i]);
-            result[28] = String.valueOf(witness2LHS[i]);
+            result[15] = String.valueOf(d.pointQueriesNumZipfian[i]);
+            result[16] = String.valueOf(d.pointQueryBinNumber[i]);
+            result[17] = String.valueOf(d.pointQueryAnswers[i]);
+            result[18] = String.valueOf(estimatedAnswersPointQuery[i]);
+            result[19] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]));
+            result[20] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) / d.pointQueryAnswers[i]);
+            result[21] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) / d.datasetResidu.length);
+            result[22] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) <= Main.eps * d.datasetResidu.length);
+            result[23] = String.valueOf(queryExecutionTime[i]);
+            result[24] = d.parsePointQueryToString(d.pointQueries[i]);
+            result[25] = String.valueOf(SCap[i]);
+            result[26] = String.valueOf(NMax[i]);
+            result[27] = String.valueOf(jaccardEstimates2LHS[i]);
+            result[28] = String.valueOf(unionEstimates2LHS[i]);
+            result[29] = String.valueOf(witness2LHS[i]);
             if (Main.checkConditions) {
-                result[29] = String.valueOf(intersectionOfR[i]);
-                result[30] = String.valueOf(unionOfR[i]);
+                result[30] = String.valueOf(intersectionOfR[i]);
+                result[31] = String.valueOf(unionOfR[i]);
             };
-            result[31] = String.valueOf(totalQueryExecutionTime);
-            result[32] = String.valueOf(s.useBetaKmin);
+            result[32] = String.valueOf(totalQueryExecutionTime);
+            result[33] = String.valueOf(s.useBetaKmin);
             int numKSamples = 0;
             if (!s.useTwoLHS) {
                 numKSamples = s.getFilledKSamples();
             }
-            result[33] = String.valueOf(numKSamples);
-            result[34] = String.valueOf(Main.kminDeletes);
-            result[35] = String.valueOf(d.pointQueryAnswersDeletes[i]);
-            result[36] = String.valueOf(d.pointQueryUnionDeletes[i]);
+            result[34] = String.valueOf(numKSamples);
+            result[35] = String.valueOf(Main.kminDeletes);
+            result[36] = String.valueOf(d.pointQueryAnswersDeletes[i]);
+            result[37] = String.valueOf(d.pointQueryUnionDeletes[i]);
             if (!Main.countUniqueSamples) {
-                result[37] = "0";
+                result[38] = "0";
             } else {
                 if (s.setting == "OmniSketch") {
-                    result[37] = String.valueOf(Main.uniqueSamples.keySet().size());
+                    result[38] = String.valueOf(Main.uniqueSamples.keySet().size());
                 } else {
-                    result[37] = String.valueOf(Main.uniqueSamplesReservoir.size());
+                    result[38] = String.valueOf(Main.uniqueSamplesReservoir.size());
                 }
             }
-            result[38] = String.valueOf(numberOfKmins[i]);
-            result[39] = String.valueOf(numberOfKminsExceedingBounds[i]);
+            result[39] = String.valueOf(numberOfKmins[i]);
+            result[40] = String.valueOf(numberOfKminsExceedingBounds[i]);
+            result[41] = String.valueOf(collisions);
+            result[42] = String.valueOf(Main.zipfAlpha);
             writer.writeNext(result);
         }
 
@@ -814,7 +817,7 @@ public class Helper {
 
 
 
-        for (int i = 0; i < Main.numQueries; i++) {
+        for (int i = 0; i < d.pointQueries.length; i++) {
             String[] result = new String[28];
             // Dataset specific info;
             result[0] = String.valueOf(d.numDeletes + d.datasetResidu.length);

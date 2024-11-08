@@ -33,28 +33,30 @@ public class AnalysisBaselinesRefactor {
     int totalQueriesZero = 0;
     int totalEstimatesZero=0;
     long ingestionTime;
+    int collisions;
     int repetition;
 
-    public AnalysisBaselinesRefactor(SynopsisRefactor s, CleanDataset cd, Helper h, long timepassed, int repetition) throws IOException {
+    public AnalysisBaselinesRefactor(SynopsisRefactor s, CleanDataset cd, Helper h, long timepassed, int collisions, int repetition) throws IOException {
         this.s = s;
         this.d = cd;
         this.h = h;
         this.ingestionTime = timepassed;
+        this.collisions = collisions;
         this.repetition = repetition;
         //this.ew = ew;
         h.setRamSettingInfo(d, s, timepassed);
-        estimatedAnswersPointQuery = new int[Main.numQueries];
-        estimatedAnswersRangeQuery = new int[Main.numQueries];
-        SCap = new int[Main.numQueries];
-        NMax = new int[Main.numQueries];
-        jaccardEstimates2LHS = new double[Main.numQueries];
-        unionEstimates2LHS = new double[Main.numQueries];
-        witness2LHS = new int[Main.numQueries];
-        queryExecutionTime = new long[Main.numQueries];
-        intersectionOfR = new int[Main.numQueries];
-        unionOfR = new int[Main.numQueries];
-        numberOfKmins = new int[Main.numQueries];
-        numberOfKminsExceedingBounds = new int[Main.numQueries];
+        estimatedAnswersPointQuery = new int[cd.pointQueries.length];
+        estimatedAnswersRangeQuery = new int[cd.pointQueries.length];
+        SCap = new int[cd.pointQueries.length];
+        NMax = new int[cd.pointQueries.length];
+        jaccardEstimates2LHS = new double[cd.pointQueries.length];
+        unionEstimates2LHS = new double[cd.pointQueries.length];
+        witness2LHS = new int[cd.pointQueries.length];
+        queryExecutionTime = new long[cd.pointQueries.length];
+        intersectionOfR = new int[cd.pointQueries.length];
+        unionOfR = new int[cd.pointQueries.length];
+        numberOfKmins = new int[cd.pointQueries.length];
+        numberOfKminsExceedingBounds = new int[cd.pointQueries.length];
 
     }
 
@@ -82,7 +84,7 @@ public class AnalysisBaselinesRefactor {
             totalExecTime = totalExecTime + l;
         }
         System.out.println("Total execution time: " + totalExecTime + " ms, average: "
-                + (double) totalExecTime / Main.numQueries + " ms");
+                + (double) totalExecTime / d.pointQueries.length + " ms");
 
         System.out.println("Difference between total time and execution time per query: "
                 + (totalQueryExecutionTime - totalExecTime));
@@ -95,11 +97,11 @@ public class AnalysisBaselinesRefactor {
             //TODO: write range query results to file here
         } else {
             h.setConditionInfo(intersectionOfR, unionOfR);
-            h.writeResultsToFilePointQuery(repetition, s, d, ingestionTime, estimatedAnswersPointQuery,
+            h.writeResultsToFilePointQuery(repetition, s, d, ingestionTime, collisions, estimatedAnswersPointQuery,
                     SCap, NMax, jaccardEstimates2LHS, unionEstimates2LHS, witness2LHS, queryExecutionTime, totalQueryExecutionTime,
                     numberOfKmins, numberOfKminsExceedingBounds);
         }
-        System.out.println("Total queries: " + Main.numQueries);
+        System.out.println("Total queries: " + d.pointQueries.length);
         System.out.println("Total queries with zero empty or singleton witnesses: " + s.countIsZero);
         System.out.println("Total queries with zero estimate: " + totalEstimatesZero);
     }
