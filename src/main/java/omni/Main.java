@@ -81,8 +81,7 @@ public class Main {
     public static Helper h;
     public static boolean writeSNMP = false;
     public static int sensitivityNumberOfRecords = 5000000;
-    public static long[] ramVals = {(long) (50*8E6), (long) (100*8E6), (long) (150*8E6), (long) (200*8E6)};//, (long) (400*8E6), (long) (600*8E6), (long) (800*8E6), (long) (1600*8E6)}; //(long) (10*8E6), (long) (20*8E6), (long) (50*8E6), (long) (100*8E6),
-    //public static long[] ramVals = {(long) (1000*8E6), (long) (1500*8E6)};
+    public static long[] ramVals = {(long) (50*8E6), (long) (100*8E6), (long) (150*8E6), (long) (200*8E6)};
 
     public static String currentDate;
     public static boolean countUniqueSamples = false;

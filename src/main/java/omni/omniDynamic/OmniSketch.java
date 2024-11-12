@@ -1,12 +1,16 @@
-package omni.omniTwoLHS;
+package omni.omniDynamic;
 
-import omni.*;
+import omni.AnalysisBaselinesRefactor;
+import omni.Formulas;
+import omni.Main;
+import omni.SynopsisRefactor;
 
 import java.util.*;
 
 import static java.lang.Math.*;
 
 public class OmniSketch extends SynopsisRefactor {
+    private final boolean dynamicSampleSizes;
     public AttributeSketch[] CMSketches;
     CountMinDyad[][] CMSketchesRange;
     CountMinS0[] CMSketchesS0;
@@ -29,7 +33,7 @@ public class OmniSketch extends SynopsisRefactor {
                       boolean rangeQueries, boolean useBetaKmin,
                       boolean useFastTwoLHS, boolean useInvDistPaper2LHS,
                       boolean useMinEstimate, boolean checkExactUnion2LHS,
-                      double BetaKmin, int seed) {
+                      double BetaKmin, boolean dynamicSampleSizes, int seed) {
         System.out.println("OmniSketch has stored attributes: " + numStoredAttributes);
         this.seed = seed;
         this.parameters = parameters;
@@ -46,6 +50,7 @@ public class OmniSketch extends SynopsisRefactor {
         this.checkExactUnion2LHS = checkExactUnion2LHS;
         this.randomHashG = new Random(seed);
         this.BetaKmin = BetaKmin;
+        this.dynamicSampleSizes = dynamicSampleSizes;
 
         depth = parameters[0];
         width = parameters[1];
@@ -91,7 +96,7 @@ public class OmniSketch extends SynopsisRefactor {
      */
 
     public void initSketch() {
-        setting = "OmniSketch";
+        setting = "OmniSketch_" + dynamicSampleSizes;
         Main.kminDeletes = 0;
 
         if (useTwoLHS) {
@@ -116,7 +121,7 @@ public class OmniSketch extends SynopsisRefactor {
         } else {
             CMSketches = new AttributeSketch[numStoredAttributes];
             for (int i = 0; i < numStoredAttributes; i++) {
-                CMSketches[i] = new AttributeSketch(i, parameters, useTwoLHS, useBetaKmin, BetaKmin, useFastTwoLHS, seed);
+                CMSketches[i] = new AttributeSketch(i, parameters, useTwoLHS, useBetaKmin, BetaKmin, useFastTwoLHS, dynamicSampleSizes, seed);
             }
             if (checkExactUnion2LHS) {
                 CMSketchesS0 = new CountMinS0[numStoredAttributes];
@@ -332,14 +337,15 @@ public class OmniSketch extends SynopsisRefactor {
         return c;
     }
 
-    private int getNmax(Kmin[] samples) {
-        int n_max = 0;
+    private int[] getNmax(Kmin[] samples) {
+        int[] nmax = new int[2];
         for (Kmin kmin : samples) {
-            if (kmin.n > n_max) {
-                n_max = kmin.n;
+            if (kmin.n > nmax[0]) {
+                nmax[0] = kmin.n;
+                nmax[1] = kmin.curSampleSize;
             }
         }
-        return n_max;
+        return nmax;
     }
 
 
@@ -369,7 +375,7 @@ public class OmniSketch extends SynopsisRefactor {
     private int queryKmin(Kmin[] samples, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
 
         double S_cap = 0;
-        int n_max = 0;
+        int[] nmax;
         int exceedBounds = 0;
         TreeSet<Long>[] flatSamples = new TreeSet[samples.length];
         for (int i = 0; i < samples.length; i++) {
@@ -379,9 +385,9 @@ public class OmniSketch extends SynopsisRefactor {
             TreeSet<Long> kmin = samples[i].getSampleToQuery();
             flatSamples[i] = kmin;
         }
-        n_max = getNmax(samples);
+        nmax = getNmax(samples);
         S_cap = getAltEstKMV(flatSamples);
-        queryInfo.setScap((int) S_cap, n_max, samples[0].K);
+        queryInfo.setScap((int) S_cap, nmax[0], nmax[1]);
         queryInfo.numberOfKmins = samples.length;
         queryInfo.numberOfKminsExceedingBound = exceedBounds;
 
@@ -390,9 +396,9 @@ public class OmniSketch extends SynopsisRefactor {
 //            throw new IllegalArgumentException("maxSize > streamSize");
 //        }
         if (useBetaKmin) {
-            return (int) ceil(S_cap * n_max / ((double) maxSize /BetaKmin)); // K/2 because we have deletes.
+            return (int) ceil(S_cap * nmax[0] / ((double) nmax[1] /BetaKmin)); // K/2 because we have deletes.
         } else {
-            return (int) ceil(S_cap * n_max / maxSize);
+            return (int) ceil(S_cap * nmax[0] / nmax[1]);
         }
 
     }

@@ -1409,6 +1409,32 @@ public class CleanDataset {
             }
         }
 
+        // Deduplication process
+        Set<String> uniqueQueries = new HashSet<>();
+        int uniqueCount = 0;
+
+        for (int i = 0; i < pointQueries.length; i++) {
+            if (pointQueries[i] == null) continue;
+
+            // Normalize the query for deduplication by converting it to a unique string format
+            StringBuilder queryKey = new StringBuilder();
+            for (int j = 0; j < numAttrs; j++) {
+                if (pointQueries[i][j] != -1) {
+                    queryKey.append(j).append(":").append(pointQueries[i][j]).append(";");
+                }
+            }
+            String normalizedQuery = queryKey.toString();
+
+            // Check if normalized query is unique
+            if (!uniqueQueries.contains(normalizedQuery)) {
+                uniqueQueries.add(normalizedQuery);
+                pointQueries[uniqueCount++] = pointQueries[i];
+            }
+        }
+
+        // Resize the pointQueries array to contain only unique entries
+        pointQueries = Arrays.copyOf(pointQueries, uniqueCount);
+
         splitDeletes(percToDelete);
 
         computeExactPoint(datasetResidu);
@@ -1471,15 +1497,24 @@ public class CleanDataset {
         }
         int rec_id = 0;
 
+        long[][] tempDataset = new long[totalRecords][];
+        for (int i=0; i <totalRecords; i++ ) {
+            tempDataset[i] = new long[numAttrs];
+            if (numZipfianAttrs > 0) System.arraycopy(zipfData[i], 0, tempDataset[i], 0, numZipfianAttrs);
+            if (Main.numAttributes - numZipfianAttrs > 0) {
+                System.arraycopy(unifData[i], 0, tempDataset[i], numZipfianAttrs, numAttrs - numZipfianAttrs);
+            }
+        }
+
+        // shuffle tempDataset
+        shuffleArray(tempDataset);
+
         this.dataset = new long[totalRecords][];
         // merge zipfData and unifData with id
         for (int i=0; i < totalRecords;i++) {
             this.dataset[i] = new long[numAttrs + 1];
             this.dataset[i][0] = i;
-            if (numZipfianAttrs > 0) System.arraycopy(zipfData[i], 0, this.dataset[i], 1, numZipfianAttrs);
-            if (Main.numAttributes - numZipfianAttrs > 0) {
-                System.arraycopy(unifData[i], 0, this.dataset[i], numZipfianAttrs + 1, numAttrs - numZipfianAttrs);
-            }
+            System.arraycopy(tempDataset[i], 0, this.dataset[i], 1, numAttrs);
         }
 
         System.out.println("Dataset size Synthetic set: " + dataset.length);

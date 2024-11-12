@@ -79,7 +79,7 @@ public class HandlingDeletes {
             h.writeResultsToFileRangeQuery(posSyn, d, timePassed, estimatedAnswersRangeQuery, queryExecutionTime);
             //TODO: write range query results to file here
         } else {
-            h.writeResultsToFilePointQuery(posSyn, d, timePassed, estimatedAnswersPointQuery, SCap, queryExecutionTime, estimatedAnswersPointQueryResiduSketch);
+            //h.writeResultsToFilePointQuery(posSyn, d, timePassed, estimatedAnswersPointQuery, SCap, queryExecutionTime, estimatedAnswersPointQueryResiduSketch);
         }
     }
 

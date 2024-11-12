@@ -672,7 +672,7 @@ public class Helper {
 
     public void writeResultsToFilePointQuery(int repetition, SynopsisRefactor s, CleanDataset d,
                                              long timePassed, int collisions, int[] estimatedAnswersPointQuery,
-                                             int[] SCap, int[] NMax, double[] jaccardEstimates2LHS,
+                                             int[] SCap, int[] NMax, int[] usedMaxSizes, double[] jaccardEstimates2LHS,
                                              double[] unionEstimates2LHS, int[] witness2LHS, long[] queryExecutionTime,
                                              long totalQueryExecutionTime,
                                              int[] numberOfKmins, int[] numberOfKminsExceedingBounds) throws IOException {
@@ -694,21 +694,17 @@ public class Helper {
                     "queryID", "numPredicates","numZipfianPredicates","binNumber",
                     "exactAnswer", "estimate", "absError",
                     "relError", "epsError", "withinThreshold",
-                    "estTime",  "queryText", "SCap", "NMax","jacEstimate2LHS", "unionEstimate2LHS","witness2LHS",
+                    "estTime",  "queryText", "SCap", "NMax","usedMaxSize","jacEstimate2LHS", "unionEstimate2LHS","witness2LHS",
                     "intersectionSizeOfR","unionSizeOfR",
                     "meanQueryTime","BetaKmin","numKSamples","KminDeletes","exactInDeletes","exactUnionDeletes","uniqueSamples",
                     "numKmins","numKminsExceedingBounds","measuredSignatureCollisions","zipfAlpha"};
-            //TODO: add more info to header
-            //, "exactTime", "intersectSize"};
-            //"bound", "thrm33case2", "case2Estimate", "zeroEstimate",
-            //"condition", "queryBin", "rangeSize"};
             writer.writeNext(header);
         }
 
 
 
         for (int i = 0; i < d.pointQueries.length; i++) {
-            String[] result = new String[43];
+            String[] result = new String[44];
             // Dataset specific info;
             result[0] = String.valueOf(repetition);
             result[1] = String.valueOf(d.dataset.length);
@@ -742,36 +738,37 @@ public class Helper {
             result[24] = d.parsePointQueryToString(d.pointQueries[i]);
             result[25] = String.valueOf(SCap[i]);
             result[26] = String.valueOf(NMax[i]);
-            result[27] = String.valueOf(jaccardEstimates2LHS[i]);
-            result[28] = String.valueOf(unionEstimates2LHS[i]);
-            result[29] = String.valueOf(witness2LHS[i]);
+            result[27] = String.valueOf(usedMaxSizes[i]);
+            result[28] = String.valueOf(jaccardEstimates2LHS[i]);
+            result[29] = String.valueOf(unionEstimates2LHS[i]);
+            result[30] = String.valueOf(witness2LHS[i]);
             if (Main.checkConditions) {
-                result[30] = String.valueOf(intersectionOfR[i]);
-                result[31] = String.valueOf(unionOfR[i]);
+                result[31] = String.valueOf(intersectionOfR[i]);
+                result[32] = String.valueOf(unionOfR[i]);
             };
-            result[32] = String.valueOf(totalQueryExecutionTime);
-            result[33] = String.valueOf(s.useBetaKmin);
+            result[33] = String.valueOf(totalQueryExecutionTime);
+            result[34] = String.valueOf(s.useBetaKmin);
             int numKSamples = 0;
             if (!s.useTwoLHS) {
                 numKSamples = s.getFilledKSamples();
             }
-            result[34] = String.valueOf(numKSamples);
-            result[35] = String.valueOf(Main.kminDeletes);
-            result[36] = String.valueOf(d.pointQueryAnswersDeletes[i]);
-            result[37] = String.valueOf(d.pointQueryUnionDeletes[i]);
+            result[35] = String.valueOf(numKSamples);
+            result[36] = String.valueOf(Main.kminDeletes);
+            result[37] = String.valueOf(d.pointQueryAnswersDeletes[i]);
+            result[38] = String.valueOf(d.pointQueryUnionDeletes[i]);
             if (!Main.countUniqueSamples) {
-                result[38] = "0";
+                result[39] = "0";
             } else {
-                if (s.setting == "OmniSketch") {
-                    result[38] = String.valueOf(Main.uniqueSamples.keySet().size());
+                if (s.setting.contains("OmniSketch")) {
+                    result[39] = String.valueOf(Main.uniqueSamples.keySet().size());
                 } else {
-                    result[38] = String.valueOf(Main.uniqueSamplesReservoir.size());
+                    result[39] = String.valueOf(Main.uniqueSamplesReservoir.size());
                 }
             }
-            result[39] = String.valueOf(numberOfKmins[i]);
-            result[40] = String.valueOf(numberOfKminsExceedingBounds[i]);
-            result[41] = String.valueOf(collisions);
-            result[42] = String.valueOf(Main.zipfAlpha);
+            result[40] = String.valueOf(numberOfKmins[i]);
+            result[41] = String.valueOf(numberOfKminsExceedingBounds[i]);
+            result[42] = String.valueOf(collisions);
+            result[43] = String.valueOf(Main.zipfAlpha);
             writer.writeNext(result);
         }
 
@@ -779,82 +776,82 @@ public class Helper {
     }
 
 
-    public void writeResultsToFilePointQuery(SynopsisRefactor s, CleanDataset d,
-                                             long timePassed, int[] estimatedAnswersPointQuery,
-                                             int[] SCap, long[] queryExecutionTime,
-                                             int[] estimatedAnswersPointQueryResidu) throws IOException {
-        // write string[] result to csvOutputFile using BufferedWriter
-        boolean init = false;
-        //String currentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-        //String currentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-
-        String CSV_FILE_NAME = Main.outputFolder + "/pointQueries/" + Main.datasetName
-                + "/results_" + Main.setting + "_" + Main.datasetName +
-                "_" + Main.currentDate +  "_Rep" + Main.repetition + ".csv";
-        if (!new File(CSV_FILE_NAME).exists()) {
-            init = true;
-        }
-        CSVWriter writer = new CSVWriter(new FileWriter(CSV_FILE_NAME, true));
-
-
-
-        if (init) {
-            String[] header = new String[]{"streamSize", "numAttributes", "memUsageDataset", "RAM",
-                    "setting",
-                    "Avg Update Time", "memUsageSynopsis", "parameters", "numAttributesInWorkload",
-                    "queryID", "numPredicates",
-                    "exactAnswer", "estimate", "absError",
-                    "relError", "epsError", "withinThreshold",
-                    "estTime",  "queryText", "estimateResidu", "absErrorResidu",
-                    "relErrorResidu", "epsErrorResidu", "withinThresholdResidu",
-                    "numNoiseRecords", "numCleanRecords","exactInDeletes","exactUnionDeletes"};
-            //TODO: add more info to header
-            //, "exactTime", "intersectSize"};
-            //"bound", "thrm33case2", "case2Estimate", "zeroEstimate",
-            //"condition", "queryBin", "rangeSize"};
-            writer.writeNext(header);
-        }
-
-
-
-        for (int i = 0; i < d.pointQueries.length; i++) {
-            String[] result = new String[28];
-            // Dataset specific info;
-            result[0] = String.valueOf(d.numDeletes + d.datasetResidu.length);
-            result[1] = String.valueOf(Main.numAttributes);
-            result[2] = String.valueOf(d.getMemoryUsage());
-            result[3] = String.valueOf(s.ram);
-            result[4] = s.setting;
-            result[5] = String.valueOf(timePassed);
-            result[6] = String.valueOf(s.getMemoryUsage());
-            result[7] = Arrays.toString(s.parameters);
-            result[8] = String.valueOf(Main.numStoredAttributes);
-            result[9] = String.valueOf(i);
-            result[10] = String.valueOf(d.pointQueriesNumAttrs[i]);
-            result[11] = String.valueOf(d.pointQueryAnswers[i]);
-            result[12] = String.valueOf(estimatedAnswersPointQuery[i]);
-            result[13] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]));
-            result[14] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) / d.pointQueryAnswers[i]);
-            result[15] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) / d.datasetResidu.length);
-            result[16] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) <= Main.eps * d.datasetResidu.length);
-            result[17] = String.valueOf(queryExecutionTime[i]);
-            result[18] = d.parsePointQueryToString(d.pointQueries[i]);
-            result[19] = String.valueOf(estimatedAnswersPointQueryResidu[i]);
-            result[20] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQueryResidu[i]));
-            result[21] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQueryResidu[i]) / d.pointQueryAnswers[i]);
-            result[22] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQueryResidu[i]) / d.datasetResidu.length);
-            result[23] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQueryResidu[i]) <= Main.eps * d.datasetResidu.length);
-            result[24] = String.valueOf(d.numDeletes);
-            result[25] = String.valueOf(d.datasetResidu.length);
-            result[26] = String.valueOf(d.pointQueryAnswersDeletes[i]);
-            result[27] = String.valueOf(d.pointQueryUnionDeletes[i]);
-            //result[19] = String.valueOf(d.avgExactExecutionTime);
-            //result[20] = String.valueOf(SCap[i]);
-            writer.writeNext(result);
-        }
-
-        writer.close();
-    }
+//    public void writeResultsToFilePointQuery(SynopsisRefactor s, CleanDataset d,
+//                                             long timePassed, int[] estimatedAnswersPointQuery,
+//                                             int[] SCap, long[] queryExecutionTime,
+//                                             int[] estimatedAnswersPointQueryResidu) throws IOException {
+//        // write string[] result to csvOutputFile using BufferedWriter
+//        boolean init = false;
+//        //String currentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+//        //String currentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+//
+//        String CSV_FILE_NAME = Main.outputFolder + "/pointQueries/" + Main.datasetName
+//                + "/results_" + Main.setting + "_" + Main.datasetName +
+//                "_" + Main.currentDate +  "_Rep" + Main.repetition + ".csv";
+//        if (!new File(CSV_FILE_NAME).exists()) {
+//            init = true;
+//        }
+//        CSVWriter writer = new CSVWriter(new FileWriter(CSV_FILE_NAME, true));
+//
+//
+//
+//        if (init) {
+//            String[] header = new String[]{"streamSize", "numAttributes", "memUsageDataset", "RAM",
+//                    "setting",
+//                    "Avg Update Time", "memUsageSynopsis", "parameters", "numAttributesInWorkload",
+//                    "queryID", "numPredicates",
+//                    "exactAnswer", "estimate", "absError",
+//                    "relError", "epsError", "withinThreshold",
+//                    "estTime",  "queryText", "estimateResidu", "absErrorResidu",
+//                    "relErrorResidu", "epsErrorResidu", "withinThresholdResidu",
+//                    "numNoiseRecords", "numCleanRecords","exactInDeletes","exactUnionDeletes"};
+//            //TODO: add more info to header
+//            //, "exactTime", "intersectSize"};
+//            //"bound", "thrm33case2", "case2Estimate", "zeroEstimate",
+//            //"condition", "queryBin", "rangeSize"};
+//            writer.writeNext(header);
+//        }
+//
+//
+//
+//        for (int i = 0; i < d.pointQueries.length; i++) {
+//            String[] result = new String[28];
+//            // Dataset specific info;
+//            result[0] = String.valueOf(d.numDeletes + d.datasetResidu.length);
+//            result[1] = String.valueOf(Main.numAttributes);
+//            result[2] = String.valueOf(d.getMemoryUsage());
+//            result[3] = String.valueOf(s.ram);
+//            result[4] = s.setting;
+//            result[5] = String.valueOf(timePassed);
+//            result[6] = String.valueOf(s.getMemoryUsage());
+//            result[7] = Arrays.toString(s.parameters);
+//            result[8] = String.valueOf(Main.numStoredAttributes);
+//            result[9] = String.valueOf(i);
+//            result[10] = String.valueOf(d.pointQueriesNumAttrs[i]);
+//            result[11] = String.valueOf(d.pointQueryAnswers[i]);
+//            result[12] = String.valueOf(estimatedAnswersPointQuery[i]);
+//            result[13] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]));
+//            result[14] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) / d.pointQueryAnswers[i]);
+//            result[15] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) / d.datasetResidu.length);
+//            result[16] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) <= Main.eps * d.datasetResidu.length);
+//            result[17] = String.valueOf(queryExecutionTime[i]);
+//            result[18] = d.parsePointQueryToString(d.pointQueries[i]);
+//            result[19] = String.valueOf(estimatedAnswersPointQueryResidu[i]);
+//            result[20] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQueryResidu[i]));
+//            result[21] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQueryResidu[i]) / d.pointQueryAnswers[i]);
+//            result[22] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQueryResidu[i]) / d.datasetResidu.length);
+//            result[23] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQueryResidu[i]) <= Main.eps * d.datasetResidu.length);
+//            result[24] = String.valueOf(d.numDeletes);
+//            result[25] = String.valueOf(d.datasetResidu.length);
+//            result[26] = String.valueOf(d.pointQueryAnswersDeletes[i]);
+//            result[27] = String.valueOf(d.pointQueryUnionDeletes[i]);
+//            //result[19] = String.valueOf(d.avgExactExecutionTime);
+//            //result[20] = String.valueOf(SCap[i]);
+//            writer.writeNext(result);
+//        }
+//
+//        writer.close();
+//    }
     int[] intersectionOfR;
     int[] unionOfR;
     public void setConditionInfo(int[] intersectionOfR, int[] unionOfR) {

@@ -1,6 +1,6 @@
 package omni;
 
-import omni.omniTwoLHS.OmniSketch;
+import omni.omniDynamic.OmniSketch;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,6 +24,7 @@ public class AnalysisBaselinesRefactor {
     int[] numberOfKminsExceedingBounds;
 
     int[] NMax;
+    int[] usedMaxSizes;
     long[] queryExecutionTime;
 
     long totalTime;
@@ -49,6 +50,7 @@ public class AnalysisBaselinesRefactor {
         estimatedAnswersRangeQuery = new int[cd.pointQueries.length];
         SCap = new int[cd.pointQueries.length];
         NMax = new int[cd.pointQueries.length];
+        usedMaxSizes = new int[cd.pointQueries.length];
         jaccardEstimates2LHS = new double[cd.pointQueries.length];
         unionEstimates2LHS = new double[cd.pointQueries.length];
         witness2LHS = new int[cd.pointQueries.length];
@@ -98,7 +100,7 @@ public class AnalysisBaselinesRefactor {
         } else {
             h.setConditionInfo(intersectionOfR, unionOfR);
             h.writeResultsToFilePointQuery(repetition, s, d, ingestionTime, collisions, estimatedAnswersPointQuery,
-                    SCap, NMax, jaccardEstimates2LHS, unionEstimates2LHS, witness2LHS, queryExecutionTime, totalQueryExecutionTime,
+                    SCap, NMax, usedMaxSizes, jaccardEstimates2LHS, unionEstimates2LHS, witness2LHS, queryExecutionTime, totalQueryExecutionTime,
                     numberOfKmins, numberOfKminsExceedingBounds);
         }
         System.out.println("Total queries: " + d.pointQueries.length);
@@ -143,6 +145,7 @@ public class AnalysisBaselinesRefactor {
         public int CMRow = 0;
         public int Scap;
         public int nmax;
+        public int maxSize;
 
         public double unionEstimate = 0;
         public ArrayList<Double> jaccardEstimates = new ArrayList<>();
@@ -165,9 +168,10 @@ public class AnalysisBaselinesRefactor {
             this.CMRow = CMRow;
         }
 
-        public void setScap(int Scap, int nmax) {
+        public void setScap(int Scap, int nmax, int maxSize) {
             this.Scap = Scap;
             this.nmax = nmax;
+            this.maxSize = maxSize;
         }
 
         public void set2LHS(double unionEstimate, int witness2LHS, double jaccardEstimate) {
@@ -206,6 +210,7 @@ public class AnalysisBaselinesRefactor {
         totalExecQueries++;
         SCap[queryId] = queryInfo.Scap;
         NMax[queryId] = queryInfo.nmax;
+        usedMaxSizes[queryId] = queryInfo.maxSize;
         jaccardEstimates2LHS[queryId] = queryInfo.jaccardEstimate;
         unionEstimates2LHS[queryId] = queryInfo.unionEstimate;
         witness2LHS[queryId] = queryInfo.witness2LHS;

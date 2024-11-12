@@ -239,7 +239,7 @@ public class RamToPar {
         int B = (int) (-32 + Math.sqrt(1024 + 4*b * parFactor * ram / (depth * numAttrs)) / (2 * b));
         //int B = (int) (b * Math.sqrt((b * temp + 256) / b * b) - 16) /b;
 
-        int width = (int) Math.ceil(B / parFactor);
+        int width = (int) Math.floor(B / parFactor);
         double memUsage = Formulas.ramOmniKmin(numAttrs, depth, width, B, b);
 
         if (memUsage < ram) {

@@ -3,7 +3,7 @@ package omni;
 import com.opencsv.exceptions.CsvValidationException;
 import omni.CountMin.CountMin;
 import omni.hydraRefactor.ImpHydraStruct;
-import omni.omniTwoLHS.OmniSketch;
+import omni.omniDynamic.OmniSketch;
 import omni.resSample.ReservoirSample;
 import omni.aSH.aSH;
 
@@ -138,53 +138,55 @@ public class RunExperiments {
             for (int b: Main.bGridSearch) {
                 for (int depth: Main.dGridSearch) {
                     for (double parFactor : Main.parFactorGridSearch) {
-                        this.rtp = new RamToPar(Main.numStoredAttributes, depth, b, parFactor);
-                        for (long ram : Main.ramVals) {
-                            System.out.println("Running sketch with ram " + ram);
-                            System.out.println("OMNISKETCH");
-                            boolean useTwoLHS = true;
-                            boolean useBetaKmin = false;
-                            if (Main.countUniqueSamples) {
-                                Main.uniqueSamples = new HashMap<>();
-                                Main.uniqueSamplesReservoir = new HashSet<>();
-                            }
+                        for (int c = 0; c < 1; c++) {
+                            boolean dynamicSampleSizes = false;
+                            this.rtp = new RamToPar(Main.numStoredAttributes, depth, b, parFactor);
+                            for (long ram : Main.ramVals) {
+                                System.out.println("Running sketch with ram " + ram);
+                                System.out.println("OMNISKETCH");
+                                boolean useTwoLHS = true;
+                                boolean useBetaKmin = false;
+                                if (Main.countUniqueSamples) {
+                                    Main.uniqueSamples = new HashMap<>();
+                                    Main.uniqueSamplesReservoir = new HashSet<>();
+                                }
 
-                            boolean useTwoLHSAcrossRows = false;
-                            boolean useFastTwoLHS = true;
-                            boolean useInvDistPaper2LHS = true;
-                            boolean useMinEstimate = true;
+                                boolean useTwoLHSAcrossRows = false;
+                                boolean useFastTwoLHS = true;
+                                boolean useInvDistPaper2LHS = true;
+                                boolean useMinEstimate = true;
 
-                            //UNCOMMENT:
-                            if (Main.exp2LHS) {
-                                runOmniSketch(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries, useBetaKmin,
-                                        useFastTwoLHS, useInvDistPaper2LHS, useMinEstimate, Main.checkConditions,
-                                        1, repetition, actRamVals, resSampleSizes);
+                                //UNCOMMENT:
+                                if (Main.exp2LHS) {
+                                    runOmniSketch(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries, useBetaKmin,
+                                            useFastTwoLHS, useInvDistPaper2LHS, useMinEstimate, Main.checkConditions,
+                                            1, dynamicSampleSizes, repetition, actRamVals, resSampleSizes);
 
+                                    System.gc();
+                                }
+                                Main.checkConditions = false;
+                                useTwoLHS = false;
+                                useFastTwoLHS = false;
+                                useInvDistPaper2LHS = false;
+                                useMinEstimate = false;
+                                useBetaKmin = true;
+                                Double betaValue = getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTable.csv", noiseUpdateFraction, ram, Main.numStoredAttributes);
+
+                                useTwoLHSAcrossRows = false;
+                                for (int r = 0; r < 1; r++) {
+                                    runOmniSketch(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries,
+                                            useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
+                                            useMinEstimate, Main.checkConditions, betaValue, dynamicSampleSizes, repetition, actRamVals, resSampleSizes);
+                                    System.gc();
+                                }
+                                // Prevent false positives in Kmin
+                                //                                    runOmniSketch(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries,
+                                //                                            useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
+                                //                                            useMinEstimate, Main.checkConditions, betaValue, repetition, actRamVals, resSampleSizes);
                                 System.gc();
+
+
                             }
-                            Main.checkConditions = false;
-                            useTwoLHS = false;
-                            useFastTwoLHS = false;
-                            useInvDistPaper2LHS = false;
-                            useMinEstimate = false;
-                            useBetaKmin = true;
-                            Double betaValue = getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTable.csv", noiseUpdateFraction, ram, Main.numStoredAttributes);
-
-                            useTwoLHSAcrossRows = false;
-
-                            for (int r = 0; r < 1; r++) {
-                                runOmniSketch(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries,
-                                        useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
-                                        useMinEstimate, Main.checkConditions, betaValue, r, actRamVals, resSampleSizes);
-                                System.gc();
-                            }
-                            // Prevent false positives in Kmin
-                            //                                    runOmniSketch(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries,
-                            //                                            useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
-                            //                                            useMinEstimate, Main.checkConditions, betaValue, repetition, actRamVals, resSampleSizes);
-                            System.gc();
-
-
                         }
                     }
                 }
@@ -258,7 +260,7 @@ public class RunExperiments {
                               boolean useBetaKmin, boolean useFastTwoLHS,
                               boolean useInvDistPaper2LHS,
                               boolean useMinEstimate, boolean checkExactUnion2LHS,
-                              double BetaKmin, int repetition,
+                              double BetaKmin, boolean dynamicSampleSizes, int repetition,
                               ArrayList<Long> actRamVals, ArrayList<Integer> ramSizes) throws IOException {
         int[] params;
         if (useTwoLHS) {
@@ -286,7 +288,7 @@ public class RunExperiments {
                 rangeQueries, useBetaKmin,
                 useFastTwoLHS, useInvDistPaper2LHS,
                 useMinEstimate, checkExactUnion2LHS,
-                BetaKmin, repetition);
+                BetaKmin, dynamicSampleSizes, repetition);
         ((OmniSketch) Main.rs).printParams();
         long synMem = runSynopsisRamBased(Main.rs, repetition);
         actRamVals.add(synMem);
@@ -359,7 +361,7 @@ public class RunExperiments {
         System.out.println("Memory usage dataset: " + cd.getMemoryUsage());
         System.out.println("\n");
         int collisions = 0;
-        if (syn.setting.equals("OmniSketch")) {
+        if (syn.setting.contains("OmniSketch")) {
             collisions = countCollisions(syn);
             //printmaxB();
         }
