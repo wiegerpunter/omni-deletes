@@ -1,18 +1,23 @@
-package omni.omniDynamic;
+package omni.omniReservoir;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import it.unimi.dsi.fastutil.PriorityQueue;
+import it.unimi.dsi.fastutil.ints.IntHeapPriorityQueue;
 import net.jpountz.xxhash.XXHash64;
 import net.jpountz.xxhash.XXHashFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Random;
 
+// make simple new datastructure of int n an IntHeapPriorityQueue
+
 public class AttributeSketch {
 
     //ArrayList<ArrayList<Sample>> CM = new ArrayList<>();
 
     TWOLHS[][][] CMTwoLHS;
-    public Kmin[][] CMKmin;
+    public Kmin[][] CMKminTreeSet;
+    public Kmin[] CMRow;
     final int depth;
     final int width;
     final int orgMaxSize;
@@ -81,11 +86,16 @@ public class AttributeSketch {
                 }
             }
         } else {
-            CMKmin = new Kmin[depth][width];
+            //CMKminTreeSet = new Kmin[depth][width];
+            CMRow = new Kmin[depth];
             for (int j = 0; j < depth; j++) {
-                for (int i = 0; i < width; i++) {
-                        CMKmin[j][i] = new Kmin(orgMaxSize, b, useTwoKmin, BetaKmin, seed);//Main.withDeletes);
-                }
+                CMRow[j] = new Kmin(orgMaxSize, width, b, false, BetaKmin, seed);
+//                maxSignaturesPerRow[j] = new int[]{0, (int) Math.pow(2, b) - 1};
+//
+//                for (int i = 0; i < width; i++) {
+//                    CMKminTreeSet[j][i] = new Kmin(orgMaxSize * width, b, useTwoKmin, BetaKmin, seed);//Main.withDeletes);
+//                }
+
             }
         }
     }
@@ -129,12 +139,6 @@ public class AttributeSketch {
         // Test if all element in A and B are consistent
         int[] hashes = hash(attrValue, depth, width);
         insertCount += sign;
-        if (dynamicSampleSizes) {
-            if (insertCount == 1000000) {
-                updateSampleSizes();
-
-            }
-        }
         for (int j = 0; j < depth; j++) {
             int w = hashes[j];
             if (useTwoLHS) {
@@ -149,53 +153,7 @@ public class AttributeSketch {
 
                 //
             } else {
-
-                CMKmin[j][w].ingest(hx[j], sign); // In Kminwise
-            }
-        }
-    }
-    private void updateSampleSizes() {
-        for (int j = 0; j < depth; j++) {
-            int[] currentN = new int[width];
-            int currentNMax = 0;
-
-            // 1. Gather current sample sizes and counts
-            for (int i = 0; i < width; i++) {
-                currentN[i] = CMKmin[j][i].n;
-                if (currentN[i] > currentNMax) {
-                    currentNMax = currentN[i];
-                }
-            }
-
-            // 2. Define minimum sample size (B_min = B0 / 2)
-            int total = orgMaxSize * width;
-            int B_min = (int) (0.9*orgMaxSize);  // Assume all initial sample sizes are equal to B0
-            int excessBudget = total - (B_min * width);
-
-            // 3. Calculate normalized weights for cells based on frequency
-            double totalWeight = 0.0;
-            double[] normalizedWeights = new double[width];
-            for (int i = 0; i < width; i++) {
-                normalizedWeights[i] = (double) currentN[i] / currentNMax;
-                totalWeight += normalizedWeights[i];
-            }
-            int usedExcessBudget = 0;
-
-            // 4. Redistribute excess budget proportionally based on weights
-            int[] newSampleSizes = new int[width];
-            for (int i = 0; i < width; i++) {
-                int excessAllocation = (int) Math.floor((normalizedWeights[i] / totalWeight) * excessBudget);
-                newSampleSizes[i] = B_min + excessAllocation;
-                usedExcessBudget += B_min + excessAllocation;
-            }
-
-            if (usedExcessBudget > total) {
-                System.out.println("Error: Used more excess budget than available");
-            }
-
-            // 5. Apply the updated sample sizes
-            for (int i = 0; i < width; i++) {
-                CMKmin[j][i].changeK(newSampleSizes[i]);
+                CMRow[j].ingest(hx[j], w, sign); // In Kminwise
             }
         }
     }
@@ -212,17 +170,22 @@ public class AttributeSketch {
         }
         return result;
     }
-    public Kmin[] queryKmin(long attrValue) {
+    public queryRes queryKmin(long attrValue) {
         int[] hashes = hash(attrValue, depth, width);
 
-        Kmin[] result;
-        result = new Kmin[depth];
+        int[] n = new int[depth];
+        int[] curSampleSizes = new int[depth];
+        IntHeapPriorityQueue[] result;
+        result = new IntHeapPriorityQueue[depth];
 
         for (int j = 0; j < depth; j++) {
             int w = hashes[j];
-            result[j] = CMKmin[j][w];
+            result[j] = CMRow[j].getSampleToQuery(w);
+            n[j] = CMRow[j].numInserts[w];
+            curSampleSizes[j] = result[j].size();//MRow[j].curSampleSize;
         }
-        return result;
+
+        return new queryRes(result, n, curSampleSizes);
     }
 //    public Sample[][] query(long attrValue) {
 //        int[] hashes = hash(attrValue, depth, width);
@@ -240,15 +203,15 @@ public class AttributeSketch {
     public long getMemoryUsage() {
         long memoryUsage = 0;
         for (int j = 0; j < depth; j++) {
-            for (int i = 0; i < width; i++) {
-                //System.out.println("CM[" + j + "][" + i + "].curSampleSize = " + CM.get(j).get(i).curSampleSize);
-                if (useTwoLHS)
+            if (useTwoLHS) {
+                for (int i = 0; i < width; i++) {
+                    //System.out.println("CM[" + j + "][" + i + "].curSampleSize = " + CM.get(j).get(i).curSampleSize);
                     for (int k = 0; k < numTwoLHSReps; k++) {
                         memoryUsage += CMTwoLHS[j][i][k].getMemoryUsage();
                     }
-                else
-                    memoryUsage += CMKmin[j][i].getMemoryUsage();
+                }
             }
+            memoryUsage += CMRow[j].getMemoryUsage();
         }
         return memoryUsage;
     }
@@ -261,7 +224,7 @@ public class AttributeSketch {
                         CMTwoLHS[j][i][k].reset();
                     }
                 } else {
-                    CMKmin[j][i].reset();
+                    CMRow[j].reset();
                 }
             }
         }
@@ -271,7 +234,7 @@ public class AttributeSketch {
         int filledKSamples = 0;
         for (int j = 0; j < depth; j++) {
             for (int i = 0; i < width; i++) {
-                filledKSamples += CMKmin[j][i].sketch.size();
+                filledKSamples += CMRow[j].sketch[i].size();
                 }
             }
         return filledKSamples;
@@ -296,7 +259,12 @@ public class AttributeSketch {
 //        rn_cm_hash.setSeed(this.seed + 18 + hash_long);
         for (int i = 0; i < depth; i++) {
             xx = Hashing.murmur3_32_fixed(i);
-            hashes[i] = ((xx.hashLong(hash_long)).asInt() % width + width) % width;// rn_cm_hash.nextInt(width);
+            //hashes[i] = ((xx.hashLong(hash_long)).asInt() % width + width) % width;// rn_cm_hash.nextInt(width); //tODO: check if this is okay
+            int hash = (xx.hashLong(hash_long).asInt() % width);
+            if (hash < 0) {
+                hash = hash + width;
+            }
+            hashes[i] = hash;
         }
         return hashes;
     }
@@ -308,10 +276,26 @@ public class AttributeSketch {
                 if (useTwoLHS) {
                     continue;
                 } else {
-                    collissions += CMKmin[j][i].collissions;
+                    collissions += CMKminTreeSet[j][i].collisions;
                 }
             }
         }
         return collissions;
+    }
+
+    public long getMemoryUsagePQ() {
+        long memoryUsage = 0;
+        for (int j = 0; j < depth; j++) {
+            if (useTwoLHS) {
+                for (int i = 0; i < width; i++) {
+                    //System.out.println("CM[" + j + "][" + i + "].curSampleSize = " + CM.get(j).get(i).curSampleSize);
+                    for (int k = 0; k < numTwoLHSReps; k++) {
+                        memoryUsage += CMTwoLHS[j][i][k].getMemoryUsage();
+                    }
+                }
+            }
+            memoryUsage += CMRow[j].getMemoryUsagePQ();
+        }
+        return memoryUsage;
     }
 }

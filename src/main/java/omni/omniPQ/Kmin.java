@@ -1,4 +1,4 @@
-package omni.omniDynamic;
+package omni.omniPQ;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.PriorityQueue;
 import java.util.Random;
 
-public class KminPriority extends Sample {
+public class Kmin extends Sample {
     private final double Beta;
     private final int allowedDeletions;
     public boolean exceedsNumberOfDeletes = false;
@@ -32,7 +32,7 @@ public class KminPriority extends Sample {
 //        return ((xx.hashLong(x).asInt() % maxHash) + maxHash) % maxHash;
     }
 
-    public KminPriority(int maxSize, int b, boolean supportDeletes, double Beta, int seed) {
+    public Kmin(int maxSize, int b, boolean supportDeletes, double Beta, int seed) {
         this.supportDeletes = supportDeletes;
         this.K = maxSize;
         this.b = b;
@@ -82,20 +82,20 @@ public class KminPriority extends Sample {
                 }
             }
         }
-        // check if hx is in the sketch already, if so, do nothing
-        else {
-            // Only proceed if hx is smaller than the current root (curTreeRoot)
-            if (hx < curTreeRoot) {
-                // Try to add hx directly, avoid a separate contains() check
-                if (sketch.add(hx)) {  // Add hx to the set, returns false if already present
-                    sketch.poll();  // Remove the smallest element (previous curTreeRoot)
-                    curTreeRoot = sketch.peek();  // Update curTreeRoot to the new smallest element
-                } else {
-                    // Collision of signatures.
-                    collissions++;
+            // check if hx is in the sketch already, if so, do nothing
+            else {
+                // Only proceed if hx is smaller than the current root (curTreeRoot)
+                if (hx < curTreeRoot) {
+                    // Try to add hx directly, avoid a separate contains() check
+                    if (sketch.add(hx)) {  // Add hx to the set, returns false if already present
+                        sketch.poll();  // Remove the smallest element (previous curTreeRoot)
+                        curTreeRoot = sketch.peek();  // Update curTreeRoot to the new smallest element
+                    } else {
+                        // Collision of signatures.
+                        collissions++;
+                    }
                 }
             }
-        }
     }
 
 

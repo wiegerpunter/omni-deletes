@@ -1,4 +1,4 @@
-package omni.omniDynamic;
+package omni.omniPQ;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import net.jpountz.xxhash.XXHash64;
@@ -12,7 +12,7 @@ public class AttributeSketch {
     //ArrayList<ArrayList<Sample>> CM = new ArrayList<>();
 
     TWOLHS[][][] CMTwoLHS;
-    public Kmin[][] CMKmin;
+    public Kmin[][] CMKminTreeSet;
     final int depth;
     final int width;
     final int orgMaxSize;
@@ -81,10 +81,10 @@ public class AttributeSketch {
                 }
             }
         } else {
-            CMKmin = new Kmin[depth][width];
+            CMKminTreeSet = new Kmin[depth][width];
             for (int j = 0; j < depth; j++) {
                 for (int i = 0; i < width; i++) {
-                        CMKmin[j][i] = new Kmin(orgMaxSize, b, useTwoKmin, BetaKmin, seed);//Main.withDeletes);
+                        CMKminTreeSet[j][i] = new Kmin(orgMaxSize, b, useTwoKmin, BetaKmin, seed);//Main.withDeletes);
                 }
             }
         }
@@ -125,7 +125,7 @@ public class AttributeSketch {
 
 
 
-    public void ingest(long attrValue, int[] hx, long[][] vals, int hashG, int sign) {
+    public void ingest(long attrValue, int hx, long[][] vals, int hashG, int sign) {
         // Test if all element in A and B are consistent
         int[] hashes = hash(attrValue, depth, width);
         insertCount += sign;
@@ -139,7 +139,7 @@ public class AttributeSketch {
             int w = hashes[j];
             if (useTwoLHS) {
                 if (twoLHSFast) {
-                    CMTwoLHS[j][w][hashG].ingest(hx[j], sign); // Hash in Sample  as in section 5 of paper
+                    CMTwoLHS[j][w][hashG].ingest(hx, sign); // Hash in Sample  as in section 5 of paper
                 } else {
                     for (int k = 0; k < numTwoLHSReps; k++) {
                         CMTwoLHS[j][w][k].ingest(vals[k], sign); // Hash in Sample  as in section 3 of paper
@@ -149,8 +149,7 @@ public class AttributeSketch {
 
                 //
             } else {
-
-                CMKmin[j][w].ingest(hx[j], sign); // In Kminwise
+                CMKminTreeSet[j][w].ingest(hx, sign); // In Kminwise
             }
         }
     }
@@ -161,7 +160,7 @@ public class AttributeSketch {
 
             // 1. Gather current sample sizes and counts
             for (int i = 0; i < width; i++) {
-                currentN[i] = CMKmin[j][i].n;
+                currentN[i] = CMKminTreeSet[j][i].n;
                 if (currentN[i] > currentNMax) {
                     currentNMax = currentN[i];
                 }
@@ -195,7 +194,7 @@ public class AttributeSketch {
 
             // 5. Apply the updated sample sizes
             for (int i = 0; i < width; i++) {
-                CMKmin[j][i].changeK(newSampleSizes[i]);
+                CMKminTreeSet[j][i].changeK(newSampleSizes[i]);
             }
         }
     }
@@ -220,7 +219,7 @@ public class AttributeSketch {
 
         for (int j = 0; j < depth; j++) {
             int w = hashes[j];
-            result[j] = CMKmin[j][w];
+            result[j] = CMKminTreeSet[j][w];
         }
         return result;
     }
@@ -247,7 +246,7 @@ public class AttributeSketch {
                         memoryUsage += CMTwoLHS[j][i][k].getMemoryUsage();
                     }
                 else
-                    memoryUsage += CMKmin[j][i].getMemoryUsage();
+                    memoryUsage += CMKminTreeSet[j][i].getMemoryUsage();
             }
         }
         return memoryUsage;
@@ -261,7 +260,7 @@ public class AttributeSketch {
                         CMTwoLHS[j][i][k].reset();
                     }
                 } else {
-                    CMKmin[j][i].reset();
+                    CMKminTreeSet[j][i].reset();
                 }
             }
         }
@@ -271,7 +270,7 @@ public class AttributeSketch {
         int filledKSamples = 0;
         for (int j = 0; j < depth; j++) {
             for (int i = 0; i < width; i++) {
-                filledKSamples += CMKmin[j][i].sketch.size();
+                filledKSamples += CMKminTreeSet[j][i].sketch.size();
                 }
             }
         return filledKSamples;
@@ -308,7 +307,7 @@ public class AttributeSketch {
                 if (useTwoLHS) {
                     continue;
                 } else {
-                    collissions += CMKmin[j][i].collissions;
+                    collissions += CMKminTreeSet[j][i].collissions;
                 }
             }
         }

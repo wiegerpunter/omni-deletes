@@ -554,11 +554,11 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
     }
 
     @Override
-    public int query(long[] query, int numPreds, int unionSize, AnalysisBaselinesRefactor.QueryInfo CMRow) {
+    public int query(long[] query, int numPreds, int unionSize,QueryInfo CMRow) {
         throw new UnsupportedOperationException();
     }
     @Override
-    public int query(long[] query, int numPreds, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
+    public int query(long[] query, int numPreds, QueryInfo queryInfo) {
         return query(query, numPreds);
     }
 

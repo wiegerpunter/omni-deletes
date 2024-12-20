@@ -51,6 +51,7 @@ public class CleanDataset {
     private int repetition;
     private final int numPredicates;
     private final int numBins;
+    public double zipfAlpha;
 
     //int[] attributesToChoose;
 //    private void getAttrsToChoose(int repetition) {
@@ -108,7 +109,7 @@ public class CleanDataset {
             cleanIds = new int[]{5, 6, 8, 9, 10}; // 4 & 7 are also ok but correlate with 5 6 8 9.
         } else if (Objects.equals(name, "wc98")) {
             throw new RuntimeException("Not implemented");
-        } else if (name.contains("synth")) {
+        } else if (name.contains("synth") || name.contains("Test")) {
             // cleanIds based on number of attributes:
             cleanIds = new int[Main.numAttributes];
             for (int i = 0; i < Main.numAttributes; i++) {
@@ -1073,6 +1074,7 @@ public class CleanDataset {
         for (int i = 0; i < Main.numStoredAttributes; i++) {
             System.out.println("Attribute with index " + i + " ," + parseIndex(i + 1) + " has " + unique[i].size() + " unique values.");
         }
+
 //
 //        // For each attribute, print count for each unique value
 //        for (int i = 0; i < Main.numStoredAttributes; i++) {
@@ -1096,6 +1098,8 @@ public class CleanDataset {
 //                }
 //            }
 //        }
+
+        System.out.println("Dataset has " + dataset.length + " records.");
     }
 
 
@@ -1353,6 +1357,7 @@ public class CleanDataset {
         this.sizeFactor = sizeFactor;
         int numAttrs = Main.numAttributes;
         Main.numQueries = 100;
+        this.zipfAlpha = zipfAlpha;
         // Process: for each attribute, decide from which distribution to sample.
         // Generate records for dataset according to distributions.
         // Query generation: Draw 1000 queries from dataset with same distributions
@@ -1365,18 +1370,190 @@ public class CleanDataset {
         generateSynthDataset(numAttrs, perc, sizeFactor, noiseSize, numZipfianAttrs, zipfAlpha);
         // Generate queries
         generateSynthQueries(numAttrs, perc, numZipfianAttrs);
+        //generateAllSynthQueries(numAttrs, perc, numZipfianAttrs);
         
     }
 
+    private void generateAllSynthQueries(int numAttrs, double percToDelete, int numZipfianAttrs) {
+        // Here we want to draw all possible subpopulations of size 1 up until numPredicates.
+        // No duplicates allowed.
+        int uniqueCount = 0;
+        int numSubpopulations = (int) Math.pow(2, numAttrs);
+        System.out.println("Num subpopulations: " + numSubpopulations);
+        pointQueries = new long[dataset.length*2][];
+
+        HashMap<String, Integer> queryToIndex = new HashMap<>();
+        pointQueryAnswers = new int[pointQueries.length];
+        pointQueriesNumAttrs = new int[pointQueries.length];
+        int maxNumPreds = 0;
+        boolean enoughQueries = false;
+        for (long[] record : dataset) {
+            if (enoughQueries) {
+                break;
+            }
+            for (int j = 1; j < numSubpopulations; j++) {
+                long[] query = new long[numAttrs];
+                StringBuilder binaryString = new StringBuilder(Integer.toBinaryString(j));
+                while (binaryString.length() < numAttrs) {
+                    binaryString.insert(0, "0");
+                }
+                for (int k = 0; k < numAttrs; k++) {
+                    if (binaryString.charAt(k) == '1') {
+                        query[k] = record[k + 1];
+                    } else {
+                        query[k] = -1;
+                    }
+                }
+                StringBuilder queryKey = new StringBuilder();
+                for (int k = 0; k < numAttrs; k++) {
+                    if (query[k] != -1) {
+                        queryKey.append(k).append(":").append(query[k]).append(";");
+                    }
+                }
+                String normalizedQuery = queryKey.toString();
+                if (!queryToIndex.containsKey(normalizedQuery)) {
+                    if (uniqueCount >= pointQueries.length) {
+                        System.out.println("Stopped early, generated " + uniqueCount + " unique queries.");
+                        enoughQueries = true;
+                        break;
+                    }
+                    queryToIndex.put(normalizedQuery, uniqueCount);
+                    pointQueries[uniqueCount] = query;
+                    pointQueryAnswers[uniqueCount] = 1;
+                    pointQueriesNumAttrs[uniqueCount] = Integer.bitCount(j);
+                    if (pointQueriesNumAttrs[uniqueCount] > maxNumPreds) {
+                        maxNumPreds = pointQueriesNumAttrs[uniqueCount];
+                    }
+                    uniqueCount++;
+                } else {
+                    pointQueryAnswers[queryToIndex.get(normalizedQuery)]++;
+                }
+            }
+        }
+
+        System.out.println("Generated " + uniqueCount + " unique queries.");
+        // Downsample to Main.numQueries per numPred
+        // get unique indices for each numPreds
+        ArrayList<Integer>[] indicesPerNumPreds = new ArrayList[maxNumPreds];
+        for (int i = 0; i < maxNumPreds; i++) {
+            indicesPerNumPreds[i] = new ArrayList<>();
+        }
+        for (int i = 0; i < uniqueCount; i++) {
+            indicesPerNumPreds[pointQueriesNumAttrs[i] - 1].add(i);
+        }
+
+        // now make sure we get Main.numQueries per numPreds, randomly sampled from the indicesPerNumPreds
+        int filledQueries = 0;
+        long[][] newPointQueries = new long[maxNumPreds * Main.numQueries][];
+        int[] newPointQueryAnswers = new int[maxNumPreds * Main.numQueries];
+        int[] newPointQueriesNumAttrs = new int[maxNumPreds * Main.numQueries];
+        int[] sampledQueriesPerNumPreds = new int[maxNumPreds];
+        for (int i = 0; i < maxNumPreds; i++) {
+            if (indicesPerNumPreds[i].size() > Main.numQueries) {
+                // Downsample
+                Random random = new Random(0);
+                Set<Integer> uniqueIndices = new HashSet<>();
+                while (uniqueIndices.size() < Main.numQueries) {
+                    uniqueIndices.add(random.nextInt(indicesPerNumPreds[i].size()));
+                }
+                for (int new_i : uniqueIndices) {
+                    newPointQueries[filledQueries] = pointQueries[indicesPerNumPreds[i].get(new_i)];
+                    newPointQueryAnswers[filledQueries] = pointQueryAnswers[indicesPerNumPreds[i].get(new_i)];
+                    newPointQueriesNumAttrs[filledQueries] = pointQueriesNumAttrs[indicesPerNumPreds[i].get(new_i)];
+                    sampledQueriesPerNumPreds[i]++;
+                    filledQueries++;
+                }
+            } else {
+                for (int j = 0; j < indicesPerNumPreds[i].size(); j++) {
+                    newPointQueries[filledQueries] = pointQueries[indicesPerNumPreds[i].get(j)];
+                    newPointQueryAnswers[filledQueries] = pointQueryAnswers[indicesPerNumPreds[i].get(j)];
+                    newPointQueriesNumAttrs[filledQueries] = pointQueriesNumAttrs[indicesPerNumPreds[i].get(j)];
+                    sampledQueriesPerNumPreds[i]++;
+                    filledQueries++;
+                }
+            }
+        }
+        pointQueries = newPointQueries;
+        pointQueryAnswers = newPointQueryAnswers;
+        pointQueriesNumAttrs = newPointQueriesNumAttrs;
+
+//
+//        if (uniqueCount > Main.numQueries) {
+//            // Downsample
+//            Set<Integer> uniqueIndices = new HashSet<>();
+//            Random random = new Random(0);
+//            while (uniqueIndices.size() < Main.numQueries) {
+//                uniqueIndices.add(random.nextInt(uniqueCount));
+//            }
+//            long[][] newPointQueries = new long[Main.numQueries][];
+//            int[] newPointQueryAnswers = new int[Main.numQueries];
+//            int[] newPointQueriesNumAttrs = new int[Main.numQueries];
+//            Iterator<Integer> unqIterator = uniqueIndices.iterator();
+//            for (int new_i=0; new_i < Main.numQueries; new_i++) {
+//                int i = unqIterator.next();
+//                newPointQueries[new_i] = pointQueries[i];
+//                newPointQueryAnswers[new_i] = pointQueryAnswers[i];
+//                newPointQueriesNumAttrs[new_i] = pointQueriesNumAttrs[i];
+//            }
+//            pointQueries = newPointQueries;
+//            pointQueryAnswers = newPointQueryAnswers;
+//            pointQueriesNumAttrs = newPointQueriesNumAttrs;
+//
+//        } else {
+//
+//            // Resize the pointQueries array to contain only unique entries
+//            pointQueries = Arrays.copyOf(pointQueries, uniqueCount);
+//            pointQueryAnswers = Arrays.copyOf(pointQueryAnswers, uniqueCount);
+//            pointQueriesNumAttrs = Arrays.copyOf(pointQueriesNumAttrs, uniqueCount);
+//        }
+        splitDeletes(percToDelete);
+        pointQueryAnswersDeletes = new int[pointQueries.length];
+        pointQueryUnion = new int[pointQueries.length];
+        pointQueryUnionDeletes = new int[pointQueries.length];
+        //computeExactPoint(datasetResidu);
+
+        // Check for every point query the number of attributes that are not -1.
+
+        pointQueryBinNumber = new int[pointQueries.length];
+        pointQueriesNumZipfian = new int[pointQueries.length];
+
+//        for (int i = 0; i < pointQueries.length; i++) {
+//            for (int j = 0; j < numAttrs; j++) {
+//                if (pointQueries[i] == null) {
+//                    continue;
+//                }
+//                if (pointQueries[i][j] != -1) {
+//                    pointQueriesNumAttrs[i]++;
+//                    if (pointQueriesNumAttrs[i] > numPredicates) {
+//                        throw new RuntimeException("More than numPredicates attributes in query.");
+//                    }
+//                    if (j < numZipfianAttrs) {
+//                        pointQueriesNumZipfian[i]++;
+//                    }
+//                }
+//            }
+//            pointQueryBinNumber[i] = i;
+//        }
+
+
+
+
+    }
     private void generateSynthQueries(int numAttrs, double percToDelete, int numZipfianAttrs) {
         // draw 1000 records from dataset
         Random random = new Random(repetition);
         pointQueries = new long[Main.numQueries * numPredicates][];
+
+//        long[] recordOutOfDomain = new long[numAttrs];
+//        Arrays.fill(recordOutOfDomain, -1000);
+
+
         for (int p = 0; p < numPredicates; p++) {
             for (int i = p * Main.numQueries; i < (p + 1) * Main.numQueries; i++) {
                 int index = random.nextInt(dataset.length);
                 // pointQueries[i] = last numAttrs of dataset[index]
                 pointQueries[i] = new long[numAttrs];
+//                pointQueries[i] = Arrays.copyOf(recordOutOfDomain, numAttrs);
                 System.arraycopy(dataset[index], 1, pointQueries[i], 0, numAttrs);
                 if (pointQueries[i] == null) {
                     throw new RuntimeException("pointQueries[i] is null");
@@ -1518,5 +1695,62 @@ public class CleanDataset {
         }
 
         System.out.println("Dataset size Synthetic set: " + dataset.length);
+    }
+
+    public void testDataset() {
+        // This will be a test dataset with queries as well, to test whether the right intersections are computed by the algorithms.
+        // Generate dataset
+        // Generate queries
+        // Compute exact answers
+        // Write dataset and queries to file.
+        int numAttrs = 2;
+        int totalRecords = 10;
+
+        // Generate dataset
+        dataset = new long[totalRecords][numAttrs + 1];
+        Random random = new Random(0);
+        for (int i = 0; i < totalRecords; i++) {
+            dataset[i][0] = i;
+            dataset[i][1] = random.nextLong(100);
+            dataset[i][2] = random.nextLong(100);
+        }
+
+        // Generate queries
+        int numQueries = 10;
+        pointQueries = new long[numQueries][numAttrs];
+        for (int i = 0; i < numQueries; i++) {
+            pointQueries[i][0] = dataset[i][1];
+            pointQueries[i][1] = dataset[i][2];
+        }
+
+        // Compute exact answers
+        splitDeletes(0);
+        computeExactPoint(dataset);
+        pointQueriesNumAttrs = new int[pointQueries.length];
+        pointQueryBinNumber = new int[pointQueries.length];
+        pointQueriesNumZipfian = new int[pointQueries.length];
+
+        for (int i = 0; i < pointQueries.length; i++) {
+            for (int j = 0; j < numAttrs; j++) {
+                if (pointQueries[i] == null) {
+                    continue;
+                }
+                if (pointQueries[i][j] != -1) {
+                    pointQueriesNumAttrs[i]++;
+                    if (pointQueriesNumAttrs[i] > numPredicates) {
+                        throw new RuntimeException("More than numPredicates attributes in query.");
+                    }
+                }
+            }
+            pointQueryBinNumber[i] = i;
+        }
+
+        // print dataset
+        for (int i = 0; i < dataset.length; i++) {
+            System.out.println("Record " + i + ": " + dataset[i][0] + ", " + dataset[i][1] + ", " + dataset[i][2]);
+        }
+
+
+
     }
 }

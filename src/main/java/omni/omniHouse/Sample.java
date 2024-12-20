@@ -1,4 +1,4 @@
-package omni.omniDynamic;
+package omni.omniHouse;
 
 public abstract class Sample {
     public int n;

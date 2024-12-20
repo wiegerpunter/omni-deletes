@@ -3,7 +3,7 @@
 # Get output to ODC output
 
 name_pod=check-pvc
-data_set=synthEquiDepthBins
+data_set=synthDev
 output_dir=/app/data/output/pointQueries/$data_set
 odc_output_dir=/home/wieger/omni-deletes/odc_output/pointQueries/$data_set
 

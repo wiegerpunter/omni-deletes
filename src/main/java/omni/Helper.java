@@ -675,7 +675,7 @@ public class Helper {
                                              int[] SCap, int[] NMax, int[] usedMaxSizes, double[] jaccardEstimates2LHS,
                                              double[] unionEstimates2LHS, int[] witness2LHS, long[] queryExecutionTime,
                                              long totalQueryExecutionTime,
-                                             int[] numberOfKmins, int[] numberOfKminsExceedingBounds) throws IOException {
+                                             int[] numberOfKmins, int[] numberOfKminsExceedingBounds, boolean[] case1, double[] bound) throws IOException {
        // write string[] result to csvOutputFile using BufferedWriter
         boolean init = false;
         //String currentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
@@ -697,14 +697,14 @@ public class Helper {
                     "estTime",  "queryText", "SCap", "NMax","usedMaxSize","jacEstimate2LHS", "unionEstimate2LHS","witness2LHS",
                     "intersectionSizeOfR","unionSizeOfR",
                     "meanQueryTime","BetaKmin","numKSamples","KminDeletes","exactInDeletes","exactUnionDeletes","uniqueSamples",
-                    "numKmins","numKminsExceedingBounds","measuredSignatureCollisions","zipfAlpha"};
+                    "numKmins","numKminsExceedingBounds","measuredSignatureCollisions","zipfAlpha", "case1", "bound"};
             writer.writeNext(header);
         }
 
 
 
         for (int i = 0; i < d.pointQueries.length; i++) {
-            String[] result = new String[44];
+            String[] result = new String[46];
             // Dataset specific info;
             result[0] = String.valueOf(repetition);
             result[1] = String.valueOf(d.dataset.length);
@@ -768,7 +768,9 @@ public class Helper {
             result[40] = String.valueOf(numberOfKmins[i]);
             result[41] = String.valueOf(numberOfKminsExceedingBounds[i]);
             result[42] = String.valueOf(collisions);
-            result[43] = String.valueOf(Main.zipfAlpha);
+            result[43] = String.valueOf(d.zipfAlpha);
+            result[44] = String.valueOf(case1[i]);
+            result[45] = String.valueOf(bound[i]);
             writer.writeNext(result);
         }
 

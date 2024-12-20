@@ -1,4 +1,4 @@
-package omni.omniDynamic;
+package omni.omniPQPrimitive;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import net.jpountz.xxhash.XXHash64;
@@ -12,7 +12,7 @@ public class AttributeSketch {
     //ArrayList<ArrayList<Sample>> CM = new ArrayList<>();
 
     TWOLHS[][][] CMTwoLHS;
-    public Kmin[][] CMKmin;
+    public Kmin[][] CMKminTreeSet;
     final int depth;
     final int width;
     final int orgMaxSize;
@@ -31,12 +31,13 @@ public class AttributeSketch {
     final boolean twoLHSFast;
     final boolean useTwoKmin;
     final double BetaKmin;
+    final boolean dynamicResizing;
     final boolean dynamicSampleSizes;
     int insertCount = 0;
 
     public AttributeSketch(int attr, int[] parameters,
                            boolean useTwoLHS, boolean useTwoKmin, double BetaKmin,
-                           boolean twoLHSFast, boolean dynamicSampleSizes, int seed){
+                           boolean twoLHSFast, boolean dynamicResizing, boolean dynamicSampleSizes, int seed){
         //int depth, int width, int numTwoLHSReps, int B, int b) {
         this.attr = attr;
         this.depth = parameters[0];
@@ -46,6 +47,7 @@ public class AttributeSketch {
         this.twoLHSFast = twoLHSFast;
         this.seed = seed;
         this.BetaKmin = BetaKmin;
+        this.dynamicResizing = dynamicResizing;
         this.dynamicSampleSizes = dynamicSampleSizes;
         rn = new Random(seed);
         if (useTwoLHS) {
@@ -81,10 +83,10 @@ public class AttributeSketch {
                 }
             }
         } else {
-            CMKmin = new Kmin[depth][width];
+            CMKminTreeSet = new Kmin[depth][width];
             for (int j = 0; j < depth; j++) {
                 for (int i = 0; i < width; i++) {
-                        CMKmin[j][i] = new Kmin(orgMaxSize, b, useTwoKmin, BetaKmin, seed);//Main.withDeletes);
+                        CMKminTreeSet[j][i] = new Kmin(orgMaxSize, b, useTwoKmin, BetaKmin, dynamicResizing, seed);//Main.withDeletes);
                 }
             }
         }
@@ -149,8 +151,7 @@ public class AttributeSketch {
 
                 //
             } else {
-
-                CMKmin[j][w].ingest(hx[j], sign); // In Kminwise
+                CMKminTreeSet[j][w].ingest(hx[j], sign); // In Kminwise
             }
         }
     }
@@ -161,7 +162,7 @@ public class AttributeSketch {
 
             // 1. Gather current sample sizes and counts
             for (int i = 0; i < width; i++) {
-                currentN[i] = CMKmin[j][i].n;
+                currentN[i] = CMKminTreeSet[j][i].n;
                 if (currentN[i] > currentNMax) {
                     currentNMax = currentN[i];
                 }
@@ -195,7 +196,7 @@ public class AttributeSketch {
 
             // 5. Apply the updated sample sizes
             for (int i = 0; i < width; i++) {
-                CMKmin[j][i].changeK(newSampleSizes[i]);
+                CMKminTreeSet[j][i].changeK(newSampleSizes[i]);
             }
         }
     }
@@ -220,7 +221,7 @@ public class AttributeSketch {
 
         for (int j = 0; j < depth; j++) {
             int w = hashes[j];
-            result[j] = CMKmin[j][w];
+            result[j] = CMKminTreeSet[j][w];
         }
         return result;
     }
@@ -247,7 +248,7 @@ public class AttributeSketch {
                         memoryUsage += CMTwoLHS[j][i][k].getMemoryUsage();
                     }
                 else
-                    memoryUsage += CMKmin[j][i].getMemoryUsage();
+                    memoryUsage += CMKminTreeSet[j][i].getMemoryUsage();
             }
         }
         return memoryUsage;
@@ -261,7 +262,7 @@ public class AttributeSketch {
                         CMTwoLHS[j][i][k].reset();
                     }
                 } else {
-                    CMKmin[j][i].reset();
+                    CMKminTreeSet[j][i].reset();
                 }
             }
         }
@@ -271,7 +272,7 @@ public class AttributeSketch {
         int filledKSamples = 0;
         for (int j = 0; j < depth; j++) {
             for (int i = 0; i < width; i++) {
-                filledKSamples += CMKmin[j][i].sketch.size();
+                filledKSamples += CMKminTreeSet[j][i].sketch.size;
                 }
             }
         return filledKSamples;
@@ -296,7 +297,13 @@ public class AttributeSketch {
 //        rn_cm_hash.setSeed(this.seed + 18 + hash_long);
         for (int i = 0; i < depth; i++) {
             xx = Hashing.murmur3_32_fixed(i);
-            hashes[i] = ((xx.hashLong(hash_long)).asInt() % width + width) % width;// rn_cm_hash.nextInt(width);
+//            hashes[i] = ((xx.hashLong(hash_long)).asInt() % width + width) % width;// rn_cm_hash.nextInt(width); // TODO: check if it makes a difference
+//            hashes[i] = ((xx.hashLong(hash_long)).asInt() % width);
+            int hash = (xx.hashLong(hash_long).asInt() % width);
+            if (hash < 0) {
+                hash = hash + width;
+            }
+            hashes[i] = hash;
         }
         return hashes;
     }
@@ -308,7 +315,7 @@ public class AttributeSketch {
                 if (useTwoLHS) {
                     continue;
                 } else {
-                    collissions += CMKmin[j][i].collissions;
+                    collissions += CMKminTreeSet[j][i].collissions;
                 }
             }
         }

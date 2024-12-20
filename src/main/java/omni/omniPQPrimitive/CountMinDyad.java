@@ -1,8 +1,8 @@
-package omni.omniDynamic;
+package omni.omniPQPrimitive;
 import omni.Main;
 
+import omni.PriorityQueue.PriorityQueue;
 import java.util.Random;
-import java.util.TreeSet;
 
 public class CountMinDyad {
 
@@ -22,16 +22,20 @@ public class CountMinDyad {
     final boolean useTwoLHS;
     final int seed;
     final double BetaKmin;
+    final boolean dynamicResizing;
 
     int n = 0;
 
-    public CountMinDyad(int attr, long intervalSize, int dyadicRangeBits, int[] parameters, boolean useTwoLHS, double BetaKmin, int seed) {
+    public CountMinDyad(int attr, long intervalSize, int dyadicRangeBits, int[] parameters,
+                        boolean useTwoLHS, boolean dynamicResizing,
+                        double BetaKmin, int seed) {
         this.attr = attr;
         this.intervalSize = intervalSize;
         this.dyadicRangeBits = dyadicRangeBits;
         this.depth = parameters[0];
         this.width = parameters[1];
         this.useTwoLHS = useTwoLHS;
+        this.dynamicResizing = dynamicResizing;
         this.seed = seed;
         this.BetaKmin = BetaKmin;
         if (useTwoLHS) {
@@ -60,7 +64,7 @@ public class CountMinDyad {
                     for (int k = 0; k < numTwoLHSReps; k++)
                         CMTwoLHS[j][i][k] = new TWOLHS(seed, k);
                 else
-                    CM[j][i] = new Kmin(maxSize, b, Main.withDeletes, BetaKmin, seed);
+                    CM[j][i] = new Kmin(maxSize, b, Main.withDeletes, BetaKmin, dynamicResizing, seed);
 
             }
         }
@@ -93,13 +97,13 @@ public class CountMinDyad {
         n += 1;
     }
 
-    public TreeSet<Integer>[] rangeQuery(long lower, long higher, int[] seenN) {
-        TreeSet<Integer>[] set = new TreeSet[depth];
+    public PriorityQueue[] rangeQuery(long lower, long higher, int[] seenN) {
+        PriorityQueue[] set = new PriorityQueue[depth];
         long sig = getRangeSignature(lower, higher);
         int[] hashes = hash(sig, depth, width);
         for (int j = 0; j < depth; j++) {
             int w = hashes[j];
-            set[j] = new TreeSet<>(CM[j][w].sketch);
+            set[j] = PriorityQueue.getCopy(CM[j][w].sketch);
             seenN[j] += CM[j][w].n;
             // Hash in Sample based on id
         }

@@ -1,9 +1,8 @@
-package omni.omniDynamic;
+package omni.omniReservoir;
 
-import omni.AnalysisBaselinesRefactor;
-import omni.Formulas;
-import omni.Main;
-import omni.SynopsisRefactor;
+import omni.*;
+//import omni.PriorityQueue.PriorityQueue;
+import it.unimi.dsi.fastutil.ints.IntHeapPriorityQueue;
 
 import java.util.*;
 
@@ -11,8 +10,9 @@ import static java.lang.Math.*;
 
 public class OmniSketch extends SynopsisRefactor {
     private final boolean dynamicSampleSizes;
+    private final boolean case1ReturnScap;
     public AttributeSketch[] CMSketches;
-    CountMinDyad[][] CMSketchesRange;
+//    CountMinDyad[][] CMSketchesRange;
     CountMinS0[] CMSketchesS0;
     public final int depth;
     public final int width;
@@ -22,6 +22,8 @@ public class OmniSketch extends SynopsisRefactor {
     public final int numStoredAttributes;
     private final int dyadicRangeBits;
     private final boolean checkExactUnion2LHS;
+    private double eps;
+    private double delta;
     Kmin[] kminTmp;
     TWOLHS[] TWOLHSTmp;
     boolean rangeQueries;
@@ -33,7 +35,7 @@ public class OmniSketch extends SynopsisRefactor {
                       boolean rangeQueries, boolean useBetaKmin,
                       boolean useFastTwoLHS, boolean useInvDistPaper2LHS,
                       boolean useMinEstimate, boolean checkExactUnion2LHS,
-                      double BetaKmin, boolean dynamicSampleSizes, int seed) {
+                      double BetaKmin, boolean dynamicSampleSizes, boolean case1ReturnScap, double eps, int seed) {
         System.out.println("OmniSketch has stored attributes: " + numStoredAttributes);
         this.seed = seed;
         this.parameters = parameters;
@@ -51,7 +53,8 @@ public class OmniSketch extends SynopsisRefactor {
         this.randomHashG = new Random(seed);
         this.BetaKmin = BetaKmin;
         this.dynamicSampleSizes = dynamicSampleSizes;
-
+        this.case1ReturnScap = case1ReturnScap;
+        this.eps = eps;
         depth = parameters[0];
         width = parameters[1];
         if (useTwoLHS) {
@@ -83,7 +86,20 @@ public class OmniSketch extends SynopsisRefactor {
             maxSize = -1;
             b = -1;
         } else {
-            sampleType = "Kmin" + Double.toString(BetaKmin);
+            StringBuilder sb = new StringBuilder();
+            sb.append("Kmin");
+            if (useBetaKmin) {
+                sb.append("Beta");
+            }
+            if (useAcrossRows) {
+                sb.append("AcrossRows");
+            } else {
+                sb.append("PerRow");
+            }
+            if (this.case1ReturnScap) {
+                sb.append("case1ReturnScap");
+            }
+            sampleType = sb.toString();
             maxSize = parameters[2];
             b = parameters[3];
             numTwoLHSReps = -1;
@@ -96,8 +112,11 @@ public class OmniSketch extends SynopsisRefactor {
      */
 
     public void initSketch() {
-        setting = "OmniSketchTreeSet_" + dynamicSampleSizes;
+        setting = "OmniSketchReservoir_eps="+ eps + dynamicSampleSizes;
         Main.kminDeletes = 0;
+//        eps = 1/(Math.pow(((width -1)/Math.exp(1)),depth) - 1);
+        delta = 2/(Math.pow(Math.exp(1),depth));
+        System.out.println("Eps: " + eps + ", Delta: " + delta);
 
         if (useTwoLHS) {
             TWOLHSTmp = new TWOLHS[numTwoLHSReps];
@@ -107,19 +126,19 @@ public class OmniSketch extends SynopsisRefactor {
         } else {
             kminTmp = new Kmin[depth];
             for (int j = 0; j < depth; j++) {
-                kminTmp[j] = new Kmin(maxSize, b, useBetaKmin, BetaKmin, seed + j);
+                kminTmp[j] = new Kmin(maxSize, width, b, useBetaKmin, BetaKmin, seed);
             }
         }
         this.maxBits = new int[numStoredAttributes];
 
         if (rangeQueries) {
-            CMSketchesRange = new CountMinDyad[numStoredAttributes][dyadicRangeBits + 1];
-            // Make dyadic intervals per attribute sketch
-            for (int i = 0; i < numStoredAttributes; i++) {
-                for (int j = dyadicRangeBits; j >-1; j--) {
-                    CMSketchesRange[i][dyadicRangeBits - j] = new CountMinDyad(i, j, dyadicRangeBits, parameters, useTwoLHS, BetaKmin, seed);
-                }
-            }
+//            CMSketchesRange = new CountMinDyad[numStoredAttributes][dyadicRangeBits + 1];
+//            // Make dyadic intervals per attribute sketch
+//            for (int i = 0; i < numStoredAttributes; i++) {
+//                for (int j = dyadicRangeBits; j >-1; j--) {
+//                    CMSketchesRange[i][dyadicRangeBits - j] = new CountMinDyad(i, j, dyadicRangeBits, parameters, useTwoLHS, BetaKmin, seed);
+//                }
+//            }
 
         } else {
             CMSketches = new AttributeSketch[numStoredAttributes];
@@ -196,12 +215,12 @@ public class OmniSketch extends SynopsisRefactor {
         if (rangeQueries) {
             // Compute all dyadic ranges it belongs to.
             // Insert in all those ranges.
-            for (int i = 0; i < numStoredAttributes; i++) {
-                long[][] ranges = wrapperInitLogRanges(record[i + 1]);
-                for (int j = 0; j < ranges[2].length; j++) {
-                    CMSketchesRange[i][j].add(ranges[1][j], ranges[2][j], hx[j]);
-                }
-            }
+//            for (int i = 0; i < numStoredAttributes; i++) {
+//                long[][] ranges = wrapperInitLogRanges(record[i + 1]);
+//                for (int j = 0; j < ranges[2].length; j++) {
+//                    CMSketchesRange[i][j].add(ranges[1][j], ranges[2][j], hx);
+//                }
+//            }
         } else {
             for (int i = 0; i < numStoredAttributes; i++) {
                 CMSketches[i].ingest(record[i + 1], hx, vals, hashG, sign);
@@ -234,7 +253,12 @@ public class OmniSketch extends SynopsisRefactor {
     }
 
     @Override
-    public int query(long[] query, int numPreds, int unionSize, AnalysisBaselinesRefactor.QueryInfo CMRow) {
+    public int query(long[] query, int numPreds, int unionSize, QueryInfo CMRow) {
+        throw new IllegalArgumentException("OmniSketch does not support this query method");
+    }
+
+    @Override
+    public int rangeQuery(long[] minrange, long[] maxrange) {
         throw new IllegalArgumentException("OmniSketch does not support this query method");
     }
 
@@ -245,7 +269,7 @@ public class OmniSketch extends SynopsisRefactor {
 
 
     @Override
-    public int query(long[] query, int numPreds, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
+    public int query(long[] query, int numPreds, QueryInfo queryInfo) {
         // Get estimate per depth. Take minimum of all estimates.
 
         if (useTwoLHS) {
@@ -271,18 +295,6 @@ public class OmniSketch extends SynopsisRefactor {
         }
     }
 
-
-
-//    public int query(long[] q, int numPreds, int unionSize, AnalysisBaselinesRefactor.QueryInfo CMRow) {
-//        if (Main.estPerRow) {
-//            return queryEstPerRow(q, numPreds, unionSize, CMRow);
-//        } else {
-//            int est = queryEstOverAllRows(q, numPreds, unionSize, CMRow);
-//            System.out.println("Estimate: " + est);
-//            return est;// queryEstOverAllRows(q, numPreds, unionSize, CMRow);
-//        }
-//    }
-
     //endregion
 
 
@@ -291,14 +303,20 @@ public class OmniSketch extends SynopsisRefactor {
      * Query minwise
      */
 
-    public Kmin[] getSamplesKmin(long[] q, int numPreds) {
-        Kmin[] samples = new Kmin[numPreds * depth];
+
+
+    public queryRes getSamplesKmin(long[] q, int numPreds) {
+        queryRes samples = new queryRes(numPreds * depth);
+        //IntHeapPriorityQueue[] samples = new IntHeapPriorityQueue[numPreds * depth];
         int attrWithoutPred = 0;
         for (int i = 0; i < q.length; i++) {
             if (q[i] != -1) { // Find way to not take the -1s into account in query.
-                Kmin[] temp = CMSketches[i].queryKmin(q[i]);
+                queryRes temp = CMSketches[i].queryKmin(q[i]);
+                temp.setNumPreds(numPreds);
                 if (depth >= 0) {
-                    System.arraycopy(temp, 0, samples, (i - attrWithoutPred) * depth, depth);
+                    System.arraycopy(temp.sketch, 0, samples.sketch, (i - attrWithoutPred) * depth, depth);
+                    System.arraycopy(temp.n, 0, samples.n, (i - attrWithoutPred) * depth, depth);
+                    System.arraycopy(temp.curSampleSizes, 0, samples.curSampleSizes, (i - attrWithoutPred) * depth, depth);
                 }
             } else {
                 attrWithoutPred++;
@@ -307,14 +325,20 @@ public class OmniSketch extends SynopsisRefactor {
         return samples;
     }
 
-    public Kmin[][] getSamplesPerRowKmin(long[] q, int numPreds) {
-        Kmin[][] samples = new Kmin[depth][numPreds];
+    public queryRes[] getSamplesPerRowKmin(long[] q, int numPreds) {
+
+        queryRes[] samples = new queryRes[depth];
+        for (int i = 0; i < depth; i++) {
+            samples[i] = new queryRes(numPreds);
+        }
         int numPredsFound = 0;
         for (int i = 0; i < q.length; i++) {
             if (q[i] != -1) {
-                Kmin[] temp = CMSketches[i].queryKmin(q[i]);
+                queryRes temp = CMSketches[i].queryKmin(q[i]);
                 for (int j = 0; j < depth; j++) {
-                    samples[j][numPredsFound] = temp[j];
+                    samples[j].sketch[numPredsFound] = temp.sketch[j];
+                    samples[j].n[numPredsFound] = temp.n[j];
+                    samples[j].curSampleSizes[numPredsFound] = temp.curSampleSizes[j];
                 }
                 numPredsFound++;
             }
@@ -322,56 +346,83 @@ public class OmniSketch extends SynopsisRefactor {
         return samples;
     }
 
-    private double getAltEstKMV(TreeSet<Integer>[] samples) {
+    private int getAltEstKMV(IntHeapPriorityQueue[] samples) {
         int numJoins = samples.length;
-        int c = 0;
-        Iterator<Integer> iter = samples[0].iterator();
-        while (iter != null && iter.hasNext()) {
-            boolean found = true;
-            Integer i = iter.next();
-            for (int j = 1; j < numJoins; j++) {
-                Integer otherElement = samples[j].ceiling(i);
-                if (otherElement == null) {
-                    found = false;
-                    iter = null;
-                    break;
-                } // not contained
-                else if (otherElement.equals(i)) continue; // is contained
-                else {
-                    iter = samples[0].tailSet(otherElement).iterator(); // fast forward iter0
-                    found = false;
-                    break; // but now you need to start from iter.hasNext() again
+        if (samples.length == 1) {
+            return samples[0].size() + 1; // One predicate and either per row or one row.
+        }
+        int intersectionCount = 0;
+
+        // Array to track the current value from each iterator
+        int[] currentValues = new int[numJoins];
+
+        // Initialize each queue's current value
+        for (int i = 0; i < numJoins; i++) {
+            if (!samples[i].isEmpty()) {
+                currentValues[i] = samples[i].firstInt();
+            } else {
+                return 0; // If any queue is empty, intersection count is zero
+            }
+        }
+
+        while (true) {
+            // Find the maximum value among the current values
+            int minCurrent = currentValues[0];
+            for (int i = 1; i < numJoins; i++) { // We can skip the first one, since we just set it to minCurrent.
+                if (currentValues[i] < minCurrent) {
+                    minCurrent = currentValues[i];
                 }
             }
-            if (found) c++;
 
-        }
-        return c;
-    }
+            // Check if all current values match the maxCurrent
+            boolean allMatch = true;
+            for (int i = 0; i < numJoins; i++) {
+                if (currentValues[i] != minCurrent) {
+                    allMatch = false;
+                    break;
+                }
+            }
 
-    private int[] getNmax(Kmin[] samples) {
-        int[] nmax = new int[2];
-        for (Kmin kmin : samples) {
-            if (kmin.n > nmax[0]) {
-                nmax[0] = kmin.n;
-                nmax[1] = kmin.curSampleSize;
+            // If all queues have the same current value, count it as an intersection
+            if (allMatch) {
+                intersectionCount++;
+                // Advance all iterators to the next element
+                for (int i = 0; i < numJoins; i++) {
+                    samples[i].dequeueInt();
+                    if (!samples[i].isEmpty()) {
+                        currentValues[i] = samples[i].firstInt();
+                    } else {
+                        return intersectionCount; // End if any queue is exhausted
+                    }
+                }
+            } else {
+                // Advance only iterators of queues with current values < maxCurrent
+                for (int i = 0; i < numJoins; i++) {
+                    while (currentValues[i] > minCurrent) {
+                        samples[i].dequeueInt();
+                        if (!samples[i].isEmpty()) {
+                            currentValues[i] = samples[i].firstInt();
+                        } else {
+                            return intersectionCount; // End if any queue is exhausted
+                        }
+                    }
+                }
             }
         }
-        return nmax;
     }
 
 
-    private int queryEstPerRowKmin(Kmin[][] samplesPerRowKmin, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
+    private int queryEstPerRowKmin(queryRes[] samplesPerRowKminTreeSet, QueryInfo queryInfo) {
         // Do queryKmin per row and take median.
         int[] estimates = new int[depth];
         int min_nmax = Integer.MAX_VALUE;
         int final_SCap = 0;
         int final_nmax = 0;
         int final_maxSize = 0;
-        int estimate = 0;
         boolean case1 = false;
+        int estimate = 0;
         for (int i = 0; i < depth; i++) {
-            estimates[i] = queryKmin(samplesPerRowKmin[i], queryInfo);
+            estimates[i] = queryKmin(samplesPerRowKminTreeSet[i], queryInfo);
             if (queryInfo.nmax < min_nmax) { // Return estimate with lowest nmax.
                 min_nmax = queryInfo.nmax;
                 estimate = estimates[i];
@@ -386,35 +437,40 @@ public class OmniSketch extends SynopsisRefactor {
 
     }
 
-    private int queryKmin(Kmin[] samples, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
+    private int queryKmin(queryRes samples, QueryInfo queryInfo) {
 
-        double S_cap = 0;
-        int[] nmax;
+        int S_cap = 0;
         int exceedBounds = 0;
-        TreeSet<Integer>[] flatSamples = new TreeSet[samples.length];
-        for (int i = 0; i < samples.length; i++) {
-            if (samples[i].exceedsNumberOfDeletes) {
-                exceedBounds++;
-            }
-            TreeSet<Integer> kmin = samples[i].getSampleToQuery();
-            flatSamples[i] = kmin;
-        }
-        nmax = getNmax(samples);
-        S_cap = getAltEstKMV(flatSamples);
-        queryInfo.setScap((int) S_cap, nmax[0], nmax[1], queryInfo.case1);
-        queryInfo.numberOfKmins = samples.length;
+        samples.compNmax();
+        S_cap = getAltEstKMV(samples.sketch);
+        int nmax = samples.getNmax();
+        int B = samples.getUsedSampleSize();
+        int p = samples.getNumPreds();
+        queryInfo.setScap(S_cap, nmax, B,false);
+        queryInfo.numberOfKmins = samples.sketch.length;
         queryInfo.numberOfKminsExceedingBound = exceedBounds;
-
-
-//        if (maxSize > Main.streamSize) {
-//            throw new IllegalArgumentException("maxSize > streamSize");
-//        }
         if (useBetaKmin) {
-            return (int) ceil(S_cap * nmax[0] / ((double) nmax[1] /BetaKmin)); // K/2 because we have deletes.
+            return (int) ((long)S_cap * samples.getNmax() / ((double) B /BetaKmin)); // K/2 because we have deletes.
         } else {
-            return (int) ceil(S_cap * nmax[0] / nmax[1]);
+            int bound;
+            if (useAcrossRows) {
+                bound = (int) ceil(Math.log(4 * p * depth * Math.sqrt(B) / delta) / (eps * eps));
+            } else {
+                bound = (int) ceil(Math.log(4 * p * Math.sqrt(B) / delta) / (eps * eps));
+            }
+            queryInfo.bound = 3*bound;
+            if (S_cap < 3*bound){
+                queryInfo.case1 = true;
+                if (case1ReturnScap) {
+                    return S_cap;
+                } else {
+                    return  (int) ((long) S_cap * nmax/ B);
+                }
+            } else {
+                queryInfo.case1 = false;
+                return (int) ((long) S_cap * nmax/ B);
+            }
         }
-
     }
 
     public int getFilledKSamples() {
@@ -469,7 +525,7 @@ public class OmniSketch extends SynopsisRefactor {
     }
 
     private int setIntersectEstimator(TWOLHS[][] samples, double unionEstimate, double eps,
-                                      int unionSizeExact, AnalysisBaselinesRefactor.QueryInfo CMRow) {
+                                      int unionSizeExact, QueryInfo CMRow) {
 
         if (this.useInvDistPaper2LHS) {
             return setIntersectEstimatorInverseDist(samples, unionEstimate, eps, unionSizeExact, CMRow);
@@ -561,7 +617,7 @@ public class OmniSketch extends SynopsisRefactor {
         return new int[]{sum, count};
     }
 
-    private int setIntersectEstimatorInverseDist(TWOLHS[][] samples, double unionEstimate, double eps, int unionSizeExact, AnalysisBaselinesRefactor.QueryInfo CMRow) {
+    private int setIntersectEstimatorInverseDist(TWOLHS[][] samples, double unionEstimate, double eps, int unionSizeExact, QueryInfo CMRow) {
         int sum = 0;
         int count = 0;
         for (int i = 0; i < numTwoLHSReps; i++) {
@@ -624,7 +680,7 @@ public class OmniSketch extends SynopsisRefactor {
     }
 
     private int setIntersectEstimatorTwoLHS(TWOLHS[][] samples, double unionEstimate, double eps,
-                                            int unionSizeExact, AnalysisBaselinesRefactor.QueryInfo CMRow) {
+                                            int unionSizeExact, QueryInfo CMRow) {
         int sum = 0;
         int count = 0;
         for (int i = 0; i < numTwoLHSReps; i++) {
@@ -681,7 +737,7 @@ public class OmniSketch extends SynopsisRefactor {
         return samples;
     }
 
-    private int queryEstAcrossRowsTwoLHS(TWOLHS[][] samples, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
+    private int queryEstAcrossRowsTwoLHS(TWOLHS[][] samples, QueryInfo queryInfo) {
 
         double u = setUnionEstimator(samples, Main.eps/3); // Est of union size. //TODO: Using Main.eps, but should use eps.
         //System.out.println("u: " + u + ", unionSize: " + unionSize + " diff: " + (u - unionSize));
@@ -731,7 +787,7 @@ public class OmniSketch extends SynopsisRefactor {
         return samples;
     }
 
-    private int minEstimate(int[] estimates, double[] unionEstimates, AnalysisBaselinesRefactor.QueryInfo CMRow) {
+    private int minEstimate(int[] estimates, double[] unionEstimates, QueryInfo CMRow) {
         int min = Integer.MAX_VALUE;
         for (int i = 0; i < estimates.length; i ++) {
             if (estimates[i] < min) {
@@ -762,7 +818,7 @@ public class OmniSketch extends SynopsisRefactor {
     }
 
 
-    private int queryEstPerRowTwoLHSWithInfo(TWOLHS[][][] samples, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
+    private int queryEstPerRowTwoLHSWithInfo(TWOLHS[][][] samples, QueryInfo queryInfo) {
         int[] estimates = new int[depth];
         double[] unionEstimates = new double[depth];
         for (int i = 0; i < depth; i++) {
@@ -779,206 +835,6 @@ public class OmniSketch extends SynopsisRefactor {
     /*
      * End 2LHS
      */
-
-
-//region COMMENTED OUT
-//
-
-
-
-    //TODO: Can I deletE?
-//    private int queryEstOverAllRows(long[] q, int numPreds, int unionSize, AnalysisBaselinesRefactor.QueryInfo CMRow) {
-//        TWOLHS[][] samples = new TWOLHS[numPreds * depth][];
-//        // initialize arrays
-//        for (int i = 0; i < numPreds * depth; i++) {
-//            samples[i] = new TWOLHS[numTwoLHSReps];
-//        }
-//
-//        int attrWithoutPred = 0;
-//        for (int i = 0; i < q.length; i++) {
-//            if (q[i] != -1) { // Find way to not take the -1s into account in query.
-//                TWOLHS[][] temp = CMSketches[i].queryTwoLHS(q[i]);
-//                if (depth >= 0) {
-//                    for (int j = 0; j < depth; j++) {
-//                        System.arraycopy(temp[j], 0, samples[(i - attrWithoutPred) * depth + j], 0, numTwoLHSReps);
-//                    }
-//                }
-//            } else {
-//                attrWithoutPred++;
-//            }
-//        }
-//        double u = setUnionEstimator((TWOLHS[][]) samples, Main.eps/3); // Est of union size.
-//        return setIntersectEstimator((TWOLHS[][]) samples, u, Main.eps/3, unionSize, CMRow);
-//    }
-
-//    private int queryEstPerRowTwoLHS(TWOLHS[][][] samples) {
-//        int[] estimates = new int[depth];
-//        for (int i = 0; i < depth; i++) {
-//            double u = setUnionEstimator( samples[i], Main.eps/3); // Est of union size.
-//            estimates[i] = setIntersectEstimator(samples[i], u, Main.eps/3, -1, null);
-//        }
-//        if (Main.minEstimate) {
-//            return minEstimate(estimates);
-//        } else {
-//            return medianEstimate(estimates);
-//        }
-//    }
-
-
-
-
-
-//    private int queryEstPerRow(long[] q, int numPreds, int unionSize, AnalysisBaselinesRefactor.QueryInfo CMRow) {
-//        TWOLHS[][][] samples = (TWOLHS[][][]) getSamplesTwoLHSPerRow(q, numPreds);
-//        // Get estimate per depth. Take minimum of all estimates.
-//        int[] estimates = new int[depth];
-//        for (int i = 0; i < depth; i++) {
-//            double u = setUnionEstimator((TWOLHS[][]) samples[i], Main.eps/3); // Est of union size.
-//            estimates[i] = setIntersectEstimator((TWOLHS[][]) samples[i], u, Main.eps/3, unionSize, CMRow);
-//        }
-//        if (Main.minEstimate) {
-//            return minEstimate(estimates, CMRow);
-//        } else {
-//            return medianEstimate(estimates);
-//        }
-
-////    }
-//    private int minEstimate(int[] estimates, AnalysisBaselinesRefactor.QueryInfo CMRow) {
-//        int min = Integer.MAX_VALUE;
-//        for (int i = 0; i < estimates.length; i ++) {
-//            if (estimates[i] < min) {
-//                CMRow.setCMRow(i);
-//                min = estimates[i];
-//
-//            }
-//        }
-//        return min;
-//    }
-//
-//
-//
-//    private int minEstimate(int[] estimates) {
-//        int min = Integer.MAX_VALUE;
-//        for (int estimate : estimates) {
-//            if (estimate < min) {
-//                min = estimate;
-//            }
-//        }
-//        return min;
-//    }
-//    private double[] minEstimateInfo(double[][] estimates) {
-//        int min = Integer.MAX_VALUE;
-//        double[] minEstimate = new double[4];
-//        for (int i = 0; i<estimates.length; i++) {
-//            if (estimates[i][0] < min) {
-//                min = (int) estimates[i][0];
-//                minEstimate = estimates[i];
-//            }
-//        }
-//        return minEstimate;
-//    }
-
-
-
-//
-//    private int[] bucketDiffEstimatorGreedy(TWOLHS[][] samples, double unionEstimate, double eps, int repetition, int unionSizeExact) {
-//        int index;
-//        int count =0;
-//        int sum=0;
-//
-//        for (int i = 0; i < TWOLHSTmp[0].bitSize; i++) {
-//            if (!singletonUnionBucket(samples, repetition, i)) {
-//                continue;
-//            }
-//            boolean witnessFound = true;
-//            for (TWOLHS[] sample : samples) {
-//                if (!sample[repetition].singletonBucket(i)) {
-//                    witnessFound = false;
-//                }
-//            }
-//            if (witnessFound) {
-//                sum++;
-//            }
-//            count++;
-//        }
-//        return new int[]{sum, count};
-//    }
-
-
-
-
-
-
-
-
-//
-//
-//    private double[] setIntersectEstimatorInfo(TWOLHS[][] samples, double unionEstimate, double eps, int unionSizeExact) {
-//        int sum = 0;
-//        int count = 0;
-//        for (int i = 0; i < numTwoLHSReps; i++) {
-//            int diff = bucketDiffEstimator(samples, unionEstimate, eps, i, unionSizeExact); // atomicDiffEstimator if section 3 of paper.
-//            if (diff != -1) {
-//                sum += diff;
-//                count++;
-//            }
-//        }
-//        if (count == 0){
-//            countIsZero++;
-//        }
-//        double result;
-//        if (Main.useExactUnionSize) {
-//            result = ceil(((double) sum / count) * unionSizeExact);
-//        } else {
-//            result = ceil(((double) sum / count) * unionEstimate);
-//        }
-//        int resultInt = (int) result;
-//        if (resultInt < 0) {
-//            System.out.println("Error: result > unionSize");
-//            System.exit(1);
-//        }
-//
-//        return new double[]{resultInt, sum, count, unionEstimate};
-//    }
-
-
-
-
-//    private double getAltEstKMV(Kmin[] samples) {
-//        int numJoins = samples.length;
-//        int c = 0;
-//        Iterator<Long> iter = samples[0].sketch.iterator();
-//        while (iter != null && iter.hasNext()) {
-//            boolean found = true;
-//            Long i = iter.next();
-//            for (int j = 1; j < numJoins; j++) {
-//                Long otherElement = samples[j].sketch.ceiling(i);
-//                if (otherElement == null) {
-//                    found = false;
-//                    iter = null;
-//                    break;
-//                } // not contained
-//                else if (otherElement.equals(i)) continue; // is contained
-//                else {
-//                    iter = samples[0].sketch.tailSet(otherElement).iterator(); // fast forward iter0
-//                    found = false;
-//                    break; // but now you need to start from iter.hasNext() again
-//                }
-//            }
-//            if (found) c++;
-//
-//        }
-//        return c;
-//    }
-
-
-    //public int[][] Bs = new int[Main.numStoredAttributes][Main.depth];
-
-
-
-
-// endregion
-
 
 
     //region SLOW INSERTION
@@ -1045,18 +901,18 @@ public class OmniSketch extends SynopsisRefactor {
         long totalSavedByMaxBits = 0;
         for (int i = 0; i < numStoredAttributes; i++) {
             if (rangeQueries) {
-                for (int j = 0; j < dyadicRangeBits + 1; j++) {
-                    if (maxBits[i] + 1 < dyadicRangeBits - j) { // no need to store empty ranges
-                        totalSavedByMaxBits += CMSketchesRange[i][j].getMemoryUsage();
-                        continue;
-                    }
-                    memUsageSketch = CMSketchesRange[i][j].getMemoryUsage();
-                    memUsageArray  = getMemUsageArray(j);
-                    if (memUsageArray < memUsageSketch) {
-                        totalSavedByArrays += memUsageSketch - memUsageArray;
-                    }
-                    memoryUsage += min(memUsageArray, memUsageSketch);
-                }
+//                for (int j = 0; j < dyadicRangeBits + 1; j++) {
+//                    if (maxBits[i] + 1 < dyadicRangeBits - j) { // no need to store empty ranges
+//                        totalSavedByMaxBits += CMSketchesRange[i][j].getMemoryUsage();
+//                        continue;
+//                    }
+//                    memUsageSketch = CMSketchesRange[i][j].getMemoryUsage();
+//                    memUsageArray  = getMemUsageArray(j);
+//                    if (memUsageArray < memUsageSketch) {
+//                        totalSavedByArrays += memUsageSketch - memUsageArray;
+//                    }
+//                    memoryUsage += min(memUsageArray, memUsageSketch);
+//                }
             } else {
                 memoryUsage += CMSketches[i].getMemoryUsage();
             }
@@ -1066,6 +922,13 @@ public class OmniSketch extends SynopsisRefactor {
             System.err.println("Memory usage is " + (memoryUsage) + " bytes and max memory usage is " + maxMemoryUsage + " bytes");
         }
         memUsageSynopsis = memoryUsage;
+
+        // Now we will test how large the PQs are in each cell.
+        long memUsagePQ = 0;
+        for (int i = 0; i < numStoredAttributes; i++) {
+            memUsagePQ += CMSketches[i].getMemoryUsagePQ();
+        }
+
         return memoryUsage;
     }
 
@@ -1073,7 +936,7 @@ public class OmniSketch extends SynopsisRefactor {
         long memUsageArray = 0;
 
         long C = (long) pow(2, j);
-        memUsageArray = C * maxSize * (b + 3 * 32 + 1) + 32;
+        memUsageArray = C * Formulas.ramSingleKmin(maxSize, b);//maxSize * (b + 3 * 32 + 1) + 32;
         return memUsageArray;
     }
 
@@ -1081,9 +944,9 @@ public class OmniSketch extends SynopsisRefactor {
     public void reset() {
         for (int i = 0; i < numStoredAttributes; i++) {
             if (rangeQueries) {
-                for (int j = 0; j < dyadicRangeBits + 1; j++) {
-                    CMSketchesRange[i][j].reset();
-                }
+//                for (int j = 0; j < dyadicRangeBits + 1; j++) {
+//                    CMSketchesRange[i][j].reset();
+//                }
             } else {
                 CMSketches[i].reset();
             }
@@ -1110,41 +973,6 @@ public class OmniSketch extends SynopsisRefactor {
             }
         }
         return n_max;
-    }
-
-
-    public int rangeQuery(long[] minranges, long[] maxranges) {
-        double S_cap = 0;
-        int n_max = 0;
-        int B_virtual = 0;
-        TreeSet<Integer>[] samples = new TreeSet[numStoredAttributes * depth];
-        // Empty ns;
-        ns = new int[numStoredAttributes][depth];
-
-        for (int i = 0; i < numStoredAttributes; i++) { // Used to be Main.numAttributes.
-            //long[][] ranges = getLogRanges(q.lower[i], q.upper[i]);
-            ArrayList<long[]> rangesList = wrapLogRanges(minranges[i + 1], minranges[i + 1]);
-            TreeSet<Integer>[] set = new TreeSet[depth];
-            B_virtual = rangesList.size() * maxSize;
-            for (int j = 0; j < rangesList.size(); j++) {
-                CountMinDyad cm = CMSketchesRange[i][getIndexOfRange(rangesList.get(j))];
-                TreeSet<Integer>[] rangeSet = cm.rangeQuery(rangesList.get(j)[0], rangesList.get(j)[1], ns[i]);
-                for (int d = 0; d < depth; d++) {
-                    if (set[d] == null) {
-                        set[d] = rangeSet[d];
-                    } else {
-                        set[d].addAll(rangeSet[d]);
-                    }
-                }
-
-            }
-            if (depth > 0) System.arraycopy(set, 0, samples, i * depth,depth);
-        }
-        n_max = getNmaxRange();
-        S_cap = getAltEstKMV(samples); //Instead of getAltEstKMV
-        double constraint = 3 * log((4 * numStoredAttributes * depth * sqrt(B_virtual))
-                / Main.delta)/(Main.eps * Main.eps);
-        return (int) ceil(S_cap * n_max / B_virtual);
     }
 
     private long[][] wrapperInitLogRanges(long l) {
@@ -1312,7 +1140,7 @@ public class OmniSketch extends SynopsisRefactor {
     }
 
     @Override
-    public int[] checkConditions(long[] q, int numPreds, int unionSize, AnalysisBaselinesRefactor.QueryInfo CMRow) {
+    public int[] checkConditions(long[] q, int numPreds, int unionSize, QueryInfo CMRow) {
         TreeSet<Long>[][] samples = new TreeSet[depth][numPreds];
         // initialize arrays
         for (int i = 0; i < depth; i++) {
@@ -1325,11 +1153,9 @@ public class OmniSketch extends SynopsisRefactor {
                 // temp is Sample[depth][numTwoLHSReps]
                 TreeSet<Long>[] temp = CMSketchesS0[i].query(q[i]);
                 // want to add to samples per depth, such that we can call unionEstimate
-                if (depth>=0) {
-                    for (int j = 0; j < depth; j++) {
-                        samples[j][(i - attrWithoutPred)] = temp[j];
-                        //System.arraycopy(temp[j], 0, samples[j][(i - attrWithoutPred)],0, temp[j].size());
-                    }
+                for (int j = 0; j < depth; j++) {
+                    samples[j][(i - attrWithoutPred)] = temp[j];
+                    //System.arraycopy(temp[j], 0, samples[j][(i - attrWithoutPred)],0, temp[j].size());
                 }
             } else {
                 attrWithoutPred++;

@@ -13,6 +13,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
+
+import static java.lang.Integer.parseInt;
+
 //import java.util.logging.*;
 
 public class Main {
@@ -56,15 +59,20 @@ public class Main {
     public static boolean exp2LHS;
     public static boolean expResSample;
     public static boolean expCM;
+    public static boolean expOmniSenate;
+    public static boolean expOmniHouse;
+    public static boolean expPerRow;
+    public static boolean expCase1ReturnScap;
     public static int[] bGridSearch;
     public static int[] dGridSearch;
+    public static double[] epsValues;
     public static int[] wGridSearch;
     public static int[] BGridSearch;
 
     public static double[] parFactorGridSearch;
     public static double[] densityGridSearch;
     public static int numZipfianAttrs;
-    public static double zipfAlpha;
+    public static double[] zipfAlphas;
 
     static String setting;
     public static boolean readAllFiles = true; // Set true if all files should be read, false if only the first file should be read
@@ -91,7 +99,7 @@ public class Main {
     //public static int[] depthOptionsGridSearch;
     private static int sizeFactor;
     public static int numBins;
-    public static int[] numPredicates;
+    public static int numPredicates;
     static double[] noiseUpdateFractions;
     public static String sizeFactorOptions;
     static double[] bufferValuesOmni;
@@ -116,7 +124,7 @@ public class Main {
         //setParameters(eps: 0.1, delta: 0.05, maxLevel: 32, seed: 1, numAttributes: 2, qTarget: 0.01);
         setting = args[0];
         Main.datasetName = args[1];
-        Main.numRepetitions = Integer.parseInt(args[2]);
+        Main.numRepetitions = parseInt(args[2]);
         Main.runOnODC= Boolean.parseBoolean(args[3]);
         Main.readFolder = args[4];
         Main.withDeletes = Boolean.parseBoolean(args[5]);
@@ -132,19 +140,24 @@ public class Main {
         Main.parFactorGridSearch = getDoubleArray(args[14]);
 //        Main.wGridSearch = parseIntArray(args[15]);
 //        Main.BGridSearch = parseIntArray(args[16]);
-        Main.numBins = Integer.parseInt(args[15]);
-        Main.numPredicates = parseIntArray(args[16]);
-        Main.exp2LHS = Boolean.parseBoolean(args[17]);
-        Main.expaSH = Boolean.parseBoolean(args[18]);
-        Main.expHydra = Boolean.parseBoolean(args[19]);
-        Main.expResSample = Boolean.parseBoolean(args[20]);
-        Main.expCM = Boolean.parseBoolean(args[21]);
-        Main.sizeFactorOptions = args[22];
-        Main.sizeNoise = parseIntArray(args[23]);
-        Main.experiment_name = args[24];
-        Main.useMultNumAttributes = Boolean.parseBoolean(args[25]);
-        Main.numZipfianAttrs = Integer.parseInt(args[26]);
-        Main.zipfAlpha = Double.parseDouble(args[27]);
+        Main.numBins = parseInt(args[15]);
+        Main.numPredicates = parseInt(args[16]);
+        Main.expOmniSenate = Boolean.parseBoolean(args[17]);
+        Main.expOmniHouse = Boolean.parseBoolean(args[18]);
+        Main.exp2LHS = Boolean.parseBoolean(args[19]);
+        Main.expaSH = Boolean.parseBoolean(args[20]);
+        Main.expHydra = Boolean.parseBoolean(args[21]);
+        Main.expResSample = Boolean.parseBoolean(args[22]);
+        Main.expCM = Boolean.parseBoolean(args[23]);
+        Main.expPerRow = Boolean.parseBoolean(args[24]);
+        Main.expCase1ReturnScap = Boolean.parseBoolean(args[25]);
+        Main.epsValues = getDoubleArray(args[26]);
+        Main.sizeFactorOptions = args[27];
+        Main.sizeNoise = parseIntArray(args[28]);
+        Main.experiment_name = args[29];
+        Main.useMultNumAttributes = Boolean.parseBoolean(args[30]);
+        Main.numZipfianAttrs = parseInt(args[31]);
+        Main.zipfAlphas = getDoubleArray(args[32]);
         //Main.useExactUnionSize = Boolean.parseBoolean(args[3]);
 
         if (Main.datasetName.equals("CAIDA")) {
@@ -213,7 +226,7 @@ public class Main {
         String[] vals = arg.split(",");
         int[] res = new int[vals.length];
         for (int i = 0; i < vals.length; i++) {
-            res[i] = Integer.parseInt(vals[i]);
+            res[i] = parseInt(vals[i]);
         }
         return res;
     }

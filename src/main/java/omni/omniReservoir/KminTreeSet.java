@@ -1,4 +1,4 @@
-package omni.omniDynamic;
+package omni.omniReservoir;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.Random;
 import java.util.TreeSet;
 
-public class Kmin extends Sample {
+public class KminTreeSet extends Sample {
     private final double Beta;
     private final int allowedDeletions;
     public boolean exceedsNumberOfDeletes = false;
@@ -28,11 +28,10 @@ public class Kmin extends Sample {
     HashFunction xx;
 
     int hash(long x) {
-        return (xx.hashLong(x).asInt() & maxHash);
-        //return ((xx.hashLong(x).asInt() % maxHash) + maxHash) % maxHash;
+        return ((xx.hashLong(x).asInt() % maxHash) + maxHash) % maxHash;
     }
 
-    public Kmin(int maxSize, int b, boolean supportDeletes, double Beta, int seed) {
+    public KminTreeSet(int maxSize, int b, boolean supportDeletes, double Beta, int seed) {
         this.supportDeletes = supportDeletes;
         this.K = maxSize;
         this.b = b;
@@ -77,16 +76,16 @@ public class Kmin extends Sample {
         } else if (curSampleSize == K) {
             curTreeRoot = sketch.first();
             if (hx < curTreeRoot) { // get tree root
-//                if (Main.countUniqueSamples) {
-//                    if (Main.uniqueSamples.containsKey(curTreeRoot)) {
-//                        Main.uniqueSamples.put(curTreeRoot, Main.uniqueSamples.get(curTreeRoot) - 1);
-//                        if (Main.uniqueSamples.get(curTreeRoot) == 0) {
-//                            Main.uniqueSamples.remove(curTreeRoot);
-//                        }
-//                    } else if (curTreeRoot != Long.MAX_VALUE) {
-//                        throw new RuntimeException("Error in Kmin: curTreeRoot not in uniqueSamples");
-//                    }
-//                }
+                if (Main.countUniqueSamples) {
+                    if (Main.uniqueSamples.containsKey(curTreeRoot)) {
+                        Main.uniqueSamples.put(curTreeRoot, Main.uniqueSamples.get(curTreeRoot) - 1);
+                        if (Main.uniqueSamples.get(curTreeRoot) == 0) {
+                            Main.uniqueSamples.remove(curTreeRoot);
+                        }
+                    } else if (curTreeRoot != Long.MAX_VALUE) {
+                        throw new RuntimeException("Error in Kmin: curTreeRoot not in uniqueSamples");
+                    }
+                }
                 sketch.pollFirst();
                 if (sketch.add(hx)) {
                     curTreeRoot = sketch.first();

@@ -1,6 +1,7 @@
 package omni.resSample;
 
 import omni.AnalysisBaselinesRefactor;
+import omni.QueryInfo;
 import omni.SynopsisRefactor;
 
 import java.util.HashMap;
@@ -49,7 +50,7 @@ public class ReservoirSample extends SynopsisRefactor {
     }
 
     @Override
-    public int query(long[] query, int numPreds, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
+    public int query(long[] query, int numPreds, QueryInfo queryInfo) {
        // go over all records in the reservoir and check if they match the query
         int queryResultCount = 0;
         for (int i = 0; i < size; i++) {
@@ -70,7 +71,7 @@ public class ReservoirSample extends SynopsisRefactor {
     }
 
     @Override
-    public int query(long[] query, int numPreds, int unionSize, AnalysisBaselinesRefactor.QueryInfo CMRow) {
+    public int query(long[] query, int numPreds, int unionSize, QueryInfo CMRow) {
         throw new UnsupportedOperationException();
     }
 

@@ -1,4 +1,4 @@
-package omni.omniDynamic;
+package omni.omniPQ;
 
 import omni.AnalysisBaselinesRefactor;
 import omni.Formulas;
@@ -22,7 +22,7 @@ public class OmniSketch extends SynopsisRefactor {
     public final int numStoredAttributes;
     private final int dyadicRangeBits;
     private final boolean checkExactUnion2LHS;
-    Kmin[] kminTmp;
+    Kmin kminTmp;
     TWOLHS[] TWOLHSTmp;
     boolean rangeQueries;
     Random randomHashG;
@@ -88,6 +88,7 @@ public class OmniSketch extends SynopsisRefactor {
             b = parameters[3];
             numTwoLHSReps = -1;
         }
+        System.out.println("Parameters: " + Arrays.toString(parameters));
         initSketch();
     }
 
@@ -96,7 +97,7 @@ public class OmniSketch extends SynopsisRefactor {
      */
 
     public void initSketch() {
-        setting = "OmniSketchTreeSet_" + dynamicSampleSizes;
+        setting = "OmniSketchPQ_" + dynamicSampleSizes;
         Main.kminDeletes = 0;
 
         if (useTwoLHS) {
@@ -105,10 +106,7 @@ public class OmniSketch extends SynopsisRefactor {
                 TWOLHSTmp[i] = new TWOLHS(seed, i);
             }
         } else {
-            kminTmp = new Kmin[depth];
-            for (int j = 0; j < depth; j++) {
-                kminTmp[j] = new Kmin(maxSize, b, useBetaKmin, BetaKmin, seed + j);
-            }
+            kminTmp = new Kmin(maxSize, b, useBetaKmin, BetaKmin, seed);
         }
         this.maxBits = new int[numStoredAttributes];
 
@@ -155,22 +153,13 @@ public class OmniSketch extends SynopsisRefactor {
 //        long[] attrRecord = new long[record.length - 1];
 //        System.arraycopy(record, 1, attrRecord, 0, record.length - 1);
 //        long id = Arrays.hashCode(attrRecord);
-        int[] hx = new int[depth];
+        int hx = (int) id;
         long[] hx_2lhs = null;
         long[][] vals = null;
         int hashG = -1;
 
         if (!useTwoLHS){
-            if (useAcrossRows) {
-                hx[0] = kminTmp[0].hash(id);
-                for (int j = 1; j < depth; j++) {
-                    hx[j] = hx[0];
-                }
-            } else {
-                for (int j = 0; j < depth; j++) {
-                    hx[j] = kminTmp[j].hash(id);
-                }
-            }
+            hx = kminTmp.hash(id);
         } else {
             if (useFastTwoLHS) {
                 hashG = hashG(id);
@@ -179,7 +168,7 @@ public class OmniSketch extends SynopsisRefactor {
                 //hx_2lhs = new long[numTwoLHSReps];
                 vals = new long[numTwoLHSReps][TWOLHSTmp[0].bitSize];
                 for (int i = 0; i < numTwoLHSReps; i++) {
-                    hx_i = TWOLHSTmp[i].hashH(hx[0]);
+                    hx_i = TWOLHSTmp[i].hashH(hx);
                     for (int j = 0; j < TWOLHSTmp[0].bitSize; j++) {
                         int mask = 1 << j;
                         long val = (hx_i & mask);
@@ -199,7 +188,7 @@ public class OmniSketch extends SynopsisRefactor {
             for (int i = 0; i < numStoredAttributes; i++) {
                 long[][] ranges = wrapperInitLogRanges(record[i + 1]);
                 for (int j = 0; j < ranges[2].length; j++) {
-                    CMSketchesRange[i][j].add(ranges[1][j], ranges[2][j], hx[j]);
+                    CMSketchesRange[i][j].add(ranges[1][j], ranges[2][j], hx);
                 }
             }
         } else {
@@ -208,7 +197,7 @@ public class OmniSketch extends SynopsisRefactor {
             }
             if (checkExactUnion2LHS) {
                 for (int i = 0; i < numStoredAttributes; i++) {
-                    CMSketchesS0[i].ingest(record[i + 1], hx[0], sign);
+                    CMSketchesS0[i].ingest(record[i + 1], hx, sign);
                 }
             }
         }
@@ -322,32 +311,153 @@ public class OmniSketch extends SynopsisRefactor {
         return samples;
     }
 
-    private double getAltEstKMV(TreeSet<Integer>[] samples) {
+    private double getAltEstKMV(PriorityQueue<Integer>[] samples) {
         int numJoins = samples.length;
-        int c = 0;
-        Iterator<Integer> iter = samples[0].iterator();
-        while (iter != null && iter.hasNext()) {
-            boolean found = true;
-            Integer i = iter.next();
-            for (int j = 1; j < numJoins; j++) {
-                Integer otherElement = samples[j].ceiling(i);
-                if (otherElement == null) {
-                    found = false;
-                    iter = null;
-                    break;
-                } // not contained
-                else if (otherElement.equals(i)) continue; // is contained
-                else {
-                    iter = samples[0].tailSet(otherElement).iterator(); // fast forward iter0
-                    found = false;
-                    break; // but now you need to start from iter.hasNext() again
+        int intersectionCount = 0;
+
+        // Array to track the current value from each iterator
+        Integer[] currentValues = new Integer[numJoins];
+
+        // Initialize each queue's current value
+        for (int i = 0; i < numJoins; i++) {
+            if (!samples[i].isEmpty()) {
+                currentValues[i] = samples[i].peek();
+            } else {
+                return 0; // If any queue is empty, intersection count is zero
+            }
+        }
+
+        while (true) {
+            // Find the maximum value among the current values
+            Integer minCurrent = currentValues[0];
+            for (int i = 1; i < numJoins; i++) {
+                if (currentValues[i] < minCurrent) {
+                    minCurrent = currentValues[i];
                 }
             }
-            if (found) c++;
 
+            // Check if all current values match the maxCurrent
+            boolean allMatch = true;
+            for (int i = 0; i < numJoins; i++) {
+                if (!currentValues[i].equals(minCurrent)) {
+                    allMatch = false;
+                    break;
+                }
+            }
+
+            // If all queues have the same current value, count it as an intersection
+            if (allMatch) {
+                intersectionCount++;
+                // Advance all iterators to the next element
+                for (int i = 0; i < numJoins; i++) {
+                    samples[i].poll();
+                    if (!samples[i].isEmpty()) {
+                        currentValues[i] = samples[i].peek();
+                    } else {
+                        return intersectionCount; // End if any queue is exhausted
+                    }
+                }
+            } else {
+                // Advance only iterators of queues with current values < maxCurrent
+                for (int i = 0; i < numJoins; i++) {
+                    while (currentValues[i] > minCurrent) {
+                        samples[i].poll();
+                        if (!samples[i].isEmpty()) {
+                            currentValues[i] = samples[i].peek();
+                        } else {
+                            return intersectionCount; // End if any queue is exhausted
+                        }
+                    }
+                }
+            }
         }
-        return c;
     }
+
+
+//    private double getAltEstKMV(PriorityQueue<Long>[] samples) {
+//        int numJoins = samples.length;
+//        int intersectionCount = 0;
+//
+//        // Clone each PriorityQueue to avoid modifying the original queues
+//
+//        // Initialize an iterator for each cloned PriorityQueue
+//        Iterator<Long>[] iterators = new Iterator[numJoins];
+//        for (int i = 0; i < numJoins; i++) {
+//            iterators[i] = samples[i].iterator();
+//        }
+//
+//        // Iterate through the first cloned queue as the "base" for comparison
+//        Iterator<Long> baseIter = iterators[0];
+//        while (baseIter.hasNext()) {
+//            Long current = baseIter.next();
+//            boolean isInAllQueues = true;
+//
+//            // Check if the current element is present in each of the other cloned queues
+//            for (int j = 1; j < numJoins; j++) {
+//                Long otherCurrent = null;
+//                while (iterators[j].hasNext()) {
+//                    otherCurrent = iterators[j].next();
+//                    // Since queues are in descending order, break when otherCurrent <= current
+//                    if (otherCurrent <= current) break;
+//                }
+//
+//                // If no match or `otherCurrent` < `current`, it's not in all queues
+//                if (otherCurrent == null || !otherCurrent.equals(current)) {
+//                    isInAllQueues = false;
+//                    break;
+//                }
+//            }
+//
+//            // If element is present in all queues, increase the count
+//            if (isInAllQueues) {
+//                intersectionCount++;
+//            }
+//        }
+//
+//        return intersectionCount;
+//    }
+
+//    private double getAltEstKMV(PriorityQueue<Long>[] samples) {
+//        int numJoins = samples.length;
+//        int intersectionCount = 0;
+//
+//        // Initialize an iterator for each PriorityQueue
+//        Iterator<Long>[] iterators = new Iterator[numJoins];
+//        for (int i = 0; i < numJoins; i++) {
+//            iterators[i] = samples[i].iterator();
+//        }
+//
+//        // Iterate through the first queue as the "base" for comparison
+//        Iterator<Long> baseIter = iterators[0];
+//        while (baseIter.hasNext()) {
+//            Long current = baseIter.next();
+//            boolean isInAllQueues = true;
+//
+//            // Check if the current element is present in each of the other queues
+//            for (int j = 1; j < numJoins; j++) {
+//                Long otherCurrent = null;
+//                while (iterators[j].hasNext()) {
+//                    otherCurrent = iterators[j].next();
+//                    // Since queues are in descending order, break when otherCurrent <= current
+//                    if (otherCurrent <= current) break;
+//                }
+//
+//                // If no match or `otherCurrent` < `current`, it's not in all queues
+//                if (otherCurrent == null || !otherCurrent.equals(current)) {
+//                    isInAllQueues = false;
+//                    break;
+//                }
+//            }
+//
+//            // If element is present in all queues, increase the count
+//            if (isInAllQueues) {
+//                intersectionCount++;
+//            }
+//        }
+//
+//        return intersectionCount;
+//    }
+
 
     private int[] getNmax(Kmin[] samples) {
         int[] nmax = new int[2];
@@ -361,7 +471,7 @@ public class OmniSketch extends SynopsisRefactor {
     }
 
 
-    private int queryEstPerRowKmin(Kmin[][] samplesPerRowKmin, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
+    private int queryEstPerRowKmin(Kmin[][] samplesPerRowKminTreeSet, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
         // Do queryKmin per row and take median.
         int[] estimates = new int[depth];
         int min_nmax = Integer.MAX_VALUE;
@@ -371,7 +481,7 @@ public class OmniSketch extends SynopsisRefactor {
         int estimate = 0;
         boolean case1 = false;
         for (int i = 0; i < depth; i++) {
-            estimates[i] = queryKmin(samplesPerRowKmin[i], queryInfo);
+            estimates[i] = queryKmin(samplesPerRowKminTreeSet[i], queryInfo);
             if (queryInfo.nmax < min_nmax) { // Return estimate with lowest nmax.
                 min_nmax = queryInfo.nmax;
                 estimate = estimates[i];
@@ -391,12 +501,12 @@ public class OmniSketch extends SynopsisRefactor {
         double S_cap = 0;
         int[] nmax;
         int exceedBounds = 0;
-        TreeSet<Integer>[] flatSamples = new TreeSet[samples.length];
+        PriorityQueue<Integer>[] flatSamples = new PriorityQueue[samples.length];
         for (int i = 0; i < samples.length; i++) {
             if (samples[i].exceedsNumberOfDeletes) {
                 exceedBounds++;
             }
-            TreeSet<Integer> kmin = samples[i].getSampleToQuery();
+            PriorityQueue<Integer> kmin = samples[i].getSampleToQuery();
             flatSamples[i] = kmin;
         }
         nmax = getNmax(samples);
@@ -1073,7 +1183,7 @@ public class OmniSketch extends SynopsisRefactor {
         long memUsageArray = 0;
 
         long C = (long) pow(2, j);
-        memUsageArray = C * maxSize * (b + 3 * 32 + 1) + 32;
+        memUsageArray = C * Formulas.ramSingleKmin(maxSize, b);//maxSize * (b + 3 * 32 + 1) + 32;
         return memUsageArray;
     }
 
@@ -1117,18 +1227,18 @@ public class OmniSketch extends SynopsisRefactor {
         double S_cap = 0;
         int n_max = 0;
         int B_virtual = 0;
-        TreeSet<Integer>[] samples = new TreeSet[numStoredAttributes * depth];
+        PriorityQueue<Integer>[] samples = new PriorityQueue[numStoredAttributes * depth];
         // Empty ns;
         ns = new int[numStoredAttributes][depth];
 
         for (int i = 0; i < numStoredAttributes; i++) { // Used to be Main.numAttributes.
             //long[][] ranges = getLogRanges(q.lower[i], q.upper[i]);
             ArrayList<long[]> rangesList = wrapLogRanges(minranges[i + 1], minranges[i + 1]);
-            TreeSet<Integer>[] set = new TreeSet[depth];
+            PriorityQueue<Integer>[] set = new PriorityQueue[depth];
             B_virtual = rangesList.size() * maxSize;
             for (int j = 0; j < rangesList.size(); j++) {
                 CountMinDyad cm = CMSketchesRange[i][getIndexOfRange(rangesList.get(j))];
-                TreeSet<Integer>[] rangeSet = cm.rangeQuery(rangesList.get(j)[0], rangesList.get(j)[1], ns[i]);
+                PriorityQueue<Integer>[] rangeSet = cm.rangeQuery(rangesList.get(j)[0], rangesList.get(j)[1], ns[i]);
                 for (int d = 0; d < depth; d++) {
                     if (set[d] == null) {
                         set[d] = rangeSet[d];

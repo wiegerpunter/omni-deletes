@@ -1,4 +1,4 @@
-package omni.omniDynamic;
+package omni.omniPQPrimitive;
 
 public abstract class Sample {
     public int n;
@@ -7,7 +7,7 @@ public abstract class Sample {
     protected String setting;
     protected int ram;
     public int memUsageSynopsis;
-    public int curSampleSize;
+    public int curSampleSize=0;
     public int seed;
 
     public Sample() {

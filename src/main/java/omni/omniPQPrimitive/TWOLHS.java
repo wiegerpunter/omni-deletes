@@ -1,4 +1,4 @@
-package omni.omniDynamic;
+package omni.omniPQPrimitive;
 
 import java.util.Random;
 
@@ -45,10 +45,10 @@ public class TWOLHS extends Sample {
         // initialize hash tables
     }
 
-    public long hashH(long x) {
+    public int hashH(int x) {
         // similar to fm. hash x to [0, M^k] uniformly.
         // hash x to [0, M^k] uniformly
-        long hash = ((a * x + b) % c % hashDomain + 1);//(((a * x + b) % c % hashDomain + hashDomain) % hashDomain) + 1;
+        int hash = (int) ((a * x + b) % c % hashDomain + 1);//(((a * x + b) % c % hashDomain + hashDomain) % hashDomain) + 1;
 //        if (hash <= 0) {
 //            System.out.println("Hash is negative for x = " + x);
 //            throw new RuntimeException("Hash is negative");
@@ -84,7 +84,7 @@ public class TWOLHS extends Sample {
     @Override
     public void ingest(int hx, int sign) {
         // get lsb of hx. increment total count by v. increment all 1 .. log M counts by v if bit is 1.
-        long h = hashH(hx);
+        int h = hashH(hx);
         // bit repr of h:
 
         int sketch_index = -1;

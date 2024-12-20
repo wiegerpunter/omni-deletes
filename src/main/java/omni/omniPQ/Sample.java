@@ -1,4 +1,4 @@
-package omni.omniDynamic;
+package omni.omniPQ;
 
 public abstract class Sample {
     public int n;

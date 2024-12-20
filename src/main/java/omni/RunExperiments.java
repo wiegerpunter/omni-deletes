@@ -3,7 +3,6 @@ package omni;
 import com.opencsv.exceptions.CsvValidationException;
 import omni.CountMin.CountMin;
 import omni.hydraRefactor.ImpHydraStruct;
-import omni.omniDynamic.OmniSketch;
 import omni.resSample.ReservoirSample;
 import omni.aSH.aSH;
 
@@ -32,9 +31,9 @@ public class RunExperiments {
     }
 
     public void run() throws IOException, CsvValidationException {
-        for (int p: Main.numPredicates) {
-            cd = new CleanDataset(h, Main.numBins,p);
-            readDatasetSettings();
+        cd = new CleanDataset(h, Main.numBins,Main.numPredicates);
+        readDatasetSettings();
+        for (double zipfAlpha : Main.zipfAlphas) {
             for (int i = 0; i < conditions.length; i++) {
                 for (int n : Main.sizeNoise) {
                     if (Main.datasetName.equals("SNMP") || Main.datasetName.equals("CAIDA")) {
@@ -62,25 +61,25 @@ public class RunExperiments {
                         for (double perc : percToDelete) {
                             if (Main.useMultNumAttributes) {
                                 if (Main.datasetName.contains("synth")) {
-                                    readDataset(perc, maxPercent, sizeFactor, n);
+                                    readDataset(perc, maxPercent, sizeFactor, n, zipfAlpha);
                                 }
                                 for (int j = 3; j < cd.cleanIds.length + 1; j++) {
                                     Main.numStoredAttributes = j;
                                     if (Main.datasetName.equals("SNMP") || Main.datasetName.equals("CAIDA")) {
-                                        readDataset(perc, maxPercent, sizeFactor, n);
+                                        readDataset(perc, maxPercent, sizeFactor, n, zipfAlpha);
                                     }
                                     runSyns(i, repetition);
                                 }
                             } else {
                                 Main.numStoredAttributes = cd.cleanIds.length;
-                                readDataset(perc, maxPercent, sizeFactor, n);
+                                readDataset(perc, maxPercent, sizeFactor, n, zipfAlpha);
                                 runSyns(i, repetition);
                             }
                         }
                     }
                 }
+            }
         }
-    }
 //        for (double perc : percToDelete) {
 //            for (int i = 0; i < conditions.length; i++) {
 //                if (Main.useMultNumAttributes) {
@@ -123,75 +122,6 @@ public class RunExperiments {
                 actRamVals.add(ram);
             }
 //
-            ArrayList<Integer> resSampleSizes = new ArrayList<Integer>();
-
-//            resSampleSizes.add(1368000);
-//            resSampleSizes.add(2760000);
-//            if (Main.expResSample) {
-//                for (int size : resSampleSizes) {
-//                    System.out.println("RESERVOIR SAMPLING");
-//                    runResSampleFixedSize(size, repetition);
-//                    System.gc();
-//                }
-//            }
-
-            for (int b: Main.bGridSearch) {
-                for (int depth: Main.dGridSearch) {
-                    for (double parFactor : Main.parFactorGridSearch) {
-                        for (int c = 0; c < 1; c++) {
-                            boolean dynamicSampleSizes = false;
-                            this.rtp = new RamToPar(Main.numStoredAttributes, depth, b, parFactor);
-                            for (long ram : Main.ramVals) {
-                                System.out.println("Running sketch with ram " + ram);
-                                System.out.println("OMNISKETCH");
-                                boolean useTwoLHS = true;
-                                boolean useBetaKmin = false;
-                                if (Main.countUniqueSamples) {
-                                    Main.uniqueSamples = new HashMap<>();
-                                    Main.uniqueSamplesReservoir = new HashSet<>();
-                                }
-
-                                boolean useTwoLHSAcrossRows = false;
-                                boolean useFastTwoLHS = true;
-                                boolean useInvDistPaper2LHS = true;
-                                boolean useMinEstimate = true;
-
-                                //UNCOMMENT:
-                                if (Main.exp2LHS) {
-                                    runOmniSketch(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries, useBetaKmin,
-                                            useFastTwoLHS, useInvDistPaper2LHS, useMinEstimate, Main.checkConditions,
-                                            1, dynamicSampleSizes, repetition, actRamVals, resSampleSizes);
-
-                                    System.gc();
-                                }
-                                Main.checkConditions = false;
-                                useTwoLHS = false;
-                                useFastTwoLHS = false;
-                                useInvDistPaper2LHS = false;
-                                useMinEstimate = false;
-                                useBetaKmin = true;
-                                Double betaValue = getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTable.csv", noiseUpdateFraction, ram, Main.numStoredAttributes);
-
-                                useTwoLHSAcrossRows = false;
-                                for (int r = 0; r < 1; r++) {
-                                    runOmniSketch(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries,
-                                            useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
-                                            useMinEstimate, Main.checkConditions, betaValue, dynamicSampleSizes, repetition, actRamVals, resSampleSizes);
-                                    System.gc();
-                                }
-                                // Prevent false positives in Kmin
-                                //                                    runOmniSketch(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries,
-                                //                                            useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
-                                //                                            useMinEstimate, Main.checkConditions, betaValue, repetition, actRamVals, resSampleSizes);
-                                System.gc();
-
-
-                            }
-                        }
-                    }
-                }
-            }
-
             this.rtp = new RamToPar(Main.numStoredAttributes, actRamVals);
             for (long ram : actRamVals) {
                 if (Main.expaSH) {
@@ -219,6 +149,95 @@ public class RunExperiments {
                     System.out.println("COUNTMIN");
                     runCountMin(ram, rtp, repetition);
                     System.gc();
+                }
+            }
+            ArrayList<Integer> resSampleSizes = new ArrayList<Integer>();
+
+            for (int b: Main.bGridSearch) {
+                for (int depth: Main.dGridSearch) {
+                    for (double parFactor : Main.parFactorGridSearch) {
+                        for (int c = 0; c < 1; c++) {
+                            boolean dynamicSampleSizes = false;
+                            this.rtp = new RamToPar(Main.numStoredAttributes, depth, b, parFactor);
+                            for (long ram : Main.ramVals) {
+                                System.out.println("Running sketch with ram " + ram);
+                                System.out.println("OMNISKETCH");
+                                boolean useTwoLHS = true;
+                                boolean useBetaKmin = false;
+                                if (Main.countUniqueSamples) {
+                                    Main.uniqueSamples = new HashMap<>();
+                                    Main.uniqueSamplesReservoir = new HashSet<>();
+                                }
+
+                                boolean useTwoLHSAcrossRows = false;
+                                boolean useFastTwoLHS = true;
+                                boolean useInvDistPaper2LHS = true;
+                                boolean useMinEstimate = true;
+
+                                //UNCOMMENT:
+                                if (Main.exp2LHS) {
+                                    runOmniSketchPQPrimitive(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries, useBetaKmin,
+                                            useFastTwoLHS, useInvDistPaper2LHS, useMinEstimate, Main.checkConditions,
+                                            1, false,dynamicSampleSizes, false, 0.1,repetition, actRamVals, resSampleSizes);
+
+                                    System.gc();
+                                }
+                                Main.checkConditions = false;
+                                useTwoLHS = false;
+                                useFastTwoLHS = false;
+                                useInvDistPaper2LHS = false;
+                                useMinEstimate = false;
+                                Double betaValue = getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTable.csv", noiseUpdateFraction, ram, Main.numStoredAttributes);
+
+
+                                int numberOfAggregations = 1;
+                                if (Main.expPerRow) {
+                                    numberOfAggregations = 2;
+                                }
+                                for (int a = 0; a < numberOfAggregations; a++) {
+                                    boolean useAcrossRows;
+                                    useAcrossRows = a == 0;
+                                    if (Main.expOmniSenate) {
+                                        for (int dynRes = 0; dynRes < 2; dynRes++) {
+                                            boolean dynamicResizing = dynRes == 1;
+                                            runOmniSketchPQPrimitive(ram, rtp, useTwoLHS, useAcrossRows, Main.rangeQueries,
+                                                    useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
+                                                    useMinEstimate, Main.checkConditions, betaValue, dynamicResizing,
+                                                    dynamicSampleSizes, false, 0.1,
+                                                    repetition, actRamVals, resSampleSizes);
+                                            System.gc();
+                                            if (Main.expCase1ReturnScap) {
+                                                for (double eps: Main.epsValues) {
+                                                    runOmniSketchPQPrimitive(ram, rtp, useTwoLHS, useAcrossRows, Main.rangeQueries,
+                                                            useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
+                                                            useMinEstimate, Main.checkConditions, betaValue, dynamicResizing,
+                                                            dynamicSampleSizes, true, eps,
+                                                            repetition, actRamVals, resSampleSizes);
+                                                    System.gc();
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if (Main.expOmniHouse) {
+                                        runOmniSketchHouse(ram, rtp, useTwoLHS, useAcrossRows, Main.rangeQueries,
+                                                useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
+                                                useMinEstimate, Main.checkConditions, betaValue, dynamicSampleSizes, false, 0.1,
+                                                repetition, actRamVals, resSampleSizes);
+                                        System.gc();
+                                        if (Main.expCase1ReturnScap) {
+                                            for (double eps: Main.epsValues) {
+                                                runOmniSketchHouse(ram, rtp, useTwoLHS, useAcrossRows, Main.rangeQueries,
+                                                        useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
+                                                        useMinEstimate, Main.checkConditions, betaValue, dynamicSampleSizes, true, eps,
+                                                        repetition, actRamVals, resSampleSizes);
+                                                System.gc();
+                                           }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -255,13 +274,16 @@ public class RunExperiments {
 
         return 1.0;//null; // Return null if no match is found //TODO: update buffer values when new sample sizes come.
     }
-    public void runOmniSketch(long ram, RamToPar rtp, boolean useTwoLHS,
-                              boolean use2LHSAcrossRows, boolean rangeQueries,
-                              boolean useBetaKmin, boolean useFastTwoLHS,
-                              boolean useInvDistPaper2LHS,
-                              boolean useMinEstimate, boolean checkExactUnion2LHS,
-                              double BetaKmin, boolean dynamicSampleSizes, int repetition,
-                              ArrayList<Long> actRamVals, ArrayList<Integer> ramSizes) throws IOException {
+
+
+    public void runOmniSketchPQPrimitive(long ram, RamToPar rtp, boolean useTwoLHS,
+                                boolean use2LHSAcrossRows, boolean rangeQueries,
+                                boolean useBetaKmin, boolean useFastTwoLHS,
+                                boolean useInvDistPaper2LHS,
+                                boolean useMinEstimate, boolean checkExactUnion2LHS,
+                                double BetaKmin, boolean dynamicResizing,
+                                         boolean dynamicSampleSizes, boolean case1ReturnScap, double eps, int repetition,
+                                ArrayList<Long> actRamVals, ArrayList<Integer> ramSizes) throws IOException {
         int[] params;
         if (useTwoLHS) {
             if (useBetaKmin) {
@@ -283,13 +305,56 @@ public class RunExperiments {
         if (Main.depth == 0 || Main.width == 0) {
             return;
         }
-        Main.rs = new OmniSketch(ram, Main.numStoredAttributes, params, Main.dyadicRangeBits,
+        Main.rs = new omni.omniPQPrimitive.OmniSketch(ram, Main.numStoredAttributes, params, Main.dyadicRangeBits,
                 useTwoLHS, use2LHSAcrossRows,
                 rangeQueries, useBetaKmin,
                 useFastTwoLHS, useInvDistPaper2LHS,
                 useMinEstimate, checkExactUnion2LHS,
-                BetaKmin, dynamicSampleSizes, repetition);
-        ((OmniSketch) Main.rs).printParams();
+                BetaKmin, dynamicResizing,
+                dynamicSampleSizes, case1ReturnScap, eps, repetition);
+        ((omni.omniPQPrimitive.OmniSketch) Main.rs).printParams();
+        long synMem = runSynopsisRamBased(Main.rs, repetition);
+        actRamVals.add(synMem);
+        ramSizes.add(Main.maxSize * Main.depth * Main.width);
+        Main.rs = null;
+    }
+
+    public void runOmniSketchHouse(long ram, RamToPar rtp, boolean useTwoLHS,
+                                       boolean useAcrossRows, boolean rangeQueries,
+                                       boolean useBetaKmin, boolean useFastTwoLHS,
+                                       boolean useInvDistPaper2LHS,
+                                       boolean useMinEstimate, boolean checkExactUnion2LHS,
+                                       double BetaKmin, boolean dynamicSampleSizes, boolean case1ReturnScap, double eps,
+                                   int repetition,
+                                       ArrayList<Long> actRamVals, ArrayList<Integer> ramSizes) throws IOException {
+        int[] params;
+        if (useTwoLHS) {
+            if (useBetaKmin) {
+                throw new RuntimeException("Cannot use both TwoLHS and BetaKmin");
+            }
+            params = rtp.getParamsOmniSketch2LHS(ram);
+            Main.numTwoLHSReps = params[2];
+        } else {
+            params = rtp.getParamsOmniSketchDynamic(ram);
+            Main.maxSize = params[2];
+            Main.b =  params[3];
+        }
+        Main.depth =  params[0];
+        Main.width = params[1];
+        System.out.println("Using twolhs: " + useTwoLHS + " and twoKmin: " + useBetaKmin);
+        for (int i = 0; i < params.length; i++) {
+            System.out.println("params[" + i + "] = " + params[i]);
+        }
+        if (Main.depth == 0 || Main.width == 0) {
+            return;
+        }
+        Main.rs = new omni.omniReservoir.OmniSketch(ram, Main.numStoredAttributes, params, Main.dyadicRangeBits,
+                useTwoLHS, useAcrossRows,
+                rangeQueries, useBetaKmin,
+                useFastTwoLHS, useInvDistPaper2LHS,
+                useMinEstimate, checkExactUnion2LHS,
+                BetaKmin, dynamicSampleSizes, case1ReturnScap, eps, repetition);
+        ((omni.omniReservoir.OmniSketch) Main.rs).printParams();
         long synMem = runSynopsisRamBased(Main.rs, repetition);
         actRamVals.add(synMem);
         ramSizes.add(Main.maxSize * Main.depth * Main.width);
@@ -361,10 +426,7 @@ public class RunExperiments {
         System.out.println("Memory usage dataset: " + cd.getMemoryUsage());
         System.out.println("\n");
         int collisions = 0;
-        if (syn.setting.contains("OmniSketch")) {
-            collisions = countCollisions(syn);
-            //printmaxB();
-        }
+
         AnalysisBaselinesRefactor ab = new AnalysisBaselinesRefactor(syn, cd, h, time_passed, collisions, repetition);
         ab.run();
         long synMem = syn.getMemoryUsage();
@@ -375,8 +437,8 @@ public class RunExperiments {
 
     private int countCollisions(SynopsisRefactor s) {
         int collisions = 0;
-        for (int i = 0; i < ((OmniSketch) s).numStoredAttributes; i++) {
-            collisions += ((OmniSketch) s).CMSketches[i].getCollisions();
+        for (int i = 0; i < ((omni.omniPQPrimitive.OmniSketch) s).numStoredAttributes; i++) {
+            collisions += ((omni.omniPQPrimitive.OmniSketch) s).CMSketches[i].getCollisions();
         }
         // make sure we can write collisions to file
 
@@ -494,7 +556,7 @@ public class RunExperiments {
         return endTime - startTime;
     }
 
-    public void readDataset(double perc, double maxPerc, double sizeFactor, int noiseSize) throws IOException, CsvValidationException {
+    public void readDataset(double perc, double maxPerc, double sizeFactor, int noiseSize, double zipfAlpha) throws IOException, CsvValidationException {
         //cd.cleanDataset(d);
         if (Main.datasetName.equals("synthEquiDepthBins")) {
             cd.cleanDatasetEquiDepthBins(perc, sizeFactor, noiseSize);
@@ -503,8 +565,10 @@ public class RunExperiments {
             cd.getDistributions();
         } else if (Main.datasetName.equals("synthDev")) {
 
-            cd.synthDev(perc, sizeFactor, noiseSize, Main.numZipfianAttrs, Main.zipfAlpha);
-            cd.getDistributions();
+            cd.synthDev(perc, sizeFactor, noiseSize, Main.numZipfianAttrs, zipfAlpha);
+            //cd.getDistributions();
+        } else if (Main.datasetName.equals("Test")) {
+            cd.testDataset();
         } else {
             cd.cleanDataset(d, perc, maxPerc);
         }
@@ -543,6 +607,10 @@ public class RunExperiments {
             case "CAIDA" -> {
                 this.conditions = new String[]{Integer.toString(Main.filesToRead)};//, "4", "5", "6", "7", "8", "9", "10", "11", "12"};
                 Main.numAttributes = 11;//10; //actually 7; can be 10;
+            }
+            case "Test" -> {
+                this.conditions = new String[]{"0"};
+                Main.numAttributes = 2;
             }
 
             default -> {

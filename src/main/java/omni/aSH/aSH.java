@@ -1,6 +1,7 @@
 package omni.aSH;
 
 import omni.AnalysisBaselinesRefactor;
+import omni.QueryInfo;
 import omni.SynopsisRefactor;
 
 import java.util.*;
@@ -180,7 +181,7 @@ public class aSH extends SynopsisRefactor{
     }
 
     @Override
-    public int query(long[] query, int numPreds, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
+    public int query(long[] query, int numPreds, QueryInfo queryInfo) {
         // go over all records in the reservoir and check if they match the query
         if (!useBufferInQuery && size > sketchSize) {
             eject();
@@ -212,7 +213,7 @@ public class aSH extends SynopsisRefactor{
     }
 
     @Override
-    public int query(long[] query, int numPreds, int unionSize, AnalysisBaselinesRefactor.QueryInfo CMRow) {
+    public int query(long[] query, int numPreds, int unionSize, QueryInfo CMRow) {
         throw new UnsupportedOperationException();
     }
 

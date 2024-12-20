@@ -22,9 +22,9 @@ public abstract class SynopsisRefactor {
 
     public abstract void add(long[] record);
     public abstract int query(long[] query, int numPreds);
-    public abstract int query(long[] query, int numPreds, AnalysisBaselinesRefactor.QueryInfo queryInfo);
+    public abstract int query(long[] query, int numPreds, QueryInfo queryInfo);
 
-    public abstract int query(long[] query, int numPreds, int unionSize, AnalysisBaselinesRefactor.QueryInfo CMRow);
+    public abstract int query(long[] query, int numPreds, int unionSize, QueryInfo CMRow);
     public abstract int rangeQuery(long[] minrange, long[] maxrange);
     public abstract void reset();
 
@@ -34,7 +34,7 @@ public abstract class SynopsisRefactor {
 
     public abstract void delete(long[] r);
 
-    public int[] checkConditions(long[] q, int numPreds, int unionSize, AnalysisBaselinesRefactor.QueryInfo CMRow){
+    public int[] checkConditions(long[] q, int numPreds, int unionSize, QueryInfo CMRow){
         throw new UnsupportedOperationException();
     };
 

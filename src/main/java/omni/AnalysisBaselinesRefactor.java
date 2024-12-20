@@ -1,9 +1,9 @@
 package omni;
-
-import omni.omniDynamic.OmniSketch;
+//
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class AnalysisBaselinesRefactor {
     SynopsisRefactor s;
@@ -22,6 +22,8 @@ public class AnalysisBaselinesRefactor {
     double[] unionEstimates2LHS;
     int[] numberOfKmins;
     int[] numberOfKminsExceedingBounds;
+    boolean[] case1;
+    double[] bound;
 
     int[] NMax;
     int[] usedMaxSizes;
@@ -59,6 +61,9 @@ public class AnalysisBaselinesRefactor {
         unionOfR = new int[cd.pointQueries.length];
         numberOfKmins = new int[cd.pointQueries.length];
         numberOfKminsExceedingBounds = new int[cd.pointQueries.length];
+        bound = new double[cd.pointQueries.length];
+        case1 = new boolean[cd.pointQueries.length];
+        Arrays.fill(case1, false);
 
     }
 
@@ -76,7 +81,13 @@ public class AnalysisBaselinesRefactor {
             for (int i = 0; i< d.pointQueries.length; i++) {
                 computeErrorPointQuery(i, d.pointQueries[i], d.pointQueriesNumAttrs[i], d.pointQueryAnswers[i], d.pointQueryUnion[i]);
                 //h.addQueryResult(q);
+                if (i % 10000 == 0) {
+                    System.out.println(i + " queries done");
+                }
             }
+            System.out.println("Memory usage is " + s.getMemoryUsage());
+            // test for Synopsis if it has more memory than the computed mem usage.
+
         }
         long endTime = System.currentTimeMillis();
         long totalQueryExecutionTime = endTime - startTime;
@@ -101,102 +112,80 @@ public class AnalysisBaselinesRefactor {
             h.setConditionInfo(intersectionOfR, unionOfR);
             h.writeResultsToFilePointQuery(repetition, s, d, ingestionTime, collisions, estimatedAnswersPointQuery,
                     SCap, NMax, usedMaxSizes, jaccardEstimates2LHS, unionEstimates2LHS, witness2LHS, queryExecutionTime, totalQueryExecutionTime,
-                    numberOfKmins, numberOfKminsExceedingBounds);
+                    numberOfKmins, numberOfKminsExceedingBounds, case1, bound);
         }
         System.out.println("Total queries: " + d.pointQueries.length);
         System.out.println("Total queries with zero empty or singleton witnesses: " + s.countIsZero);
         System.out.println("Total queries with zero estimate: " + totalEstimatesZero);
     }
 
-    private void printmaxB() {
+//    private void printmaxB() {
+//
+//        // Look at sample and print the max K value in each cell, plus its potential signature size
+//        // signature size is number of bits needed to express this number
+//        int maxSigsize = 0;
+//        int minSigsize = Integer.MAX_VALUE;
+//        long maxK = 0;
+//        long minK = 0;
+//        for (int i = 0; i < ((OmniSketch) s).numStoredAttributes; i++) {
+//            for (int j = 0; j < ((OmniSketch) s).width; j++) {
+//                for (int r = 0; r < ((OmniSketch) s).depth; r++) {
+//                    long K = ((OmniSketch) s).CMSketches[i].CMKminTreeSet[r][j].curTreeRoot;
+//                    int sigSize = (int) Math.ceil(Math.log(K) / Math.log(2)); // number of bits needed to express this number
+//                    //System.out.println("K for attribute " + i + " in cell " + j + " in row " + r + ": " + K + " with signature size: " + sigSize);
+//                    if (sigSize > maxSigsize) {
+//                        maxSigsize = sigSize;
+//                        maxK = K;
+//                    }
+//                    if (sigSize < minSigsize) {
+//                        minSigsize = sigSize;
+//                        minK = K;
+//                    }
+//                    if (((OmniSketch) s).CMSketches[i].CMKminTreeSet[r][j].K > K) {
+//                        System.out.println("K exceeds bound in cell " + j + " in row " + r + " for attribute " + i + ": " + K);
+//                    }
+//                }
+//            }
+//        }
+//        System.out.println("Max K: " + maxK + " with signature size: " + maxSigsize);
+//        System.out.println("Min K: " + minK + " with signature size: " + minSigsize);
+//    }
 
-        // Look at sample and print the max K value in each cell, plus its potential signature size
-        // signature size is number of bits needed to express this number
-        int maxSigsize = 0;
-        int minSigsize = Integer.MAX_VALUE;
-        long maxK = 0;
-        long minK = 0;
-        for (int i = 0; i < ((OmniSketch) s).numStoredAttributes; i++) {
-            for (int j = 0; j < ((OmniSketch) s).width; j++) {
-                for (int r = 0; r < ((OmniSketch) s).depth; r++) {
-                    long K = ((OmniSketch) s).CMSketches[i].CMKmin[r][j].curTreeRoot;
-                    int sigSize = (int) Math.ceil(Math.log(K) / Math.log(2)); // number of bits needed to express this number
-                    //System.out.println("K for attribute " + i + " in cell " + j + " in row " + r + ": " + K + " with signature size: " + sigSize);
-                    if (sigSize > maxSigsize) {
-                        maxSigsize = sigSize;
-                        maxK = K;
-                    }
-                    if (sigSize < minSigsize) {
-                        minSigsize = sigSize;
-                        minK = K;
-                    }
-                    if (((OmniSketch) s).CMSketches[i].CMKmin[r][j].K > K) {
-                        System.out.println("K exceeds bound in cell " + j + " in row " + r + " for attribute " + i + ": " + K);
-                    }
-                }
-            }
-        }
-        System.out.println("Max K: " + maxK + " with signature size: " + maxSigsize);
-        System.out.println("Min K: " + minK + " with signature size: " + minSigsize);
-    }
 
 
-    public static class QueryInfo {
-        public int CMRow = 0;
-        public int Scap;
-        public int nmax;
-        public int maxSize;
-
-        public double unionEstimate = 0;
-        public ArrayList<Double> jaccardEstimates = new ArrayList<>();
-        public ArrayList<Integer> witnessEstimates = new ArrayList<>();
-
-        public double jaccardEstimate = 0;
-        public int witness2LHS = 0;
-        public int numberOfKmins = 0;
-        public int numberOfKminsExceedingBound = 0;
-
-        public int exactUnion = 0;
-        public int exactIntersection = 0;
-        public QueryInfo() {
-        }
-        public QueryInfo(int CMRow) {
-            this.CMRow = CMRow;
-        }
-
-        public void setCMRow(int CMRow) {
-            this.CMRow = CMRow;
-        }
-
-        public void setScap(int Scap, int nmax, int maxSize) {
-            this.Scap = Scap;
-            this.nmax = nmax;
-            this.maxSize = maxSize;
-        }
-
-        public void set2LHS(double unionEstimate, int witness2LHS, double jaccardEstimate) {
-            this.unionEstimate = unionEstimate;
-            this.witness2LHS = witness2LHS;
-            this.jaccardEstimate = jaccardEstimate;
-        }
-        public void addJaccardEstimate(double jaccardEstimate, int witness2LHS) {
-            this.jaccardEstimates.add(jaccardEstimate);
-            this.witnessEstimates.add(witness2LHS);
+    public void testQueryInfoIsolation() {
+        QueryInfo queryInfo1 = new QueryInfo();
+        QueryInfo queryInfo2 = new QueryInfo();
+        queryInfo1.case1 = true;
+        if (!queryInfo2.case1) {
+            System.out.println("QueryInfo objects are independent");
+        } else {
+            throw new RuntimeException("QueryInfo objects are not independent");
         }
     }
-    QueryInfo queryInfo = new QueryInfo(0);
+
+   // = new QueryInfo(0);
     public void computeErrorPointQuery (int queryId, long[] q, int numPreds, int exactAnswer, int unionSize) {
         //q.exactAnswer = d.exactSolution(q);
         if (exactAnswer == 0) {
             totalQueriesZero++;
         }
-        queryInfo = new QueryInfo(0);
-        int[] res = new int[2];
+        QueryInfo queryInfo = new QueryInfo();
+
         long startTime = System.currentTimeMillis();
 //        if (Main.checkConditions ) { //&& s.ram == Main.ramVals[0]
 //            estimatedAnswersPointQuery[queryId] = s.query(q, numPreds, unionSize, queryInfo);
 //            res = s.checkConditions(q, numPreds, unionSize, queryInfo);
 //        } else {
+        if (queryId == 76) {
+            System.out.println("Query 76");
+        }
+        if (queryId == 77) {
+            System.out.println("Query 77");
+        }
+        if (queryId == 78) {
+            System.out.println("Query 78");
+        }
         estimatedAnswersPointQuery[queryId] = s.query(q, numPreds, queryInfo);
 //        }
         long endTime = System.currentTimeMillis();
@@ -204,18 +193,22 @@ public class AnalysisBaselinesRefactor {
         if (estimatedAnswersPointQuery[queryId] == 0) {
             totalEstimatesZero++;
         }
-        unionOfR[queryId] = queryInfo.exactUnion;
-        intersectionOfR[queryId] = queryInfo.exactIntersection;
+
+        QueryInfo copy = new QueryInfo(queryInfo);
+        unionOfR[queryId] = copy.exactUnion;
+        intersectionOfR[queryId] = copy.exactIntersection;
         totalTime = totalTime + queryExecutionTime[queryId];
         totalExecQueries++;
-        SCap[queryId] = queryInfo.Scap;
-        NMax[queryId] = queryInfo.nmax;
-        usedMaxSizes[queryId] = queryInfo.maxSize;
-        jaccardEstimates2LHS[queryId] = queryInfo.jaccardEstimate;
-        unionEstimates2LHS[queryId] = queryInfo.unionEstimate;
-        witness2LHS[queryId] = queryInfo.witness2LHS;
-        numberOfKmins[queryId] = queryInfo.numberOfKmins;
-        numberOfKminsExceedingBounds[queryId] = queryInfo.numberOfKminsExceedingBound;
+        SCap[queryId] = copy.Scap;
+        NMax[queryId] = copy.nmax;
+        case1[queryId] = copy.case1;
+        bound[queryId] = copy.bound;
+        usedMaxSizes[queryId] = copy.maxSize;
+        jaccardEstimates2LHS[queryId] = copy.jaccardEstimate;
+        unionEstimates2LHS[queryId] = copy.unionEstimate;
+        witness2LHS[queryId] = copy.witness2LHS;
+        numberOfKmins[queryId] = copy.numberOfKmins;
+        numberOfKminsExceedingBounds[queryId] = copy.numberOfKminsExceedingBound;
 //        if (s.useTwoLHS) {
 //            if (estimatedAnswersPointQuery[queryId] > 0) {
 //                System.out.println("Estimated answer: " + estimatedAnswersPointQuery[queryId]);

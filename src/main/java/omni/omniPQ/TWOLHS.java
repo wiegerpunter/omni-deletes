@@ -1,4 +1,4 @@
-package omni.omniDynamic;
+package omni.omniPQ;
 
 import java.util.Random;
 

@@ -1,6 +1,7 @@
-package omni.omniDynamic;
+package omni.omniPQ;
 import omni.Main;
 
+import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.TreeSet;
 
@@ -93,13 +94,13 @@ public class CountMinDyad {
         n += 1;
     }
 
-    public TreeSet<Integer>[] rangeQuery(long lower, long higher, int[] seenN) {
-        TreeSet<Integer>[] set = new TreeSet[depth];
+    public PriorityQueue<Integer>[] rangeQuery(long lower, long higher, int[] seenN) {
+        PriorityQueue<Integer>[] set = new PriorityQueue[depth];
         long sig = getRangeSignature(lower, higher);
         int[] hashes = hash(sig, depth, width);
         for (int j = 0; j < depth; j++) {
             int w = hashes[j];
-            set[j] = new TreeSet<>(CM[j][w].sketch);
+            set[j] = new PriorityQueue<>(CM[j][w].sketch);
             seenN[j] += CM[j][w].n;
             // Hash in Sample based on id
         }

@@ -22,6 +22,8 @@ public class RamToPar {
             .81, .82, .83, .84, .85, .86, .87, .88, .89, .9, .91, .92, .93, .94, .95, .96, .97, .98, .99};
     HashMap<Long, double[]> ramToSketchTwoLHSParams = new HashMap<>();
     HashMap<Long, double[]> ramToSketchKminParams = new HashMap<>();
+    HashMap<Long, double[]> ramToSketchKminParamsDynamic = new HashMap<>();
+
     HashMap<Long, HashMap<Integer, HashMap<Integer, double[]>>> ramToSketchKminParamsGridSearch = new HashMap<>();
     HashMap<Long, double[]> ramToKminParams = new HashMap<>();
 
@@ -117,6 +119,10 @@ public class RamToPar {
             //HashMap<Integer, HashMap<Integer, double[]>> paramsOmniKminGridSearch = compParamsOmniSketchKmin(ram,
             //        Main.widthOptionsGridSearch, Main.depthOptionsGridSearch);
             ramToSketchKminParams.put(ram, parsOmniKmin);
+            double[] parsOmniKminDynamic = compParamsOmniSketchDynamic(ram, false);
+
+            ramToSketchKminParamsDynamic.put(ram, parsOmniKminDynamic);
+
             //ramToSketchKminParamsGridSearch.put(ram, paramsOmniKminGridSearch);
 //
 //            double[] parsCM = compParamsCMBaseline(ram);
@@ -198,6 +204,21 @@ public class RamToPar {
        return currentInfo;
     }
 
+    private double[] compParamsOmniSketchDynamic(long ram, boolean useTwoLHS) {
+        double[] currentInfo;
+        if (useTwoLHS) {
+            currentInfo = compParams2LHS(ram,Main.eps);
+        } else {
+            //currentInfo = compParamsKmin(ram, Main.eps);
+            //currentInfo = compParamsMinwise(ram, density, w, B);
+            currentInfo = compParamsKminParFactorDynamic(ram, parFactor);
+        }
+        if (currentInfo[0] == 0) {
+            System.out.println("No sketch found for ram " + ram + " and depth " + currentInfo[1] + " and width " + currentInfo[2]);
+        }
+        return currentInfo;
+    }
+
 
 
     private double[] compParams2LHS(long ram, double eps) {
@@ -243,7 +264,27 @@ public class RamToPar {
         double memUsage = Formulas.ramOmniKmin(numAttrs, depth, width, B, b);
 
         if (memUsage < ram) {
+            //info = new double[]{memUsage, 3, 10, 10, 31, parFactor};
             info = new double[]{memUsage, depth, width, B, b, parFactor};
+        }
+        // throw exception if info is not set
+        return info;
+    }
+
+    private double[] compParamsKminParFactorDynamic(long ram, double parFactor) {
+        int depth = this.d;
+        double[] info = new double[8];
+        // ParFactor is B / W, so B = parFactor * W
+        double temp = parFactor * ram / (depth * numAttrs);
+        int B = (int) (-32 + Math.sqrt(1024 + 4*b * parFactor * ram / (depth * numAttrs)) / (2 * b));
+        //int B = (int) (b * Math.sqrt((b * temp + 256) / b * b) - 16) /b;
+
+        int width = (int) Math.floor(B / parFactor);
+        double memUsage = Formulas.ramOmniKmin(numAttrs, depth, width, B, b);
+
+        if (memUsage < ram) {
+            //info = new double[]{memUsage, 3, 10, 10, 31, parFactor};
+            info = new double[]{memUsage, depth, width, B*width, b, parFactor};
         }
         // throw exception if info is not set
         return info;
@@ -441,6 +482,20 @@ public class RamToPar {
     public int[] getParamsOmniSketchKmin(long ram) {
         if (ramToSketchKminParams.containsKey(ram)) {
             double[] info = ramToSketchKminParams.get(ram);
+            int d = (int) info[1];
+            int w = (int) info[2];
+            int B = (int) info[3];
+            int b = (int) info[4];
+            int density = (int) (100 *info[5]);
+            return new int[]{d, w, B, b, density};
+        } else {
+            throw new IllegalArgumentException("RAM not found in ramToSketchParams");
+        }
+    }
+
+    public int[] getParamsOmniSketchDynamic(long ram) {
+        if (ramToSketchKminParamsDynamic.containsKey(ram)) {
+            double[] info = ramToSketchKminParamsDynamic.get(ram);
             int d = (int) info[1];
             int w = (int) info[2];
             int B = (int) info[3];

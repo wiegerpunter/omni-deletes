@@ -1,6 +1,7 @@
 package omni.CountMin;
 
 import omni.AnalysisBaselinesRefactor;
+import omni.QueryInfo;
 import omni.SynopsisRefactor;
 
 import javax.rmi.ssl.SslRMIClientSocketFactory;
@@ -64,12 +65,12 @@ public class CountMin  extends SynopsisRefactor {
     }
 
     @Override
-    public int query(long[] query, int numPreds, AnalysisBaselinesRefactor.QueryInfo queryInfo) {
+    public int query(long[] query, int numPreds, QueryInfo queryInfo) {
         return query(query, numPreds);
     }
 
     @Override
-    public int query(long[] query, int numPreds, int unionSize, AnalysisBaselinesRefactor.QueryInfo CMRow) {
+    public int query(long[] query, int numPreds, int unionSize, QueryInfo CMRow) {
         return query(query, numPreds);
     }
 
