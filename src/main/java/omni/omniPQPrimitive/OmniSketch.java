@@ -36,7 +36,7 @@ public class OmniSketch extends SynopsisRefactor {
                       boolean useFastTwoLHS, boolean useInvDistPaper2LHS,
                       boolean useMinEstimate, boolean checkExactUnion2LHS,
                       double BetaKmin, boolean dynamicResizing,
-                      boolean dynamicSampleSizes, boolean case1ReturnScap, double eps, int seed) {
+                      boolean dynamicSampleSizes, boolean case1ReturnScap, boolean useNmax, double eps, int seed) {
         System.out.println("OmniSketch has stored attributes: " + numStoredAttributes);
         this.seed = seed;
         this.parameters = parameters;
@@ -56,6 +56,7 @@ public class OmniSketch extends SynopsisRefactor {
         this.dynamicResizing = dynamicResizing;
         this.dynamicSampleSizes = dynamicSampleSizes;
         this.case1ReturnScap = case1ReturnScap;
+        this.useNmax = useNmax;
         this.eps = eps;
         depth = parameters[0];
         width = parameters[1];
@@ -107,6 +108,13 @@ public class OmniSketch extends SynopsisRefactor {
                 sb.append("DynamicResizing");
             } else {
                 sb.append("NoResizing");
+            }
+            if (useNmax) {
+                System.out.println("Using Nmax");
+                sb.append("Nmax");
+            } else {
+                System.out.println("Using SigMax");
+                sb.append("SigMax");
             }
             sampleType = sb.toString();
             maxSize = parameters[2];
@@ -477,6 +485,37 @@ public class OmniSketch extends SynopsisRefactor {
         return nmax;
     }
 
+    private int[] getSigMax(Kmin[] samples) {
+        // We get the n and sample size of sketch with highest signature.
+        // The sample size to use is #records in this cell up until the smallest signature.
+        int smallestSig = Integer.MAX_VALUE;
+        int[] highestSig = new int[3]; // [0] = sigMax, [1] = index in samples, [2] = n.
+        highestSig[0] = Integer.MIN_VALUE;
+        for (int i = 0; i < samples.length; i++) {
+            int n = samples[i].n;
+            PriorityQueue sketch = samples[i].getSampleToQuery();
+            if (sketch.peek() < smallestSig) {
+                smallestSig = sketch.peek();
+            }
+            if (sketch.peek() > highestSig[0]) {
+                highestSig[0] = sketch.peek();
+                highestSig[1] = i;
+                highestSig[2] = n;
+            }
+        }
+        // Now we have the highest signature. We need to find the sample size up until the smallest signature.
+
+        PriorityQueue sketch = samples[highestSig[1]].getSampleToQuery();
+        for (int i = 0; i < sketch.size; i++) {
+            if (sketch.peek() > smallestSig) {
+                sketch.poll();
+            } else {
+                break;
+            }
+        }
+        return new int[]{highestSig[2], sketch.size};
+    }
+
 
     private int queryEstPerRowKmin(Kmin[][] samplesPerRowKminTreeSet, QueryInfo queryInfo, int numPreds) {
         // Do queryKmin per row and take median.
@@ -516,8 +555,14 @@ public class OmniSketch extends SynopsisRefactor {
             PriorityQueue kmin = samples[i].getSampleToQuery();
             flatSamples[i] = kmin;
         }
-        nmax = getNmax(samples);
+        if (useNmax) {
+            nmax = getNmax(samples);
+        } else {
+            nmax = getSigMax(samples);
+        }
+
         S_cap = getAltEstKMV(flatSamples);
+
         queryInfo.setScap(S_cap, nmax[0], nmax[1], false);
         queryInfo.numberOfKmins = samples.length;
         queryInfo.numberOfKminsExceedingBound = exceedBounds;

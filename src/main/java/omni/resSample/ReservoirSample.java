@@ -30,13 +30,16 @@ public class ReservoirSample extends SynopsisRefactor {
 
     @Override
     public void add(long[] record) {
-        long[] attr = new long[record.length - 1];
-        System.arraycopy(record, 1, attr, 0, record.length - 1); // ignore RID
+        long[] attr;
         if (count < size) {
+            attr = new long[record.length - 1];
+            System.arraycopy(record, 1, attr, 0, record.length - 1); // ignore RID
             reservoir[count] = attr;
         } else {
             int replace = rn.nextInt(count + 1);
             if (replace < size) {
+                attr = new long[record.length - 1];
+                System.arraycopy(record, 1, attr, 0, record.length - 1); // ignore RID
                 reservoir[replace] = attr;
             }
         }

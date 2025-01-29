@@ -71,6 +71,7 @@ public class Main {
 
     public static double[] parFactorGridSearch;
     public static double[] densityGridSearch;
+    public static int numSynthAttrs;
     public static int numZipfianAttrs;
     public static double[] zipfAlphas;
 
@@ -131,6 +132,9 @@ public class Main {
         Main.spreadOutDeletes = Boolean.parseBoolean(args[6]);
         Main.useExactUnionSize = Boolean.parseBoolean(args[7]);
         Main.ramVals = parseLongArray(args[8]);
+        for (int i = 0; i < Main.ramVals.length; i++) {
+            System.out.println("ramVals[" + i + "] = " + Main.ramVals[i]);
+        }
         Main.noiseUpdateFractions = getDoubleArray(args[9]);
         Main.bufferValuesOmni = getDoubleArray(args[10]);
         Main.ingestBuffers = getDoubleArray(args[11]);
@@ -156,8 +160,9 @@ public class Main {
         Main.sizeNoise = parseIntArray(args[28]);
         Main.experiment_name = args[29];
         Main.useMultNumAttributes = Boolean.parseBoolean(args[30]);
-        Main.numZipfianAttrs = parseInt(args[31]);
-        Main.zipfAlphas = getDoubleArray(args[32]);
+        Main.numSynthAttrs = parseInt(args[31]);
+        Main.numZipfianAttrs = parseInt(args[32]);
+        Main.zipfAlphas = getDoubleArray(args[33]);
         //Main.useExactUnionSize = Boolean.parseBoolean(args[3]);
 
         if (Main.datasetName.equals("CAIDA")) {
@@ -217,7 +222,8 @@ public class Main {
         String[] vals = arg.split(",");
         long[] res = new long[vals.length];
         for (int i = 0; i < vals.length; i++) {
-            res[i] = (long) (Long.parseLong(vals[i]) * 8E6);
+            System.out.println("vals[" + i + "] = " + vals[i]);
+            res[i] = (long) (Double.parseDouble(vals[i]) * 8E6);
         }
         return res;
     }

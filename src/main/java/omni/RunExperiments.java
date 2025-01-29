@@ -178,7 +178,8 @@ public class RunExperiments {
                                 if (Main.exp2LHS) {
                                     runOmniSketchPQPrimitive(ram, rtp, useTwoLHS, useTwoLHSAcrossRows, Main.rangeQueries, useBetaKmin,
                                             useFastTwoLHS, useInvDistPaper2LHS, useMinEstimate, Main.checkConditions,
-                                            1, false,dynamicSampleSizes, false, 0.1,repetition, actRamVals, resSampleSizes);
+                                            1, false,dynamicSampleSizes, false,true,
+                                            0.1,repetition, actRamVals, resSampleSizes);
 
                                     System.gc();
                                 }
@@ -200,20 +201,23 @@ public class RunExperiments {
                                     if (Main.expOmniSenate) {
                                         for (int dynRes = 0; dynRes < 2; dynRes++) {
                                             boolean dynamicResizing = dynRes == 1;
-                                            runOmniSketchPQPrimitive(ram, rtp, useTwoLHS, useAcrossRows, Main.rangeQueries,
-                                                    useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
-                                                    useMinEstimate, Main.checkConditions, betaValue, dynamicResizing,
-                                                    dynamicSampleSizes, false, 0.1,
-                                                    repetition, actRamVals, resSampleSizes);
-                                            System.gc();
-                                            if (Main.expCase1ReturnScap) {
-                                                for (double eps: Main.epsValues) {
-                                                    runOmniSketchPQPrimitive(ram, rtp, useTwoLHS, useAcrossRows, Main.rangeQueries,
-                                                            useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
-                                                            useMinEstimate, Main.checkConditions, betaValue, dynamicResizing,
-                                                            dynamicSampleSizes, true, eps,
-                                                            repetition, actRamVals, resSampleSizes);
-                                                    System.gc();
+                                            for (int nmaxUse = 0; nmaxUse <2; nmaxUse++) {
+                                                boolean useNmax = nmaxUse == 1;
+                                                runOmniSketchPQPrimitive(ram, rtp, useTwoLHS, useAcrossRows, Main.rangeQueries,
+                                                        useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
+                                                        useMinEstimate, Main.checkConditions, betaValue, dynamicResizing,
+                                                        dynamicSampleSizes, false, useNmax, 0.1,
+                                                        repetition, actRamVals, resSampleSizes);
+                                                System.gc();
+                                                if (Main.expCase1ReturnScap) {
+                                                    for (double eps : Main.epsValues) {
+                                                        runOmniSketchPQPrimitive(ram, rtp, useTwoLHS, useAcrossRows, Main.rangeQueries,
+                                                                useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
+                                                                useMinEstimate, Main.checkConditions, betaValue, dynamicResizing,
+                                                                dynamicSampleSizes, true, useNmax, eps,
+                                                                repetition, actRamVals, resSampleSizes);
+                                                        System.gc();
+                                                    }
                                                 }
                                             }
                                         }
@@ -281,8 +285,9 @@ public class RunExperiments {
                                 boolean useBetaKmin, boolean useFastTwoLHS,
                                 boolean useInvDistPaper2LHS,
                                 boolean useMinEstimate, boolean checkExactUnion2LHS,
-                                double BetaKmin, boolean dynamicResizing,
-                                         boolean dynamicSampleSizes, boolean case1ReturnScap, double eps, int repetition,
+                                double BetaKmin, boolean dynamicResizing, boolean dynamicSampleSizes,
+                                         boolean case1ReturnScap, boolean useNmax,
+                                         double eps, int repetition,
                                 ArrayList<Long> actRamVals, ArrayList<Integer> ramSizes) throws IOException {
         int[] params;
         if (useTwoLHS) {
@@ -311,7 +316,7 @@ public class RunExperiments {
                 useFastTwoLHS, useInvDistPaper2LHS,
                 useMinEstimate, checkExactUnion2LHS,
                 BetaKmin, dynamicResizing,
-                dynamicSampleSizes, case1ReturnScap, eps, repetition);
+                dynamicSampleSizes, case1ReturnScap, useNmax, eps, repetition);
         ((omni.omniPQPrimitive.OmniSketch) Main.rs).printParams();
         long synMem = runSynopsisRamBased(Main.rs, repetition);
         actRamVals.add(synMem);
@@ -564,7 +569,9 @@ public class RunExperiments {
             cd.synthZipf(perc, sizeFactor, noiseSize);
             cd.getDistributions();
         } else if (Main.datasetName.equals("synthDev")) {
-
+            if (Main.numZipfianAttrs > Main.numSynthAttrs) {
+                throw new RuntimeException("Number of zipfian attributes cannot be larger than number of attributes");
+            }
             cd.synthDev(perc, sizeFactor, noiseSize, Main.numZipfianAttrs, zipfAlpha);
             //cd.getDistributions();
         } else if (Main.datasetName.equals("Test")) {
@@ -617,7 +624,7 @@ public class RunExperiments {
                 if (!Main.datasetName.contains("synth")) {
                     throw new RuntimeException("Unknown dataset name");
                 }
-                Main.numAttributes =9;
+                Main.numAttributes =Main.numSynthAttrs;
                 // make string array from Main.sizeFactorOptions
                 this.conditions = Main.sizeFactorOptions.split(",");
             }

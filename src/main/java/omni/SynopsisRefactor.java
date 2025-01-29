@@ -14,6 +14,7 @@ public abstract class SynopsisRefactor {
     public boolean useFastTwoLHS;
     public boolean useInvDistPaper2LHS;
     public boolean useMinEstimate;
+    public boolean useNmax;
     public int seed;
 
     public SynopsisRefactor() {

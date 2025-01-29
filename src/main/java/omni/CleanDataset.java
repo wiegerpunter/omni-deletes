@@ -1578,6 +1578,10 @@ public class CleanDataset {
                 int curNumPreds = 0;
                 while (curNumPreds < numAttrs - (p + 1)) {
                     int index = randomQueries.nextInt(numAttrs);
+                    if (pointQueries[i][index] == -3){ // In case the actual value is a null, we don't use it as a predicate.
+                        pointQueries[i][index] = -1;
+                        curNumPreds++;
+                    }
                     if (pointQueries[i][index] != -1) {
                         pointQueries[i][index] = -1;
                         curNumPreds++;
@@ -1657,8 +1661,10 @@ public class CleanDataset {
         long[][] unifData = new long[0][];
 
         if (numZipfianAttrs>0){
-            zipfData=ZipfGenerator.zipfData(totalRecords,  numZipfianAttrs, domain, zipfAlpha);
+//            zipfData=ZipfGenerator.zipfData(totalRecords,  numZipfianAttrs, domain, zipfAlpha);
+            zipfData=ZipfGenerator.zipfDataSparse(totalRecords, numZipfianAttrs, domain, zipfAlpha);
         }
+
         if (Main.numAttributes - numZipfianAttrs > 0) {
             unifData = new long[totalRecords][numAttrs - numZipfianAttrs];
         }

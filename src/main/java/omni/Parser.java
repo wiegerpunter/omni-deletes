@@ -116,7 +116,7 @@ public class Parser {
         } else if (Main.datasetName.equals("CAIDA")) {
             return attributeNamesCAIDA[i];
         } else {
-            return attributeNamesSynth[i];
+            return String.valueOf(i);
         }
     }
 
