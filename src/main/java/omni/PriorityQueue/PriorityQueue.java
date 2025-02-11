@@ -5,6 +5,9 @@ package omni.PriorityQueue;
 // array implementation of
 // binary heap
 
+import java.util.Arrays;
+import java.util.TreeSet;
+
 public class PriorityQueue {
 
     int[] H;
@@ -14,9 +17,7 @@ public class PriorityQueue {
     public PriorityQueue(int size) {
         this.K = size;
         H = new int[size];
-        for (int i = 0; i < size; i++) {
-            H[i] = -1;
-        }
+        Arrays.fill(H, -1);
     }
 
     public PriorityQueue(int size, PriorityQueue pq) {
@@ -27,6 +28,27 @@ public class PriorityQueue {
         System.arraycopy(pq.H, 0, H, 0, pq.size);
         this.size = pq.size;
         shiftUp(this.size);
+    }
+
+    public PriorityQueue(TreeSet<Long> s0Bucket) {
+        this.K = s0Bucket.size();
+        H = new int[s0Bucket.size()];
+        Arrays.fill(H, -1);
+
+        for (long l : s0Bucket) {
+            this.insert((int) l);
+        }
+
+//
+//        H = new int[K];
+//        int i = 0;
+//        for (long l : s0Bucket) {
+//            H[i] = (int) l;
+//            i++;
+//        }
+//        this.size = K - 1;
+//        shiftUp(this.size);
+//    }
     }
 
 //    public PriorityQueue(PriorityQueue priorityQueue) {

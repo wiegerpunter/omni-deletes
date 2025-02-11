@@ -1,9 +1,12 @@
 package omni.omniPQPrimitive;
 
+import com.sun.source.tree.Tree;
 import omni.*;
 
 import java.util.*;
 import omni.PriorityQueue.PriorityQueue;
+import omni.omniHouse.queryRes;
+
 import static java.lang.Math.*;
 
 public class OmniSketch extends SynopsisRefactor {
@@ -31,7 +34,9 @@ public class OmniSketch extends SynopsisRefactor {
     final double BetaKmin;
 
     public OmniSketch(long ram, int numStoredAttributes, int[] parameters, int dyadicBits,
-                      boolean useTwoLHS, boolean useAcrossRows,
+                      boolean useS0,
+                      boolean useTwoLHS, boolean useOnlyBestRow,
+                      boolean useAcrossRows,
                       boolean rangeQueries, boolean useBetaKmin,
                       boolean useFastTwoLHS, boolean useInvDistPaper2LHS,
                       boolean useMinEstimate, boolean checkExactUnion2LHS,
@@ -42,7 +47,9 @@ public class OmniSketch extends SynopsisRefactor {
         this.parameters = parameters;
         this.ram = ram;
         this.dyadicRangeBits = dyadicBits;
+        this.useS0 = useS0;
         this.useTwoLHS = useTwoLHS;
+        this.useOnlyBestRow = useOnlyBestRow;
         this.useAcrossRows = useAcrossRows;
         this.numStoredAttributes = numStoredAttributes;
         this.rangeQueries = rangeQueries;
@@ -60,7 +67,12 @@ public class OmniSketch extends SynopsisRefactor {
         this.eps = eps;
         depth = parameters[0];
         width = parameters[1];
-        if (useTwoLHS) {
+        if (useS0) {
+            sampleType = "S0";
+            numTwoLHSReps = -1;
+            maxSize = parameters[2];
+            b = parameters[3];
+        } else if (useTwoLHS) {
             StringBuilder sb = new StringBuilder();
             sb.append("TWOLHS");
             if (useAcrossRows) {
@@ -97,7 +109,11 @@ public class OmniSketch extends SynopsisRefactor {
             if (useAcrossRows) {
                 sb.append("AcrossRows");
             } else {
-                sb.append("PerRow");
+                if (useOnlyBestRow) {
+                    sb.append("BestRow");
+                } else {
+                    sb.append("PerRow");
+                }
             }
             if (this.case1ReturnScap) {
                 sb.append("case1ReturnScap");
@@ -161,15 +177,16 @@ public class OmniSketch extends SynopsisRefactor {
             }
 
         } else {
-            CMSketches = new AttributeSketch[numStoredAttributes];
-            for (int i = 0; i < numStoredAttributes; i++) {
-                CMSketches[i] = new AttributeSketch(i, parameters, useTwoLHS, useBetaKmin, BetaKmin, useFastTwoLHS, dynamicResizing,
-                        dynamicSampleSizes, seed);
-            }
-            if (checkExactUnion2LHS) {
+            if (useS0) {
                 CMSketchesS0 = new CountMinS0[numStoredAttributes];
                 for (int i = 0; i < numStoredAttributes; i++) {
                     CMSketchesS0[i] = new CountMinS0(i, parameters, seed);
+                }
+            } else {
+                CMSketches = new AttributeSketch[numStoredAttributes];
+                for (int i = 0; i < numStoredAttributes; i++) {
+                    CMSketches[i] = new AttributeSketch(i, parameters, useTwoLHS, useBetaKmin, BetaKmin, useFastTwoLHS, dynamicResizing,
+                            dynamicSampleSizes, seed);
                 }
             }
 
@@ -201,13 +218,12 @@ public class OmniSketch extends SynopsisRefactor {
         int hashG = -1;
 
         if (!useTwoLHS){
+            hx[0] = kminTmp[0].hash(id);
             if (useAcrossRows) {
-                hx[0] = kminTmp[0].hash(id);
                 for (int i = 1; i < depth; i++) {
                     hx[i] = hx[0];
                 }
             } else {
-                hx[0] = kminTmp[0].hash(id);
                 for (int i = 0; i < depth; i++) {
                     hx[i] = kminTmp[i].hash(id);
                 }
@@ -244,14 +260,21 @@ public class OmniSketch extends SynopsisRefactor {
                 }
             }
         } else {
-            for (int i = 0; i < numStoredAttributes; i++) {
-                CMSketches[i].ingest(record[i + 1], hx, vals, hashG, sign);
-            }
-            if (checkExactUnion2LHS) {
+            if (useS0) {
                 for (int i = 0; i < numStoredAttributes; i++) {
-                    CMSketchesS0[i].ingest(record[i + 1], hx[0], sign);
+                    CMSketchesS0[i].ingest(record[i + 1], id, sign);
                 }
             }
+            else {
+                for (int i = 0; i < numStoredAttributes; i++) {
+                    CMSketches[i].ingest(record[i + 1], hx, vals, hashG, sign);
+                }
+            }
+//            if (checkExactUnion2LHS) {
+//                for (int i = 0; i < numStoredAttributes; i++) {
+//                    CMSketchesS0[i].ingest(record[i + 1], hx[0], sign);
+//                }
+//            }
         }
     }
 
@@ -287,8 +310,9 @@ public class OmniSketch extends SynopsisRefactor {
 
     @Override
     public int query(long[] query, int numPreds, QueryInfo queryInfo) {
-        // Get estimate per depth. Take minimum of all estimates.
-
+        if (useS0) {
+            return queryEstS0(getS0Buckets(query, numPreds), queryInfo);
+        }
         if (useTwoLHS) {
             int result;
             if (useAcrossRows) {
@@ -307,9 +331,92 @@ public class OmniSketch extends SynopsisRefactor {
                 return queryKmin(getSamplesKmin(query, numPreds), queryInfo, numPreds);
             } else {
                 // return median of rows
-                return queryEstPerRowKmin(getSamplesPerRowKmin(query, numPreds), queryInfo, numPreds);
+
+                if (useOnlyBestRow) {
+                    return queryEstPerRowKmin(getSamplesBestRowKmin(query, numPreds), queryInfo, numPreds);
+                } else {
+                    return queryEstPerRowKmin(getSamplesPerRowKmin(query, numPreds), queryInfo, numPreds);
+                }
             }
         }
+    }
+
+    private int queryEstS0(TreeSet<Long>[] s0Buckets, QueryInfo queryInfo) {
+        // Intersect all buckets and return the size of the intersection.
+        int intersectionCount = 0;
+        int numJoins = s0Buckets.length;
+        if (s0Buckets.length == 1) {
+            return s0Buckets[0].size();
+        }
+        PriorityQueue[] samples = new PriorityQueue[numJoins];
+        for (int i = 0; i < numJoins; i++) {
+            // sort the buckets
+            samples[i] = new PriorityQueue(s0Buckets[i]);
+        }
+        int[] currentValues = new int[numJoins];
+        // initialize to the first element of each bucket
+        for (int i = 0; i < numJoins; i++) {
+            if (!samples[i].isEmpty()) {
+                currentValues[i] = samples[i].peek();
+            } else {
+                return 0;
+            }
+        }
+        while (true) {
+            int minCurrent = currentValues[0];
+            for (int i = 1; i < numJoins; i++) {
+                if (currentValues[i] < minCurrent) {
+                    minCurrent = currentValues[i];
+                }
+            }
+            boolean allMatch = true;
+            for (int i = 0; i < numJoins; i++) {
+                if (currentValues[i] != minCurrent) {
+                    allMatch = false;
+                    break;
+                }
+            }
+            if (allMatch) {
+                intersectionCount++;
+                for (int i = 0; i < numJoins; i++) {
+                    samples[i].poll();
+                    if (!samples[i].isEmpty()) {
+                        currentValues[i] = samples[i].peek();
+                    } else {
+                        return intersectionCount;
+                    }
+                }
+            } else {
+                for (int i = 0; i < numJoins; i++) {
+                    while (currentValues[i] > minCurrent) {
+                        samples[i].poll();
+                        if (!samples[i].isEmpty()) {
+                            currentValues[i] = samples[i].peek();
+                        } else {
+                            return intersectionCount;
+                        }
+                    }
+                }
+            }
+        }
+
+
+    }
+
+    public TreeSet<Long>[] getS0Buckets(long[] q, int numPreds) {
+        TreeSet<Long>[] result = new TreeSet[depth * numPreds];
+        int attrWithoutPred = 0;
+        for (int i = 0; i < q.length; i++) {
+            if (q[i] != -1) {
+                TreeSet<Long>[] temp = CMSketchesS0[i].query(q[i]);
+                if (depth >= 0) {
+                    System.arraycopy(temp, 0, result, (i - attrWithoutPred) * depth, depth);
+                }
+            } else {
+                attrWithoutPred++;
+            }
+        }
+        return result;
     }
 
     public Kmin[] getSamplesKmin(long[] q, int numPreds) {
@@ -343,6 +450,30 @@ public class OmniSketch extends SynopsisRefactor {
         }
         return samples;
     }
+
+    public Kmin[][] getSamplesBestRowKmin(long[] q, int numPreds) {
+        Kmin[][] samples = new Kmin[1][numPreds];
+
+        int numPredsFound = 0;
+        for (int i = 0; i < q.length; i++) {
+            if (q[i] != -1) {
+                Kmin[] temp = CMSketches[i].queryKmin(q[i]);
+                // First find best row
+                int bestRow = 0;
+                int min_nmax = Integer.MAX_VALUE;
+                for (int j = 0; j < depth; j++) {
+                    if (temp[j].n < min_nmax) {
+                        min_nmax = temp[j].n;
+                        bestRow = j;
+                    }
+                }
+                samples[0][numPredsFound] = temp[bestRow];
+                numPredsFound++;
+            }
+        }
+        return samples;
+    }
+
 
     private int getAltEstKMV(omni.PriorityQueue.PriorityQueue[] samples) {
         int numJoins = samples.length;
@@ -519,14 +650,14 @@ public class OmniSketch extends SynopsisRefactor {
 
     private int queryEstPerRowKmin(Kmin[][] samplesPerRowKminTreeSet, QueryInfo queryInfo, int numPreds) {
         // Do queryKmin per row and take median.
-        int[] estimates = new int[depth];
+        int[] estimates = new int[samplesPerRowKminTreeSet.length];
         int min_nmax = Integer.MAX_VALUE;
         int final_SCap = 0;
         int final_nmax = 0;
         int final_maxSize = 0;
         int estimate = 0;
         boolean case1 = false;
-        for (int i = 0; i < depth; i++) {
+        for (int i = 0; i < samplesPerRowKminTreeSet.length; i++) {
             estimates[i] = queryKmin(samplesPerRowKminTreeSet[i], queryInfo, numPreds);
             if (queryInfo.nmax < min_nmax) { // Return estimate with lowest nmax.
                 min_nmax = queryInfo.nmax;
@@ -1237,7 +1368,12 @@ public class OmniSketch extends SynopsisRefactor {
                     memoryUsage += min(memUsageArray, memUsageSketch);
                 }
             } else {
-                memoryUsage += CMSketches[i].getMemoryUsage();
+                if (useS0) {
+                    memoryUsage += CMSketchesS0[i].getMemoryUsage();
+                }
+                else {
+                    memoryUsage += CMSketches[i].getMemoryUsage();
+                }
             }
         }
 
@@ -1264,7 +1400,10 @@ public class OmniSketch extends SynopsisRefactor {
                     CMSketchesRange[i][j].reset();
                 }
             } else {
-                CMSketches[i].reset();
+                if (useS0) {
+                    CMSketchesS0[i].reset();
+                } else {CMSketches[i].reset();
+                }
             }
         }
     }

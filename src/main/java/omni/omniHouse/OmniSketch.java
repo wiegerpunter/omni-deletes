@@ -34,6 +34,7 @@ public class OmniSketch extends SynopsisRefactor {
 
     public OmniSketch(long ram, int numStoredAttributes, int[] parameters, int dyadicBits,
                       boolean useTwoLHS, boolean useAcrossRows,
+                      boolean useOnlyBestRow,
                       boolean rangeQueries, boolean useBetaKmin,
                       boolean useFastTwoLHS, boolean useInvDistPaper2LHS,
                       boolean useMinEstimate, boolean checkExactUnion2LHS,
@@ -45,6 +46,7 @@ public class OmniSketch extends SynopsisRefactor {
         this.dyadicRangeBits = dyadicBits;
         this.useTwoLHS = useTwoLHS;
         this.useAcrossRows = useAcrossRows;
+        this.useOnlyBestRow = useOnlyBestRow;
         this.numStoredAttributes = numStoredAttributes;
         this.rangeQueries = rangeQueries;
         this.useBetaKmin = useBetaKmin;
@@ -297,7 +299,11 @@ public class OmniSketch extends SynopsisRefactor {
                 return queryKmin(getSamplesKmin(query, numPreds), queryInfo);
             } else {
                 // return median of rows
-                return queryEstPerRowKmin(getSamplesPerRowKmin(query, numPreds), queryInfo);
+                if (useOnlyBestRow) {
+                    return queryEstPerRowKmin(getSamplesBestRowKmin(query, numPreds), queryInfo);
+                } else {
+                    return queryEstPerRowKmin(getSamplesPerRowKmin(query, numPreds), queryInfo);
+                }
             }
         }
     }
@@ -352,6 +358,35 @@ public class OmniSketch extends SynopsisRefactor {
         }
         return samples;
     }
+
+    public queryRes[] getSamplesBestRowKmin(long[] q, int numPreds) {
+
+        queryRes[] samples = new queryRes[1];
+        for (int i = 0; i < 1; i++) {
+            samples[i] = new queryRes(numPreds);
+        }
+        int numPredsFound = 0;
+        for (int i = 0; i < q.length; i++) {
+            if (q[i] != -1) {
+                queryRes temp = CMSketches[i].queryKmin(q[i]);
+                // now take the best row (smallest nmax)
+                int min_nmax = Integer.MAX_VALUE;
+                int bestRow = 0;
+                for (int j = 0; j < depth; j++) {
+                    if (temp.n[j] < min_nmax) {
+                        min_nmax = temp.n[j];
+                        bestRow = j;
+                    }
+                }
+                samples[0].sketch[numPredsFound] = temp.sketch[bestRow];
+                samples[0].n[numPredsFound] = temp.n[bestRow];
+                samples[0].curSampleSizes[numPredsFound] = temp.curSampleSizes[bestRow];
+                numPredsFound++;
+            }
+        }
+        return samples;
+    }
+
 
     private int getAltEstKMV(PriorityQueue[] samples) {
         int numJoins = samples.length;
@@ -421,14 +456,14 @@ public class OmniSketch extends SynopsisRefactor {
 
     private int queryEstPerRowKmin(queryRes[] samplesPerRowKminTreeSet, QueryInfo queryInfo) {
         // Do queryKmin per row and take median.
-        int[] estimates = new int[depth];
+        int[] estimates = new int[samplesPerRowKminTreeSet.length];
         int min_nmax = Integer.MAX_VALUE;
         int final_SCap = 0;
         int final_nmax = 0;
         int final_maxSize = 0;
         boolean case1 = false;
         int estimate = 0;
-        for (int i = 0; i < depth; i++) {
+        for (int i = 0; i < samplesPerRowKminTreeSet.length; i++) {
             estimates[i] = queryKmin(samplesPerRowKminTreeSet[i], queryInfo);
             if (queryInfo.nmax < min_nmax) { // Return estimate with lowest nmax.
                 min_nmax = queryInfo.nmax;

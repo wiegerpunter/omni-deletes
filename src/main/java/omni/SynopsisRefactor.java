@@ -5,7 +5,9 @@ public abstract class SynopsisRefactor {
     public int countIsZero = 0;
     public String sampleType;
     public boolean useTwoLHS;
+    public boolean useS0;
     public boolean useAcrossRows;
+    public boolean useOnlyBestRow;
     protected String setting;
     protected long ram;
     public long memUsageSynopsis;

@@ -1353,7 +1353,8 @@ public class CleanDataset {
         return numToKeep;
     }
 
-    public void synthDev(double perc, double sizeFactor, int noiseSize, int numZipfianAttrs, double zipfAlpha) {
+    public void synthDev(double perc, double sizeFactor, int noiseSize, int numZipfianAttrs,
+                         double zipfAlpha, int numUniformAttrs) {
         this.sizeFactor = sizeFactor;
         int numAttrs = Main.numAttributes;
         Main.numQueries = 100;
@@ -1367,7 +1368,10 @@ public class CleanDataset {
         // Write dataset to file.
         
         // Generate dataset
-        generateSynthDataset(numAttrs, perc, sizeFactor, noiseSize, numZipfianAttrs, zipfAlpha);
+        int numModes = 15;
+        double stdDev = 5;
+        generateSynthDataset(numAttrs, perc, sizeFactor, noiseSize, numZipfianAttrs, zipfAlpha,
+                numUniformAttrs, numModes, stdDev);
         // Generate queries
         generateSynthQueries(numAttrs, perc, numZipfianAttrs);
         //generateAllSynthQueries(numAttrs, perc, numZipfianAttrs);
@@ -1648,7 +1652,9 @@ public class CleanDataset {
 
     }
 
-    private void generateSynthDataset(int numAttrs, double perc, double sizeFactor, int noiseSize, int numZipfianAttrs, double zipfAlpha) {
+    private void generateSynthDataset(int numAttrs, double perc, double sizeFactor,
+                                      int noiseSize, int numZipfianAttrs,
+                                      double zipfAlpha, int numUniformAttrs, int numModes, double stdDev) {
         int totalRecords = (int) Math.pow(2, sizeFactor);
         int domain = 100000;
         // for each attribute, decide from which distribution to sample.
@@ -1659,43 +1665,60 @@ public class CleanDataset {
 
         long[][] zipfData = new long[0][];
         long[][] unifData = new long[0][];
+        long[][] mixtureData = new long[0][];
 
         if (numZipfianAttrs>0){
 //            zipfData=ZipfGenerator.zipfData(totalRecords,  numZipfianAttrs, domain, zipfAlpha);
             zipfData=ZipfGenerator.zipfDataSparse(totalRecords, numZipfianAttrs, domain, zipfAlpha);
         }
 
-        if (Main.numAttributes - numZipfianAttrs > 0) {
+        if (numUniformAttrs > 0) {
             unifData = new long[totalRecords][numAttrs - numZipfianAttrs];
-        }
-
-        int domainUniform = 1000;
-        Random random = new Random(1);
-        if (numAttrs - numZipfianAttrs > 0) {
+            int domainUniform = 1000;
+            Random random = new Random(1);
             for (int i = 0; i < totalRecords; i++) {
-                for (int j = 0; j < numAttrs - numZipfianAttrs; j++) {
-                    unifData[i][j] = (long) (random.nextLong(domainUniform));
+                for (int j = 0; j < numUniformAttrs; j++) {
+                    unifData[i][j] = random.nextInt(domainUniform);
                 }
             }
         }
-        int rec_id = 0;
+
+        int numMixtureAttrs = numAttrs - numZipfianAttrs - numUniformAttrs;
+        if (numMixtureAttrs> 0) {
+            mixtureData = new long[totalRecords][numMixtureAttrs];
+            Random random = new Random(2);
+
+            long[] modeCenters = new long[numModes];
+            for (int m = 0; m < numModes; m++) {
+                modeCenters[m] = random.nextInt(domain);
+            }
+
+            for (int i = 0; i < totalRecords; i++) {
+                int mode = random.nextInt(numModes);
+                for (int j = 0; j < numMixtureAttrs; j++) {
+                    double noise = random.nextGaussian() * stdDev;
+                    mixtureData[i][j] = Math.max(0, Math.min(domain, (long) (modeCenters[mode] + noise)));
+                }
+            }
+        }
 
         long[][] tempDataset = new long[totalRecords][];
         for (int i=0; i <totalRecords; i++ ) {
             tempDataset[i] = new long[numAttrs];
             if (numZipfianAttrs > 0) System.arraycopy(zipfData[i], 0, tempDataset[i], 0, numZipfianAttrs);
-            if (Main.numAttributes - numZipfianAttrs > 0) {
-                System.arraycopy(unifData[i], 0, tempDataset[i], numZipfianAttrs, numAttrs - numZipfianAttrs);
-            }
+            if (numUniformAttrs > 0) System.arraycopy(unifData[i], 0, tempDataset[i], numZipfianAttrs, numUniformAttrs);
+            if (numMixtureAttrs > 0) System.arraycopy(mixtureData[i], 0, tempDataset[i], numZipfianAttrs + numUniformAttrs, numMixtureAttrs);
+//            if (Main.numAttributes - numZipfianAttrs > 0) {
+//                System.arraycopy(unifData[i], 0, tempDataset[i], numZipfianAttrs, numAttrs - numZipfianAttrs);
+//            }
         }
 
         // shuffle tempDataset
         shuffleArray(tempDataset);
 
-        this.dataset = new long[totalRecords][];
+        this.dataset = new long[totalRecords][numAttrs + 1];
         // merge zipfData and unifData with id
         for (int i=0; i < totalRecords;i++) {
-            this.dataset[i] = new long[numAttrs + 1];
             this.dataset[i][0] = i;
             System.arraycopy(tempDataset[i], 0, this.dataset[i], 1, numAttrs);
         }

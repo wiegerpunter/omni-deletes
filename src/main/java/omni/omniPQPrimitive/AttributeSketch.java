@@ -35,6 +35,8 @@ public class AttributeSketch {
     final boolean dynamicSampleSizes;
     int insertCount = 0;
 
+    HashFunction[] xx;
+
     public AttributeSketch(int attr, int[] parameters,
                            boolean useTwoLHS, boolean useTwoKmin, double BetaKmin,
                            boolean twoLHSFast, boolean dynamicResizing, boolean dynamicSampleSizes, int seed){
@@ -90,6 +92,10 @@ public class AttributeSketch {
                 }
             }
         }
+        xx = new HashFunction[depth];
+        for (int i = 0; i < depth; i++) {
+            xx[i] = Hashing.murmur3_32_fixed(seed + i);
+        }
     }
 
     public byte[] longToBytes(long attrValue) {
@@ -99,11 +105,34 @@ public class AttributeSketch {
     }
 
     int[] hash(long attrValue, int depth, int width) {
+        int[] hashes = new int[depth];
+//        for (int i = 0; i < depth; i++) {
+//            if (i<4){
+//                hashes[i] = (int) ((hash_long >> (16 * i)) & 0xffff) % width;
+//            } else {
+//                hashes[i] = (int) ((hash_long >> (16 * (i) - 1)) & 0xffff) % width;
+//            }
+//        }
+//        return hashes;
+
+        // Make new hash function based on Random rn
+//        rn_cm_hash.setSeed(this.seed + 18 + hash_long);
+        for (int i = 0; i < depth; i++) {
+//            hashes[i] = ((xx.hashLong(hash_long)).asInt() % width + width) % width;// rn_cm_hash.nextInt(width); // TODO: check if it makes a difference
+//            hashes[i] = ((xx.hashLong(hash_long)).asInt() % width);
+            int hash = (xx[i].hashLong(attrValue).asInt() % width);
+            if (hash < 0) {
+                hash = hash + width;
+            }
+            hashes[i] = hash;
+        }
+        return hashes;
+
         //int[] hashes = new int[depth];
         //byte[] byte_key = longToBytes(attrValue);
         //byte[] byte_key = utils.StringToByte(sp);
         //long hash_key_long = hashFunc.hash(byte_key, 0, byte_key.length, this.seed);
-        return getHashArray(attrValue, depth, width);
+        //return getHashArray(attrValue, depth, width);
         //return getHashArray(hash_key_long, depth, width);
 //        rn.setSeed(attrValue + this.seed);
 //        for (int i = 0; i < depth; i++) hashes[i] = rn.nextInt(width);
@@ -280,33 +309,6 @@ public class AttributeSketch {
 
     Random rn_cm_hash = new Random();
 
-
-    HashFunction xx = Hashing.murmur3_32_fixed();
-    public int[] getHashArray(final long hash_long, int depth, int width) {
-        int[] hashes = new int[depth];
-//        for (int i = 0; i < depth; i++) {
-//            if (i<4){
-//                hashes[i] = (int) ((hash_long >> (16 * i)) & 0xffff) % width;
-//            } else {
-//                hashes[i] = (int) ((hash_long >> (16 * (i) - 1)) & 0xffff) % width;
-//            }
-//        }
-//        return hashes;
-
-        // Make new hash function based on Random rn
-//        rn_cm_hash.setSeed(this.seed + 18 + hash_long);
-        for (int i = 0; i < depth; i++) {
-            xx = Hashing.murmur3_32_fixed(i);
-//            hashes[i] = ((xx.hashLong(hash_long)).asInt() % width + width) % width;// rn_cm_hash.nextInt(width); // TODO: check if it makes a difference
-//            hashes[i] = ((xx.hashLong(hash_long)).asInt() % width);
-            int hash = (xx.hashLong(hash_long).asInt() % width);
-            if (hash < 0) {
-                hash = hash + width;
-            }
-            hashes[i] = hash;
-        }
-        return hashes;
-    }
 
     public int getCollisions() {
         int collissions = 0;

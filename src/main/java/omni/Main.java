@@ -74,6 +74,8 @@ public class Main {
     public static int numSynthAttrs;
     public static int numZipfianAttrs;
     public static double[] zipfAlphas;
+    public static int numUniformAttrs;
+    public static boolean useS0;
 
     static String setting;
     public static boolean readAllFiles = true; // Set true if all files should be read, false if only the first file should be read
@@ -163,6 +165,8 @@ public class Main {
         Main.numSynthAttrs = parseInt(args[31]);
         Main.numZipfianAttrs = parseInt(args[32]);
         Main.zipfAlphas = getDoubleArray(args[33]);
+        Main.numUniformAttrs = parseInt(args[34]);
+        Main.useS0 = Boolean.parseBoolean(args[35]);
         //Main.useExactUnionSize = Boolean.parseBoolean(args[3]);
 
         if (Main.datasetName.equals("CAIDA")) {

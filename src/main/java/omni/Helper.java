@@ -749,7 +749,7 @@ public class Helper {
             result[33] = String.valueOf(totalQueryExecutionTime);
             result[34] = String.valueOf(s.useBetaKmin);
             int numKSamples = 0;
-            if (!s.useTwoLHS) {
+            if (!s.useTwoLHS & !s.useS0) {
                 numKSamples = s.getFilledKSamples();
             }
             result[35] = String.valueOf(numKSamples);
