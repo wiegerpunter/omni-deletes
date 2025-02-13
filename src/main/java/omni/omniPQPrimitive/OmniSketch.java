@@ -15,7 +15,7 @@ public class OmniSketch extends SynopsisRefactor {
     CountMinDyad[][] CMSketchesRange;
     CountMinS0[] CMSketchesS0;
     public final int depth;
-    public final int width;
+    public int width;
     private final int maxSize;
     private final int b;
     private double eps;
@@ -33,21 +33,27 @@ public class OmniSketch extends SynopsisRefactor {
     Random randomHashG;
     final double BetaKmin;
 
+    private int sampleSize;
+    private final int sampleBufferSize;
+    private int sampleCount = 0;
+    private long[] sampledIds;
+
     public OmniSketch(long ram, int numStoredAttributes, int[] parameters, int dyadicBits,
-                      boolean useS0,
+                      boolean useS0, boolean useS0WithSampling,
                       boolean useTwoLHS, boolean useOnlyBestRow,
                       boolean useAcrossRows,
                       boolean rangeQueries, boolean useBetaKmin,
                       boolean useFastTwoLHS, boolean useInvDistPaper2LHS,
                       boolean useMinEstimate, boolean checkExactUnion2LHS,
                       double BetaKmin, boolean dynamicResizing,
-                      boolean dynamicSampleSizes, boolean case1ReturnScap, boolean useNmax, double eps, int seed) {
+                      boolean dynamicSampleSizes, boolean case1ReturnScap, boolean useNmax, double eps, int sampleBufferSize, int seed) {
         System.out.println("OmniSketch has stored attributes: " + numStoredAttributes);
         this.seed = seed;
         this.parameters = parameters;
         this.ram = ram;
         this.dyadicRangeBits = dyadicBits;
         this.useS0 = useS0;
+        this.useS0WithSampling = useS0WithSampling;
         this.useTwoLHS = useTwoLHS;
         this.useOnlyBestRow = useOnlyBestRow;
         this.useAcrossRows = useAcrossRows;
@@ -65,13 +71,27 @@ public class OmniSketch extends SynopsisRefactor {
         this.case1ReturnScap = case1ReturnScap;
         this.useNmax = useNmax;
         this.eps = eps;
+        this.sampleBufferSize = sampleBufferSize;
         depth = parameters[0];
         width = parameters[1];
+        sampleSize = 0;
         if (useS0) {
             sampleType = "S0";
+
             numTwoLHSReps = -1;
             maxSize = parameters[2];
             b = parameters[3];
+            if (useS0WithSampling) {
+                sampleType = "S0WithSampling_bufferSize:" + sampleBufferSize;
+                width = 300;
+                // sample size is dependent on ram, we have numStoredAttributes * depth * 32 bits.
+                sampleSize = (int) (ram / (numStoredAttributes * depth * 32L));
+
+                //sampleSize = width * maxSize;
+                System.out.println("Sample size: " + sampleSize);
+
+                sampledIds = new long[sampleSize];
+            }
         } else if (useTwoLHS) {
             StringBuilder sb = new StringBuilder();
             sb.append("TWOLHS");
@@ -180,7 +200,7 @@ public class OmniSketch extends SynopsisRefactor {
             if (useS0) {
                 CMSketchesS0 = new CountMinS0[numStoredAttributes];
                 for (int i = 0; i < numStoredAttributes; i++) {
-                    CMSketchesS0[i] = new CountMinS0(i, parameters, seed);
+                    CMSketchesS0[i] = new CountMinS0(i, depth, width, sampleSize, sampleBufferSize, seed);
                 }
             } else {
                 CMSketches = new AttributeSketch[numStoredAttributes];
@@ -205,6 +225,7 @@ public class OmniSketch extends SynopsisRefactor {
         ingest(record, 1);
     }
 
+    Random sampleRn = new Random();
     public void ingest(long[] record, int sign) {
         long id = record[0];
         int[] hx = new int[depth];
@@ -261,8 +282,34 @@ public class OmniSketch extends SynopsisRefactor {
             }
         } else {
             if (useS0) {
-                for (int i = 0; i < numStoredAttributes; i++) {
-                    CMSketchesS0[i].ingest(record[i + 1], id, sign);
+                if (useS0WithSampling) {
+                    if (sampleCount < sampleSize) {
+                        for (int i = 0; i < numStoredAttributes; i++) {
+                            CMSketchesS0[i].ingest(record[i + 1], id, sign);
+                        }
+                        sampledIds[sampleCount] = id;
+                    } else {
+                        // Bucket is full. Now we need to sample.
+                        // we pick one random id from the sample and replace it with the new id.
+                        int replace = sampleRn.nextInt(sampleCount + 1);
+                        if (replace < sampleSize) {
+                            long replace_id = sampledIds[replace];
+
+                            // now we need to go over all S0 sketches and remove the id.
+                            for (int i = 0; i < numStoredAttributes; i++) {
+                                CMSketchesS0[i].removeId(replace_id); // removes id if present.
+                            }
+                            for (int i = 0; i < numStoredAttributes; i++) {
+                                CMSketchesS0[i].ingest(record[i + 1], id, sign);
+                            }
+                            sampledIds[replace] = id;
+                        }
+                    }
+                    sampleCount++;
+                } else {
+                    for (int i = 0; i < numStoredAttributes; i++) {
+                        CMSketchesS0[i].ingest(record[i + 1], id, sign);
+                    }
                 }
             }
             else {
@@ -341,29 +388,32 @@ public class OmniSketch extends SynopsisRefactor {
         }
     }
 
-    private int queryEstS0(TreeSet<Long>[] s0Buckets, QueryInfo queryInfo) {
+    private int queryEstS0(TreeSet<Long>[] samples, QueryInfo queryInfo) {
         // Intersect all buckets and return the size of the intersection.
         int intersectionCount = 0;
-        int numJoins = s0Buckets.length;
-        if (s0Buckets.length == 1) {
-            return s0Buckets[0].size();
+        int numJoins = samples.length;
+        if (numJoins == 1) {
+            return samples[0].size();
         }
-        PriorityQueue[] samples = new PriorityQueue[numJoins];
-        for (int i = 0; i < numJoins; i++) {
-            // sort the buckets
-            samples[i] = new PriorityQueue(s0Buckets[i]);
-        }
-        int[] currentValues = new int[numJoins];
+//        PriorityQueue[] samples = new PriorityQueue[numJoins];
+//        for (int i = 0; i < numJoins; i++) {
+//            // sort the buckets
+//            samples[i] = new PriorityQueue(s0TreeSets[i]);
+//        }
+        Long[] currentValues = new Long[numJoins];
+//        int[] currentValues = new int[numJoins];
         // initialize to the first element of each bucket
         for (int i = 0; i < numJoins; i++) {
             if (!samples[i].isEmpty()) {
-                currentValues[i] = samples[i].peek();
+//                currentValues[i] = samples[i].peek();
+                currentValues[i] = samples[i].first();
             } else {
                 return 0;
             }
         }
         while (true) {
-            int minCurrent = currentValues[0];
+            Long minCurrent = currentValues[0];
+//            int minCurrent = currentValues[0];
             for (int i = 1; i < numJoins; i++) {
                 if (currentValues[i] < minCurrent) {
                     minCurrent = currentValues[i];
@@ -371,7 +421,7 @@ public class OmniSketch extends SynopsisRefactor {
             }
             boolean allMatch = true;
             for (int i = 0; i < numJoins; i++) {
-                if (currentValues[i] != minCurrent) {
+                if (!Objects.equals(currentValues[i], minCurrent)) {
                     allMatch = false;
                     break;
                 }
@@ -379,44 +429,55 @@ public class OmniSketch extends SynopsisRefactor {
             if (allMatch) {
                 intersectionCount++;
                 for (int i = 0; i < numJoins; i++) {
-                    samples[i].poll();
+//                    samples[i].poll();
+                    samples[i].pollFirst();
                     if (!samples[i].isEmpty()) {
-                        currentValues[i] = samples[i].peek();
+//                        currentValues[i] = samples[i].peek();
+                        currentValues[i] = samples[i].first();
                     } else {
-                        return intersectionCount;
+                        return (int) (intersectionCount * (Math.max((double) sampleCount / sampleSize, 1)));
                     }
                 }
             } else {
                 for (int i = 0; i < numJoins; i++) {
                     while (currentValues[i] > minCurrent) {
-                        samples[i].poll();
+//                        samples[i].poll();
+                        samples[i].pollFirst();
                         if (!samples[i].isEmpty()) {
-                            currentValues[i] = samples[i].peek();
+//                            currentValues[i] = samples[i].peek();
+                            currentValues[i] = samples[i].first();
                         } else {
-                            return intersectionCount;
+                            return (int) (intersectionCount * (Math.max((double) sampleCount / sampleSize, 1)));
                         }
                     }
                 }
             }
         }
-
-
     }
 
     public TreeSet<Long>[] getS0Buckets(long[] q, int numPreds) {
-        TreeSet<Long>[] result = new TreeSet[depth * numPreds];
+//        TreeSet<Long>[] result = new TreeSet[depth * numPreds];
+        TreeSet<Long>[] resultPQ = new TreeSet[depth * numPreds];
         int attrWithoutPred = 0;
         for (int i = 0; i < q.length; i++) {
             if (q[i] != -1) {
                 TreeSet<Long>[] temp = CMSketchesS0[i].query(q[i]);
+//                java.util.PriorityQueue<Long>[] tempPQ = CMSketchesS0[i].query(q[i]);
+//                PriorityQueue[] tempPQ = CMSketchesS0[i].query(q[i]);
                 if (depth >= 0) {
-                    System.arraycopy(temp, 0, result, (i - attrWithoutPred) * depth, depth);
+                    System.arraycopy(temp, 0, resultPQ, (i - attrWithoutPred) * depth, depth);
                 }
             } else {
                 attrWithoutPred++;
             }
         }
-        return result;
+
+//        PriorityQueue[] samples = new PriorityQueue[result.length];
+//        for (int i = 0; i < result.length; i++) {
+//            // sort the buckets
+//            samples[i] = new PriorityQueue(result[i]);
+//        }
+        return resultPQ;
     }
 
     public Kmin[] getSamplesKmin(long[] q, int numPreds) {
@@ -1631,37 +1692,39 @@ public class OmniSketch extends SynopsisRefactor {
 
     @Override
     public int[] checkConditions(long[] q, int numPreds, int unionSize, QueryInfo CMRow) {
-        TreeSet<Long>[][] samples = new TreeSet[depth][numPreds];
-        // initialize arrays
-        for (int i = 0; i < depth; i++) {
-            samples[i] = new TreeSet[numPreds];
+        throw new IllegalArgumentException("Not implemented");
 
-        }
-        int attrWithoutPred = 0;
-        for (int i = 0; i < q.length; i++) {
-            if (q[i] != -1) { // Find way to not take the -1s into account in query.
-                // temp is Sample[depth][numTwoLHSReps]
-                TreeSet<Long>[] temp = CMSketchesS0[i].query(q[i]);
-                // want to add to samples per depth, such that we can call unionEstimate
-                if (depth>=0) {
-                    for (int j = 0; j < depth; j++) {
-                        samples[j][(i - attrWithoutPred)] = temp[j];
-                        //System.arraycopy(temp[j], 0, samples[j][(i - attrWithoutPred)],0, temp[j].size());
-                    }
-                }
-            } else {
-                attrWithoutPred++;
-            }
-        }
-        int[] result = new int[2];
-        if (numPreds == 0) {
-            return new int[]{0, 0};
-        }
-        // get union and intersection size
-        result[0] = unionSize(samples[CMRow.CMRow]);
-        result[1] = intersection(samples[CMRow.CMRow]);
-        //System.out.println("In CheckConditions | Union size: " + result[0] + ", intersection size: " + result[1]);
-        return result;
+//        PriorityQueue[][] samples = new PriorityQueue[][][depth][numPreds];
+//        // initialize arrays
+//        for (int i = 0; i < depth; i++) {
+//            samples[i] = new PriorityQueue[numPreds];
+//
+//        }
+//        int attrWithoutPred = 0;
+//        for (int i = 0; i < q.length; i++) {
+//            if (q[i] != -1) { // Find way to not take the -1s into account in query.
+//                // temp is Sample[depth][numTwoLHSReps]
+//                PriorityQueue[] temp = CMSketchesS0[i].query(q[i]);
+//                // want to add to samples per depth, such that we can call unionEstimate
+//                if (depth>=0) {
+//                    for (int j = 0; j < depth; j++) {
+//                        samples[j][(i - attrWithoutPred)] = temp[j];
+//                        //System.arraycopy(temp[j], 0, samples[j][(i - attrWithoutPred)],0, temp[j].size());
+//                    }
+//                }
+//            } else {
+//                attrWithoutPred++;
+//            }
+//        }
+//        int[] result = new int[2];
+//        if (numPreds == 0) {
+//            return new int[]{0, 0};
+//        }
+//        // get union and intersection size
+//        result[0] = unionSize(samples[CMRow.CMRow]);
+//        result[1] = intersection(samples[CMRow.CMRow]);
+//        //System.out.println("In CheckConditions | Union size: " + result[0] + ", intersection size: " + result[1]);
+//        return result;
     }
     //endregion
 

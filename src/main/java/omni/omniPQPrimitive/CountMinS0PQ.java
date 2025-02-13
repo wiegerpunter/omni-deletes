@@ -2,17 +2,17 @@ package omni.omniPQPrimitive;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import com.sun.source.tree.Tree;
-import omni.PriorityQueue.PriorityQueue;
-import org.w3c.dom.Attr;
+import java.util.PriorityQueue;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.TreeSet;
 
-public class CountMinS0 {
+public class CountMinS0PQ {
 
     //ArrayList<ArrayList<Sample>> CM = new ArrayList<>();
 
-    TreeSet<Long>[][] CM;
+    PriorityQueue<Long>[][] CM;
     //Tree[][] CMPQ;
     final int depth;
     final int width;
@@ -25,7 +25,7 @@ public class CountMinS0 {
 
     Random rn;
 
-    public CountMinS0(int attr, int depth, int width, int sampleSize, int sampleBufferSize, int seed) {
+    public CountMinS0PQ(int attr, int depth, int width, int sampleSize, int sampleBufferSize, int seed) {
         this.attr = attr;
         this.depth = depth;
         this.width = width;
@@ -56,11 +56,11 @@ public class CountMinS0 {
 //        System.out.println("CMS0: hash_a = " + hash_a[0]);
 //        System.out.println("CMS0: hash_b = " + hash_b[0]);
 //        System.out.println("CMS0: hash_c = " + hash_c[0]);
-        CM = new TreeSet[depth][width];
+        CM = new PriorityQueue[depth][width];
 //        CMPQ = new PriorityQueue[depth][width];
         for (int j = 0; j < depth; j++) {
             for (int i = 0; i < width; i++) {
-                CM[j][i] = new TreeSet<Long>(Comparator.reverseOrder());
+                CM[j][i] = new PriorityQueue(sampleSize + sampleBufferSize);
 //                CMPQ[j][i] = new PriorityQueue(sampleSize + sampleBufferSize);
             }
         }
@@ -109,6 +109,7 @@ public class CountMinS0 {
 //    }
     public void ingest(long attrValue, long id, int sign) {
         // Test if all element in A and B are consistent
+//        int idInt = (int) id;
         int[] hashes = hash(attrValue, depth, width);
         for (int j = 0; j < depth; j++) {
             int w = hashes[j];
@@ -120,7 +121,7 @@ public class CountMinS0 {
         }
     }
 
-    public TreeSet<Long>[] query(long attrValue) {
+    public PriorityQueue<Long>[] query(long attrValue) {
         if (!toRemoveId.isEmpty()) { // otherwise, scaling is not correct
             removeList();
         }
@@ -128,12 +129,12 @@ public class CountMinS0 {
         int[] hashes = hash(attrValue, depth, width);
 //
 //         result;
-        TreeSet<Long>[] result = new TreeSet[depth];
+        PriorityQueue<Long>[] result = new PriorityQueue[depth];
 
 //        PriorityQueue[] resultPQ = new PriorityQueue[depth];
         for (int j = 0; j < depth; j++) {
             int w = hashes[j];
-            result[j] = getCopy(j, w);
+            result[j] = CM[j][w];
         }
 
         return result;
@@ -167,6 +168,7 @@ public class CountMinS0 {
     ArrayList<Long> toRemoveId = new ArrayList<>();
 
     public void removeId(long removeId) {
+//        int removeIdInt = (int) removeId;
         toRemoveId.add(removeId);
         if (toRemoveId.size() > sampleBufferSize) {
             removeList();
@@ -176,20 +178,15 @@ public class CountMinS0 {
     private void removeList() {
         for (int j = 0; j < depth; j++) {
             for (int i = 0; i < width; i++) {
+                CM[j][i].removeAll(toRemoveId);
 //                for (Long aLong : toRemoveId) {
 //                    CM[j][i].remove(aLong);
 //                }
-//                toRemoveIdSet.forEach(CM[j][i]::remove);
-                toRemoveId.forEach(CM[j][i]::remove);
             }
         }
         toRemoveId.clear();
     }
 
-    public TreeSet<Long> getCopy(int row, int column) {
-        // copy of treeset for querying
-        return new TreeSet<>(CM[row][column]);
-    }
 
 //    public void sort() {
 //        // sort all arraylists in CM:

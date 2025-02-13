@@ -88,7 +88,7 @@ public class AttributeSketch {
             CMKminTreeSet = new Kmin[depth][width];
             for (int j = 0; j < depth; j++) {
                 for (int i = 0; i < width; i++) {
-                        CMKminTreeSet[j][i] = new Kmin(orgMaxSize, b, useTwoKmin, BetaKmin, dynamicResizing, seed);//Main.withDeletes);
+                    CMKminTreeSet[j][i] = new Kmin(orgMaxSize, b, useTwoKmin, BetaKmin, dynamicResizing, seed);//Main.withDeletes);
                 }
             }
         }
@@ -244,13 +244,10 @@ public class AttributeSketch {
     }
     public Kmin[] queryKmin(long attrValue) {
         int[] hashes = hash(attrValue, depth, width);
-
-        Kmin[] result;
-        result = new Kmin[depth];
-
+        Kmin[] result = new Kmin[depth];
         for (int j = 0; j < depth; j++) {
             int w = hashes[j];
-            result[j] = CMKminTreeSet[j][w];
+            result[j] = new Kmin(CMKminTreeSet[j][w]);
         }
         return result;
     }

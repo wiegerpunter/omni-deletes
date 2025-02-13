@@ -163,19 +163,23 @@ public class RunExperiments {
                                 System.out.println("Running sketch with ram " + ram);
                                 System.out.println("OMNISKETCH");
                                 if (Main.useS0){
-                                    runOmniSketchPQPrimitive(ram, rtp, true,
-                                            false, false,
-                                            true, Main.rangeQueries, false,
-                                            false, false,
-                                            false, false, 1, false,
-                                            dynamicSampleSizes, false, false, 0.1,
-                                            repetition, actRamVals, resSampleSizes);
+                                    int[] sampleBufferSizes = new int[]{10,100,1000};
+                                    for (int sbs: sampleBufferSizes) {
+                                        runOmniSketchPQPrimitive(ram, rtp, true, true,
+                                                false, false,
+                                                true, Main.rangeQueries, false,
+                                                false, false,
+                                                false, false, 1, false,
+                                                dynamicSampleSizes, false, false, 0.1,
+                                                sbs, repetition, actRamVals, resSampleSizes);
+                                    }
                                     System.gc();
                                 }
 
 
 
                                 boolean useS0 = false;
+                                int sampleBufferSize = 0;
 
                                 boolean useTwoLHS = true;
                                 boolean useBetaKmin = false;
@@ -192,12 +196,12 @@ public class RunExperiments {
 
                                 //UNCOMMENT:
                                 if (Main.exp2LHS) {
-                                    runOmniSketchPQPrimitive(ram, rtp, useS0,
+                                    runOmniSketchPQPrimitive(ram, rtp, useS0, useS0,
                                             useTwoLHS, useOnlyBestRow,
                                             useTwoLHSAcrossRows, Main.rangeQueries, useBetaKmin,
                                             useFastTwoLHS, useInvDistPaper2LHS, useMinEstimate, Main.checkConditions,
                                             1, false,dynamicSampleSizes, false,true,
-                                            0.1,repetition, actRamVals, resSampleSizes);
+                                            0.1, sampleBufferSize,repetition, actRamVals, resSampleSizes);
 
                                     System.gc();
                                 }
@@ -223,23 +227,23 @@ public class RunExperiments {
                                                 boolean useNmax = nmaxUse == 1;
                                                 for (int bestRow =0; bestRow<2; bestRow++) {
                                                     useOnlyBestRow = bestRow == 1;
-                                                    runOmniSketchPQPrimitive(ram, rtp, useS0,
+                                                    runOmniSketchPQPrimitive(ram, rtp, useS0, useS0,
                                                             useTwoLHS,
                                                             useOnlyBestRow,
                                                             useAcrossRows, Main.rangeQueries,
                                                             useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
                                                             useMinEstimate, Main.checkConditions, betaValue, dynamicResizing,
-                                                            dynamicSampleSizes, false, useNmax, 0.1,
+                                                            dynamicSampleSizes, false, useNmax, 0.1, sampleBufferSize,
                                                             repetition, actRamVals, resSampleSizes);
                                                     System.gc();
                                                     if (Main.expCase1ReturnScap) {
                                                         for (double eps : Main.epsValues) {
-                                                            runOmniSketchPQPrimitive(ram, rtp, useS0,
+                                                            runOmniSketchPQPrimitive(ram, rtp, useS0,useS0,
                                                                     useTwoLHS, useOnlyBestRow,
                                                                     useAcrossRows, Main.rangeQueries,
                                                                     useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
                                                                     useMinEstimate, Main.checkConditions, betaValue, dynamicResizing,
-                                                                    dynamicSampleSizes, true, useNmax, eps,
+                                                                    dynamicSampleSizes, true, useNmax, eps, sampleBufferSize,
                                                                     repetition, actRamVals, resSampleSizes);
                                                             System.gc();
                                                         }
@@ -306,7 +310,7 @@ public class RunExperiments {
     }
 
 
-    public void runOmniSketchPQPrimitive(long ram, RamToPar rtp, boolean useS0,
+    public void runOmniSketchPQPrimitive(long ram, RamToPar rtp, boolean useS0, boolean useS0WithSampling,
                                          boolean useTwoLHS,
                                 boolean useOnlyBestRow,
                                 boolean use2LHSAcrossRows, boolean rangeQueries,
@@ -315,7 +319,7 @@ public class RunExperiments {
                                 boolean useMinEstimate, boolean checkExactUnion2LHS,
                                 double BetaKmin, boolean dynamicResizing, boolean dynamicSampleSizes,
                                          boolean case1ReturnScap, boolean useNmax,
-                                         double eps, int repetition,
+                                         double eps, int sampleBufferSize, int repetition,
                                 ArrayList<Long> actRamVals, ArrayList<Integer> ramSizes) throws IOException {
         int[] params;
         if (useTwoLHS) {
@@ -339,14 +343,14 @@ public class RunExperiments {
             return;
         }
         Main.rs = new omni.omniPQPrimitive.OmniSketch(ram, Main.numStoredAttributes, params, Main.dyadicRangeBits,
-                useS0,
+                useS0, useS0WithSampling,
                 useTwoLHS, useOnlyBestRow,
                 use2LHSAcrossRows,
                 rangeQueries, useBetaKmin,
                 useFastTwoLHS, useInvDistPaper2LHS,
                 useMinEstimate, checkExactUnion2LHS,
                 BetaKmin, dynamicResizing,
-                dynamicSampleSizes, case1ReturnScap, useNmax, eps, repetition);
+                dynamicSampleSizes, case1ReturnScap, useNmax, eps, sampleBufferSize, repetition);
         ((omni.omniPQPrimitive.OmniSketch) Main.rs).printParams();
         long synMem = runSynopsisRamBased(Main.rs, repetition);
         actRamVals.add(synMem);

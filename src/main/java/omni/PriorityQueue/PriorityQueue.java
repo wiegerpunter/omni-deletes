@@ -5,6 +5,9 @@ package omni.PriorityQueue;
 // array implementation of
 // binary heap
 
+import org.checkerframework.checker.units.qual.A;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.TreeSet;
 
@@ -18,6 +21,10 @@ public class PriorityQueue {
         this.K = size;
         H = new int[size];
         Arrays.fill(H, -1);
+    }
+
+    public int size(){
+        return size;
     }
 
     public PriorityQueue(int size, PriorityQueue pq) {
@@ -50,6 +57,14 @@ public class PriorityQueue {
 //        shiftUp(this.size);
 //    }
     }
+
+//    public PriorityQueue query() {
+//        if (!toRemove.isEmpty()) {
+//            removeBatch(toRemove);
+//            toRemove.clear();
+//        }
+//        return this;
+//    }
 
 //    public PriorityQueue(PriorityQueue priorityQueue) {
 //        this.H = priorityQueue.H;
@@ -181,15 +196,50 @@ public class PriorityQueue {
 
     // Function to remove the element
 // located at given index
-    void remove(int i) {
-        H[i] = getMax() + 1;
+    int removeBufferSize = 1000;
+    ArrayList<Integer> toRemove = new ArrayList<>();
+    public void remove(int i) {
+//        if (i >= size) {
+//            // cant remove
+//            throw new RuntimeException("Index out of bounds");
+//        }
 
-        // Shift the node to the root
-        // of the heap
-        shiftUp(i);
+        toRemove.add(i);
+        if (toRemove.size() > removeBufferSize) {
+            removeBatch(toRemove);
+            toRemove.clear();
+        }
+//
+//        H[i] = getMax() + 1;
+//
+//        // Shift the node to the root
+//        // of the heap
+//        shiftUp(i);
+//
+//        // Extract the node
+//        extractMax();
+    }
 
-        // Extract the node
-        extractMax();
+    public void removeBatch(ArrayList<Integer> removeList) {
+        // newIndex will track the next position for a kept element.
+        int newIndex = 0;
+
+        // Iterate over all elements (from 0 to size, inclusive, because size is the last index).
+        for (int i = 0; i <= size; i++) {
+            // If the element should NOT be removed, copy it to the new position.
+            if (!removeList.contains(H[i])) {
+                H[newIndex++] = H[i];
+            }
+        }
+
+        // Update size: note that if newIndex==0, then no element remains, so size should be -1.
+        size = newIndex - 1;
+
+        // Rebuild the heap in one pass.
+        // Start at the last parent and shift down every node.
+        for (int i = parent(size); i >= 0; i--) {
+            shiftDown(i);
+        }
     }
 
     void swap(int i, int j) {
@@ -218,4 +268,11 @@ public class PriorityQueue {
         insert(hx);
         return true;
     }
+
+    public void clear() {
+        // clear the priority queue
+        size = -1;
+        Arrays.fill(H, -1);
+    }
+
 }

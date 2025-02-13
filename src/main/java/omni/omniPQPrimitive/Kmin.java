@@ -62,6 +62,29 @@ public class Kmin extends Sample {
 
     }
 
+    public Kmin(Kmin kmin) {
+        this.supportDeletes = kmin.supportDeletes;
+        this.K = kmin.K;
+        this.b = kmin.b;
+        this.seed = kmin.seed;
+        this.Beta = kmin.Beta;
+        this.dynamicResizing = kmin.dynamicResizing;
+        this.curb = kmin.curb;
+        this.nextbVal = kmin.nextbVal;
+        this.KInQuery = kmin.KInQuery;
+        this.allowedDeletions = kmin.allowedDeletions;
+        this.sketch = PriorityQueue.getCopy(kmin.sketch);
+        this.maxHash = kmin.maxHash;
+        this.xx = Hashing.murmur3_32_fixed(seed);
+        // copy everything
+        this.n = kmin.n;
+        this.curSampleSize = kmin.curSampleSize;
+        this.curTreeRoot = kmin.curTreeRoot;
+        this.collissions = kmin.collissions;
+        this.deletesFromSample = kmin.deletesFromSample;
+        this.exceedsNumberOfDeletes = kmin.exceedsNumberOfDeletes;
+    }
+
     public int curTreeRoot = Integer.MAX_VALUE;
     int collissions = 0;
 //    public void add(int hx) {

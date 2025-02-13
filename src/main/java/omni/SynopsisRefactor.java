@@ -18,6 +18,7 @@ public abstract class SynopsisRefactor {
     public boolean useMinEstimate;
     public boolean useNmax;
     public int seed;
+    protected boolean useS0WithSampling;
 
     public SynopsisRefactor() {
 
