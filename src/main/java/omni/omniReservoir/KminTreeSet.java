@@ -2,7 +2,7 @@ package omni.omniReservoir;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import omni.Formulas;
+import omni.parameterSetting.Formulas;
 import omni.Main;
 
 import java.util.Collections;

@@ -1,5 +1,8 @@
 package omni;
 
+import omni.Record.Query;
+import omni.Record.Record;
+
 public abstract class Synopsis {
     public int[] maxBits;
     protected String setting;

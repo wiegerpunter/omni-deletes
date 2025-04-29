@@ -2,17 +2,15 @@ package omni.omniPQPrimitive;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import com.sun.source.tree.Tree;
 import omni.PriorityQueue.PriorityQueue;
-import org.w3c.dom.Attr;
 
 import java.util.*;
 
-public class CountMinS0 {
+public class CountMinS0PriorityQueue {
 
     //ArrayList<ArrayList<Sample>> CM = new ArrayList<>();
 
-    TreeSet<Integer>[][] CM;
+    PriorityQueue[][] CM;
     //Tree[][] CMPQ;
     final int depth;
     final int width;
@@ -25,7 +23,7 @@ public class CountMinS0 {
 
     Random rn;
 
-    public CountMinS0(int attr, int depth, int width, int sampleSize, int sampleBufferSize, int seed) {
+    public CountMinS0PriorityQueue(int attr, int depth, int width, int sampleSize, int sampleBufferSize, int seed) {
         this.attr = attr;
         this.depth = depth;
         this.width = width;
@@ -56,11 +54,11 @@ public class CountMinS0 {
 //        System.out.println("CMS0: hash_a = " + hash_a[0]);
 //        System.out.println("CMS0: hash_b = " + hash_b[0]);
 //        System.out.println("CMS0: hash_c = " + hash_c[0]);
-        CM = new TreeSet[depth][width];
+        CM = new PriorityQueue[depth][width];
 //        CMPQ = new PriorityQueue[depth][width];
         for (int j = 0; j < depth; j++) {
             for (int i = 0; i < width; i++) {
-                CM[j][i] = new TreeSet<Integer>(Comparator.reverseOrder());
+                CM[j][i] = new PriorityQueue(sampleSize / width);
 //                CMPQ[j][i] = new PriorityQueue(sampleSize + sampleBufferSize);
             }
         }
@@ -120,7 +118,7 @@ public class CountMinS0 {
         }
     }
 
-    public TreeSet<Integer>[] query(long attrValue) {
+    public PriorityQueue[] query(long attrValue) {
         if (!toRemoveId.isEmpty()) { // otherwise, scaling is not correct
             removeList();
         }
@@ -128,12 +126,12 @@ public class CountMinS0 {
         int[] hashes = hash(attrValue, depth, width);
 //
 //         result;
-        TreeSet<Integer>[] result = new TreeSet[depth];
+        PriorityQueue[] result = new PriorityQueue[depth];
 
 //        PriorityQueue[] resultPQ = new PriorityQueue[depth];
         for (int j = 0; j < depth; j++) {
             int w = hashes[j];
-            result[j] = getCopy(j, w);
+            result[j] = PriorityQueue.getCopy(CM[j][w]);
         }
 
         return result;
@@ -174,7 +172,7 @@ public class CountMinS0 {
     }
 
     private void removeList() {
-        Collections.sort(toRemoveId);
+//        Collections.sort(toRemoveId);
         for (int j = 0; j < depth; j++) {
             for (int i = 0; i < width; i++) {
 //                for (Long aLong : toRemoveId) {
@@ -186,11 +184,9 @@ public class CountMinS0 {
 //                    if (CM[j][i].isEmpty() || CM[j][i].first() < aLong) {
 //                        break;
 //                    }
-
-                    if (CM[j][i].isEmpty()) {
-                        break;
+                    if (!CM[j][i].isEmpty()) {
+                        CM[j][i].remove(aLong);
                     }
-                    CM[j][i].remove(aLong);
                 }
 //                toRemoveId.forEach(CM[j][i]::remove);
 
@@ -201,9 +197,9 @@ public class CountMinS0 {
         toRemoveId.clear();
     }
 
-    public TreeSet<Integer> getCopy(int row, int column) {
+    public PriorityQueue getCopy(int row, int column) {
         // copy of treeset for querying
-        return new TreeSet<>(CM[row][column]);
+        return new PriorityQueue(CM[row][column]);
     }
 
 //    public void sort() {

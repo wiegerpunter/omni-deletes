@@ -3,6 +3,7 @@ package omni;
 import com.opencsv.exceptions.CsvValidationException;
 import omni.CountMin.CountMin;
 import omni.hydraRefactor.ImpHydraStruct;
+import omni.parameterSetting.RamToPar;
 import omni.resSample.ReservoirSample;
 import omni.aSH.aSH;
 
@@ -15,7 +16,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 
-public class RunExperiments {
+public class RunExperimentsOld {
     Helper h;
     DatasetRefactor d;
     CleanDataset cd;
@@ -23,15 +24,16 @@ public class RunExperiments {
     RamToPar rtp;
     String[] conditions;
     double sizeFactor;
+    Config config;
 
     int numNoiseUpdates;
-    public RunExperiments(Helper h, int sizeFactor) {
-        this.h = h;
+    public RunExperimentsOld(Config config, int sizeFactor) {
+        this.config = config;
         this.sizeFactor = sizeFactor;
     }
 
     public void run() throws IOException, CsvValidationException {
-        cd = new CleanDataset(h, Main.numBins,Main.numPredicates);
+        cd = new CleanDataset(config);
         readDatasetSettings();
         for (double zipfAlpha : Main.zipfAlphas) {
             for (int i = 0; i < conditions.length; i++) {
@@ -123,6 +125,7 @@ public class RunExperiments {
             }
 //
             this.rtp = new RamToPar(Main.numStoredAttributes, actRamVals);
+            int[] numSampleSizes = rtp.getSampleSizes();
             for (long ram : actRamVals) {
                 if (Main.expaSH) {
                     for (double ingestBuffer : Main.ingestBuffers) {
@@ -158,20 +161,34 @@ public class RunExperiments {
                     for (double parFactor : Main.parFactorGridSearch) {
                         for (int c = 0; c < 1; c++) {
                             boolean dynamicSampleSizes = false;
-                            this.rtp = new RamToPar(Main.numStoredAttributes, depth, b, parFactor);
+                            this.rtp.computeOmniSketchParametersFromRAM(depth, b, parFactor);
+                            this.rtp.computeOmniSketchParametersFromSampleSize(depth, b, parFactor);
+
                             for (long ram : Main.ramVals) {
-                                System.out.println("Running sketch with ram " + ram);
+//                            for (int sampleSize : rtp.getSampleSizes()) {
+//                                System.out.println("Running sketch with ram " + ram);
+//                                System.out.println("Sample size " + sampleSize);
                                 System.out.println("OMNISKETCH");
                                 if (Main.useS0){
-                                    int[] sampleBufferSizes = new int[]{10,100,1000};
+                                    int[] sampleBufferSizes = new int[]{100};
+                                    int[] s0Settings = new int[]{2};
                                     for (int sbs: sampleBufferSizes) {
-                                        runOmniSketchPQPrimitive(ram, rtp, true, true,
-                                                false, false,
-                                                true, Main.rangeQueries, false,
-                                                false, false,
-                                                false, false, 1, false,
-                                                dynamicSampleSizes, false, false, 0.1,
-                                                sbs, repetition, actRamVals, resSampleSizes);
+                                        for (int s0setting : s0Settings) {
+                                            runOmniSketchPQPrimitive(ram, rtp, true, true,
+                                                    false, false,
+                                                    true, Main.rangeQueries, false,
+                                                    false, false,
+                                                    false, false, 1, false,
+                                                    dynamicSampleSizes, false, false, s0setting, 0.1,
+                                                    sbs, repetition, actRamVals, resSampleSizes);
+//                                            runOmniSketchPQPrimitive(ram, rtp, true, true,
+//                                                    false, false,
+//                                                    true, Main.rangeQueries, false,
+//                                                    false, false,
+//                                                    false, false, 1, false,
+//                                                    dynamicSampleSizes, false, false, false, 0.1,
+//                                                    sbs, s0width, repetition, actRamVals, resSampleSizes);
+                                        }
                                     }
                                     System.gc();
                                 }
@@ -200,8 +217,8 @@ public class RunExperiments {
                                             useTwoLHS, useOnlyBestRow,
                                             useTwoLHSAcrossRows, Main.rangeQueries, useBetaKmin,
                                             useFastTwoLHS, useInvDistPaper2LHS, useMinEstimate, Main.checkConditions,
-                                            1, false,dynamicSampleSizes, false,true,
-                                            0.1, sampleBufferSize,repetition, actRamVals, resSampleSizes);
+                                            1, false,dynamicSampleSizes, false,true, 0,
+                                            0.1, sampleBufferSize, repetition, actRamVals, resSampleSizes);
 
                                     System.gc();
                                 }
@@ -233,7 +250,8 @@ public class RunExperiments {
                                                             useAcrossRows, Main.rangeQueries,
                                                             useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
                                                             useMinEstimate, Main.checkConditions, betaValue, dynamicResizing,
-                                                            dynamicSampleSizes, false, useNmax, 0.1, sampleBufferSize,
+                                                            dynamicSampleSizes, false, useNmax, 0,
+                                                            0.1, sampleBufferSize,
                                                             repetition, actRamVals, resSampleSizes);
                                                     System.gc();
                                                     if (Main.expCase1ReturnScap) {
@@ -243,7 +261,8 @@ public class RunExperiments {
                                                                     useAcrossRows, Main.rangeQueries,
                                                                     useBetaKmin, useFastTwoLHS, useInvDistPaper2LHS,
                                                                     useMinEstimate, Main.checkConditions, betaValue, dynamicResizing,
-                                                                    dynamicSampleSizes, true, useNmax, eps, sampleBufferSize,
+                                                                    dynamicSampleSizes, true, useNmax, 0,
+                                                                    eps, sampleBufferSize,
                                                                     repetition, actRamVals, resSampleSizes);
                                                             System.gc();
                                                         }
@@ -318,7 +337,7 @@ public class RunExperiments {
                                 boolean useInvDistPaper2LHS,
                                 boolean useMinEstimate, boolean checkExactUnion2LHS,
                                 double BetaKmin, boolean dynamicResizing, boolean dynamicSampleSizes,
-                                         boolean case1ReturnScap, boolean useNmax,
+                                         boolean case1ReturnScap, boolean useNmax, int s0Setting,
                                          double eps, int sampleBufferSize, int repetition,
                                 ArrayList<Long> actRamVals, ArrayList<Integer> ramSizes) throws IOException {
         int[] params;
@@ -329,7 +348,15 @@ public class RunExperiments {
             params = rtp.getParamsOmniSketch2LHS(ram);
             Main.numTwoLHSReps = params[2];
         } else {
-            params = rtp.getParamsOmniSketchKmin(ram);
+            if (useS0) {
+                if (s0Setting == 2) {
+                    params = rtp.getParamsOmniSketchRef(ram);
+                } else {
+                    params = rtp.getParamsOmniSketchArrayList(ram);
+                }
+            } else {
+                params = rtp.getParamsOmniSketchKmin(ram);
+            }
             Main.maxSize = params[2];
             Main.b =  params[3];
         }
@@ -350,7 +377,7 @@ public class RunExperiments {
                 useFastTwoLHS, useInvDistPaper2LHS,
                 useMinEstimate, checkExactUnion2LHS,
                 BetaKmin, dynamicResizing,
-                dynamicSampleSizes, case1ReturnScap, useNmax, eps, sampleBufferSize, repetition);
+                dynamicSampleSizes, case1ReturnScap, useNmax, s0Setting, eps, sampleBufferSize, repetition);
         ((omni.omniPQPrimitive.OmniSketch) Main.rs).printParams();
         long synMem = runSynopsisRamBased(Main.rs, repetition);
         actRamVals.add(synMem);
@@ -466,7 +493,7 @@ public class RunExperiments {
         System.out.println("\n");
         int collisions = 0;
 
-        AnalysisBaselinesRefactor ab = new AnalysisBaselinesRefactor(syn, cd, h, time_passed, collisions, repetition);
+        AnalysisBaselinesRefactor ab = new AnalysisBaselinesRefactor(syn, cd, time_passed, collisions, repetition, config);
         ab.run();
         long synMem = syn.getMemoryUsage();
         syn.reset();
@@ -597,28 +624,31 @@ public class RunExperiments {
 
     public void readDataset(double perc, double maxPerc, double sizeFactor, int noiseSize, double zipfAlpha) throws IOException, CsvValidationException {
         //cd.cleanDataset(d);
-        if (Main.datasetName.equals("synthEquiDepthBins")) {
-            cd.cleanDatasetEquiDepthBins(perc, sizeFactor, noiseSize);
-        } else if (Main.datasetName.equals("synthZipf"))  {
-            cd.synthZipf(perc, sizeFactor, noiseSize);
-            cd.getDistributions();
-        } else if (Main.datasetName.equals("synthDev")) {
-            if (Main.numZipfianAttrs > Main.numSynthAttrs) {
-                throw new RuntimeException("Number of zipfian attributes cannot be larger than number of attributes");
+        switch (Main.datasetName) {
+            case "synthEquiDepthBins" -> cd.cleanDatasetEquiDepthBins(perc, sizeFactor, noiseSize);
+            case "synthZipf" -> {
+                cd.synthZipf(perc, sizeFactor, noiseSize);
+                cd.getDistributions();
             }
-            if (Main.numUniformAttrs > Main.numSynthAttrs) {
-                throw new RuntimeException("Number of uniform attributes cannot be larger than number of attributes");
+            case "synthDev" -> {
+                if (Main.numZipfianAttrs > Main.numSynthAttrs) {
+                    throw new RuntimeException("Number of zipfian attributes cannot be larger than number of attributes");
+                }
+                if (Main.numUniformAttrs > Main.numSynthAttrs) {
+                    throw new RuntimeException("Number of uniform attributes cannot be larger than number of attributes");
+                }
+                if (Main.numZipfianAttrs + Main.numUniformAttrs > Main.numSynthAttrs) {
+                    throw new RuntimeException("Number of zipfian and uniform attributes cannot be larger than number of attributes");
+                }
+                cd.synthDev(perc, sizeFactor, Main.numZipfianAttrs, zipfAlpha, Main.numUniformAttrs);
+                //cd.getDistributions();
             }
-            if (Main.numZipfianAttrs + Main.numUniformAttrs > Main.numSynthAttrs) {
-                throw new RuntimeException("Number of zipfian and uniform attributes cannot be larger than number of attributes");
-            }
-            cd.synthDev(perc, sizeFactor, noiseSize, Main.numZipfianAttrs, zipfAlpha, Main.numUniformAttrs);
-            //cd.getDistributions();
-        } else if (Main.datasetName.equals("Test")) {
-            cd.testDataset();
-        } else {
-            cd.cleanDataset(d, perc, maxPerc);
+            case "Test" -> cd.testDataset();
+            default -> cd.cleanDataset(d, perc, maxPerc);
         }
+
+        // get number of unique full records, ignoring the id
+        cd.getUniqueRecords();
 
         // print distributions
         //cd.getDistributions();

@@ -1,4 +1,4 @@
-package omni;
+package omni.parameterSetting;
 
 public class Formulas {
 
@@ -20,5 +20,13 @@ public class Formulas {
     static int ramOmniTwoLHS(int numAttrsToUse, int depth, int width, int numTwoLHSReps) {
         return depth * width * numAttrsToUse * (numTwoLHSReps * 31 * 32 * 32 + 32);
         //return depth * width * numAttrsToUse * (numTwoLHSReps * 31 * 32 + 32);
+    }
+
+    static int ramOmniRef(int numAttrsToUse, int depth, int B, int width) {
+        return (int) (depth * numAttrsToUse * B  * (Math.log(B)/Math.log(2) + Math.log(width)/Math.log(2)));
+    }
+
+    static int ramOmniArr(int numAttrsToUse, int depth, int B) {
+        return (int) ((depth * numAttrsToUse + 1) * B  * 32L);
     }
 }

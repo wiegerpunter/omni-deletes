@@ -1,4 +1,4 @@
-package omni;
+package omni.parameterSetting;
 
 public class DetermineBKmin {
 

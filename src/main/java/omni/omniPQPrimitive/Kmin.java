@@ -2,10 +2,8 @@ package omni.omniPQPrimitive;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import omni.Formulas;
-import omni.Main;
+import omni.parameterSetting.Formulas;
 
-import java.util.Collections;
 import omni.PriorityQueue.PriorityQueue;
 import java.util.Random;
 
@@ -233,6 +231,9 @@ public class Kmin extends Sample {
     @Override
     public long getMemoryUsage() {
         //return (sketch.size() * (b + 32*3 + 1) + 32);
+        if (dynamicResizing) {
+            return Formulas.ramSingleKmin(sketch.size + 1, curb);
+        }
         return Formulas.ramSingleKmin(sketch.size + 1, b);
     }
 

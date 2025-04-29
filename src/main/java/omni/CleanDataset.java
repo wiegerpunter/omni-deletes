@@ -5,18 +5,18 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvException;
 import com.opencsv.exceptions.CsvValidationException;
+import omni.Record.Record;
 
 import java.io.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class CleanDataset {
+    private final Config config;
 
     public int numDeletes;
-    Helper h;
 
     // Input dataset and make new dataset with new records, omitting attributes that are not valid.
-    DatasetRefactor original;
+    public DatasetRefactor original;
     String name;
     long[][] dataset;
     long[][] datasetNegUpdates;
@@ -77,11 +77,11 @@ public class CleanDataset {
 //        System.out.println("Attributes to choose: " + Arrays.toString(attributesToChoose) + " for repetition " + repetition);
 //    }
 
-    public CleanDataset(Helper h, int numBins, int numPredicates) {
-        this.h = h;
-        this.name = Main.datasetName;
-        this.numBins = numBins;
-        this.numPredicates = numPredicates;
+    public CleanDataset(Config config) {
+        this.config = config;
+        this.name = config.datasetName;
+        this.numBins = config.numBins;
+        this.numPredicates = config.numPredicates;
 //        if (Objects.equals(name, "SNMP")) {
 //            cleanIds = new int[]{12, 14, 11, 1, 5, 13, 9, 8, 10, 21, 15};//{0, 1, 2, 3, 4, 5, 6, 7, 8, 16, 17};
 //            //int[] order = {12, 14, 11, 1, 5, 13, 9, 8, 10, 21, 15};//21, 19, 18, 1, 16, 12, 15, 5, 20,11, 17, 8, 13, 10};
@@ -100,6 +100,12 @@ public class CleanDataset {
 //        }
     }
 
+    public void initToNull(){
+        dataset = null;
+        datasetNegUpdates = null;
+        datasetResidu = null;
+    }
+
     public void setAttributes(int repetition) {
         this.repetition = repetition;
         if (Objects.equals(name, "SNMP")) {
@@ -111,8 +117,8 @@ public class CleanDataset {
             throw new RuntimeException("Not implemented");
         } else if (name.contains("synth") || name.contains("Test")) {
             // cleanIds based on number of attributes:
-            cleanIds = new int[Main.numAttributes];
-            for (int i = 0; i < Main.numAttributes; i++) {
+            cleanIds = new int[config.numAttributes];
+            for (int i = 0; i < config.numAttributes; i++) {
                 cleanIds[i] = i;
             }
             return; // no need to shuffle cleanIds, as already synthetic data.
@@ -136,7 +142,9 @@ public class CleanDataset {
         clean();
         // warmupDataset is a subset of dataset, first Main.warmupNumber records.
         int numToKeep = splitDeletes(percToDelete);
-        if (Main.rangeQueries) {
+        getUniqueRecords();
+
+        if (config.rangeQueries) {
             getRangeQueries();
         } else {
             getPointQueries(percToDelete, maxPercToDelete);
@@ -146,7 +154,7 @@ public class CleanDataset {
     private int splitDeletes(double percToDelete) {
 //        warmupDataset = Arrays.copyOfRange(dataset, 0, Math.min(Main.warmupNumber, dataset.length));
 //        ingestionDataset = Arrays.copyOfRange(dataset, Math.min(Main.warmupNumber, dataset.length), dataset.length);
-        if (!Main.withDeletes) {
+        if (!config.withDeletes) {
             datasetResidu = dataset;
             datasetNegUpdates = new long[0][];
             Main.streamSize = dataset.length;
@@ -208,7 +216,7 @@ public class CleanDataset {
     private boolean queryFileExists() throws CsvValidationException, IOException {
         String filenameToMatch = getQueryFileName(false);
         // check if there exists a file where first part of name matches filenameToMatch
-        String queriesDir = Main.inputFolder + "pointQueries/" + Main.datasetName + "/";
+        String queriesDir = config.getInputFolder() + "pointQueries/" + config.datasetName + "/";
         File[] files = new File(queriesDir).listFiles();
         assert files != null;
         String filename = fileExists(filenameToMatch, files);
@@ -228,9 +236,8 @@ public class CleanDataset {
         // Then generate dataset in zipf distribution.
 
         // Generate queries
-        Main.numQueries = 1000;
-        int numQueries = Main.numQueries;
-        int numAttrs = Main.numAttributes;
+        int numQueries = config.numQueries;
+        int numAttrs = config.numAttributes;
         int largeQueryDomainSize = 1000000;
         int smallQueryDomainSize = 100;
         pointQueries = new long[numQueries][];
@@ -335,9 +342,8 @@ public class CleanDataset {
         this.sizeFactor = sizeFactor;
 
         // Generate queries
-        Main.numQueries = 100 * numBins;
-        int numQueries = Main.numQueries;
-        int numAttrs = Main.numAttributes; // Change to numStoredAttributes if needed.
+        int numQueries = config.numQueries * numBins;
+        int numAttrs = config.numAttributes; // Change to numStoredAttributes if needed.
 
         int queriesPerBin = numQueries / numBins;
         int[] binStartDomain = new int[numBins];
@@ -448,7 +454,7 @@ public class CleanDataset {
 
     private void writeDatasetToFile() {
         String datasetName = getDatasetName();
-        String datasetDir = Main.inputFolder + "data/" + Main.datasetName + "/";
+        String datasetDir = config.getInputFolder() + "data/" + config.datasetName + "/";
         try {
             CSVWriter writer = new CSVWriter(new FileWriter(datasetDir + datasetName));
             for (long[] longs : dataset) {
@@ -467,7 +473,7 @@ public class CleanDataset {
     private void readDatasetFromFile() {
         // read dataset
         String datasetName = getDatasetName();
-        String datasetDir = Main.inputFolder + "data/" + Main.datasetName + "/";
+        String datasetDir = config.getInputFolder() + "data/" + config.datasetName + "/";
         File f = new File(datasetDir + datasetName);
         if (!f.exists()) {
             throw new RuntimeException("Dataset file does not exist.");
@@ -522,57 +528,13 @@ public class CleanDataset {
         } else {
             throw new RuntimeException("Queries do not exist and maxPercToDelete is different from percToDelete. Not implemented.");
         }
-//        String queriesDir = Main.inputFolder + "pointQueries/" + Main.datasetName + "/";
-//        // num Queries unknown beforehand
-//        String filenameToMatch = getQueryFileName();
-//
-////        "queries_" + deletes + Main.datasetName  +
-////                "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain +
-////                "_orgN" + dataset.length + "_numQueries_";
-//        // check if there exists a file where first part of name matches filenameToMatch
-//        File[] files = new File(queriesDir).listFiles();
-//        assert files != null;
-//        String filename = fileExists(filenameToMatch, files);
-//        if (filename != null) {
-//            System.out.println("File " + filename + " exists. Reading queries with exact frequency.");
-//            // parse numQueries
-//            readWorkloadWithExact(queriesDir + filename);
-//            return;
-//        }
-
-        //deletes = deletes(numToKeep, maxPercToDelete, maxPercToDelete);
-//        String filenameToMatchMaxPerc = "queries_" + deletes + Main.datasetName +
-//                    "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain + "_orgN" + dataset.length + "_numQueries_";
-//        filename = fileExists(filenameToMatchMaxPerc, files);
-//        if (filename != null) {
-//            System.out.println("File " + filename + " exists. Reading queries for different # deletes, but same N.");
-//            // parse numQueries
-//            numQueries = Integer.parseInt(filename.substring(filenameToMatchMaxPerc.length(), filename.length() - 4));
-//            Main.numQueries = numQueries;
-//            System.out.println("NumQueries: " + numQueries);
-//            readWorkloadWithoutExact(queriesDir + filename, numToKeep, percToDelete, maxPercToDelete);
-//            return;
-//        }
-
-//        String filenameToMatchDiffN = "queries_" + deletes + Main.datasetName +
-//                "_numStoredAttrs_" + Main.numStoredAttributes + "_queriesFromDomain_" + Main.queriesFromDomain + "_numQueries_";
-//        filename = fileExists(filenameToMatchDiffN, files);
-//        if (filename != null) {
-//            String subString = filename.substring(filenameToMatchDiffN.length(), filename.length() - 4);
-//
-//            Main.numQueries = Integer.parseInt(subString);
-//            System.out.println("NumQueries: " + Main.numQueries);
-//            readWorkloadWithoutExact(queriesDir + filename, numToKeep, percToDelete, maxPercToDelete);
-//            return;
-//        }
-
     }
 
     public void generateQueries() throws IOException {
-        if (Main.rangeQueries) {
+        if (config.rangeQueries) {
             generateRangeQueries();
             computeExactRange();
-            h.writeRangeQueriesToFile();
+            throw new UnsupportedOperationException("Need to write queries to file");
         } else {
             generatePointQueriesAlt(datasetResidu);// todo: queryGenProb based on ratio numToKeep / dataset.length
             System.out.println("Generated queries, computing exact answers.");
@@ -600,14 +562,14 @@ public class CleanDataset {
 
     private long[] cleanRecord(Record r) {
 
-        long[] newRecord = new long[1 + Main.numStoredAttributes];
-        newRecord[0] = r.id;
+        long[] newRecord = new long[1 + config.numStoredAttributes];
+        newRecord[0] = r.getId();
         int i = 1;
         for (int j = 0; j < cleanIds.length; j++) {
-            if (j >= Main.numStoredAttributes) {
+            if (j >= config.numStoredAttributes) {
                 break;
             }
-            newRecord[i] = r.record[cleanIds[j]];
+            newRecord[i] = r.getRecord()[cleanIds[j]];
             i++;
         }
         return newRecord;
@@ -633,15 +595,7 @@ public class CleanDataset {
     private void writePointQueriesToFile() throws IOException {
         boolean init = false;
         String queriesWithExactName = getQueryFileName(true);
-        /*+ "queries_" + deletes + Main.datasetName +
-                "_numStoredAttrs_" + Main.numStoredAttributes + "_sizeFactor_" + sizeFactor +
-                "_queriesFromDomain_" + Main.queriesFromDomain +
-                "_numQueries_" + Main.numQueries + ".csv";*/
-//        String queriesWithoutExactName = queriesDir + "queries_" + deletes + Main.datasetName +
-//                "_numStoredAttrs_" + Main.numStoredAttributes + "_sizeFactor_" + sizeFactor +
-//                "_queriesFromDomain_" + Main.queriesFromDomain + "_numQueries_" +
-//                Main.numQueries +".csv";
-        String queryDir = Main.inputFolder + "pointQueries/" + Main.datasetName + "/";
+        String queryDir = config.getInputFolder() + "pointQueries/" + config.datasetName + "/";
         File f = new File(queryDir + queriesWithExactName);
         if (!f.exists()) {
             init = true;
@@ -654,9 +608,9 @@ public class CleanDataset {
             writer.writeNext(header);
         }
 
-        for (int i = 0; i < Main.numQueries; i++) {
+        for (int i = 0; i < pointQueries.length; i++) {
             String[] nextLine = new String[9];
-            nextLine[0] = String.valueOf(Main.numStoredAttributes);
+            nextLine[0] = String.valueOf(config.numStoredAttributes);
             nextLine[1] = String.valueOf(i);
             nextLine[2] = parsePointQueryToString(pointQueries[i]);
             nextLine[3] = String.valueOf(pointQueriesNumAttrs[i]);
@@ -673,13 +627,13 @@ public class CleanDataset {
     private String getQueryFileName(boolean withNumberOfQueries) {
         //String queriesDir = Main.inputFolder + "pointQueries/" + Main.datasetName + "/";
         String filename = "queries_" +
-                Main.datasetName +
+                config.datasetName +
                 "_sizeFactor_" + this.sizeFactor +
                 "_repetition_" + this.repetition +
                 "_numPredicates_" + this.numPredicates +
                 "_numBins_" + this.numBins;
         if (withNumberOfQueries) {
-            return filename + "_numQueries_" + Main.numQueries + ".csv";
+            return filename + "_numQueries_" + config.numQueries + ".csv";
         } else {
             return filename;
         }
@@ -688,10 +642,10 @@ public class CleanDataset {
 
     private String getDatasetName() {
         return "dataset_" +
-                Main.datasetName +
+                config.datasetName +
                 "_sizeFactor_" + this.sizeFactor +
                 "_repetition_" + this.repetition +
-                "_numStoredAttrs_" + Main.numStoredAttributes +
+                "_numStoredAttrs_" + config.numStoredAttributes +
                 ".csv";
     }
 
@@ -739,12 +693,12 @@ public class CleanDataset {
     }
 
     private void computeExactRange() {
-        rangeQueryAnswers = new int[Main.numQueries];
+        rangeQueryAnswers = new int[config.numQueries];
         // loop over dataset, for each record, check if it is in one of the queries, if so, add to answer.
         for (long[] longs : dataset) {
             for (int j = 0; j < rangeQueries.length; j++) {
                 boolean inQuery = true;
-                for (int k = 0; k < Main.numStoredAttributes; k++) {
+                for (int k = 0; k < config.numStoredAttributes; k++) {
                     if (rangeQueries[j][0][k] != -1 && rangeQueries[j][0][k] > longs[k + 1]) {
                         inQuery = false;
                         break;
@@ -766,92 +720,21 @@ public class CleanDataset {
         //TODO: implement
     }
 
-    private void generatePointQueries(long[][] dataset, double queryGenProb) {
-        // Make point queries on the clean dataset.
-        pointQueries = new long[Main.numQueries][];
-        // initialize with -1s
-        for (int i = 0; i < Main.numQueries; i++) {
-            pointQueries[i] = new long[Main.numStoredAttributes];
-            for (int j = 0; j < Main.numStoredAttributes; j++) {
-                pointQueries[i][j] = -1;
-            }
-        }
-        int generatedQueries = 0;
-        Random rng = new Random(0);
-
-        for (int j = 0; j < dataset.length; j++) {
-                // Select random record from dataset with probability 0.05%.
-                if (rng.nextDouble() < queryGenProb) {
-                    // For each possible combination of predicates, generate a query.
-                    for (int k = 1; k < Math.pow(2, Main.numStoredAttributes); k++) {
-                        long[] query = new long[Main.numStoredAttributes];
-                        // Convert k to binary string.
-                        StringBuilder binaryString = new StringBuilder(Integer.toBinaryString(k));
-                        // Pad with zeros.
-                        while (binaryString.length() < Main.numStoredAttributes) {
-                            binaryString.insert(0, "0");
-                        }
-                        // Make query.
-                        for (int l = 0; l < Main.numStoredAttributes; l++) {
-                            if (binaryString.charAt(l) == '1') {
-                                query[l] = dataset[j][l + 1];
-                            } else {
-                                query[l] = -1;
-                            }
-                        }
-                        // Check if query is already in list of queries.
-                        boolean alreadyInList = false;
-                        for (int m = 0; m < generatedQueries; m++) {
-                            if (Arrays.equals(query, pointQueries[m])) {
-                                alreadyInList = true;
-                                break;
-                            }
-                        }
-                        if (!alreadyInList) {
-                            pointQueries[generatedQueries] = query;
-                            generatedQueries++;
-                            if (generatedQueries == Main.numQueries) {
-                                break;
-                            }
-                        }
-                    }
-                    if (generatedQueries >= Main.numQueries) {
-                        break;
-                    }
-                }
-        }
-
-        // Check for every point query the number of attributes that are not -1.
-        pointQueriesNumAttrs = new int[Main.numQueries];
-        for (int i = 0; i < generatedQueries; i++) {
-            for (int j = 0; j < Main.numStoredAttributes; j++) {
-                if (pointQueries[i][j] != -1) {
-                    pointQueriesNumAttrs[i]++;
-                }
-            }
-        }
-    }
-
-
     private void generatePointQueriesAlt(long[][] dataset) {
         // Make point queries on the clean dataset.
-        //ArrayList<Long[]> potentialQueries = new ArrayList<>();
 
-        //getAttrsToChoose(repetition);
         HashMap<Long[], Integer> potQueries = new HashMap<>();
-        //ArrayList<Integer> potentialQueriesExactAnswer = new ArrayList<>();
-
         // initialize with -1s
         int generatedQueries = 0;
 
-        for (int j = 0; j < dataset.length; j++) {
+        for (long[] longs : dataset) {
             // Select random record from dataset with probability 0.05%.
-            Long[] query = new Long[Main.numStoredAttributes];
-                // Convert k to binary string.
+            Long[] query = new Long[config.numStoredAttributes];
+            // Convert k to binary string.
 
-            for (int l = 0; l < Main.numStoredAttributes; l++) {
+            for (int l = 0; l < config.numStoredAttributes; l++) {
                 if (l < numPredicates) {
-                    query[l] = dataset[j][l + 1];
+                    query[l] = longs[l + 1];
                 } else {
                     query[l] = (long) -1;
                 }
@@ -879,7 +762,7 @@ public class CleanDataset {
 
         // Sort queries by frequency of occurrence.
         //
-        if (Main.numQueries > generatedQueries) {
+        if (config.numQueries > generatedQueries) {
             throw new RuntimeException("Number of queries to generate is larger than number of potential queries.");
         }
         // Sort queries by frequency of occurrence.
@@ -895,10 +778,10 @@ public class CleanDataset {
         Long[][] keys_array = new Long[keys.size()][];
         keys.toArray(keys_array);
         for (int i = 0; i < generatedQueries; i++) {
-            potPointQueries[i] = new long[Main.numStoredAttributes];
+            potPointQueries[i] = new long[config.numStoredAttributes];
 
             potPointQueryAnswers[i] = potQueries.get(keys_array[i]);
-            for (int j = 0; j < Main.numStoredAttributes; j++) {
+            for (int j = 0; j < config.numStoredAttributes; j++) {
                 potPointQueries[i][j] = (long) keys_array[i][j];
             }
         }
@@ -943,7 +826,7 @@ public class CleanDataset {
             splitIndices[splitIndex]++;
         }
 
-        Main.numQueries = 0;
+        config.numQueries = 0;
         for (int i = 0; i < numBins; i++) {
             int binSize = 0;
             if (i == 0) {
@@ -954,27 +837,12 @@ public class CleanDataset {
             addRandomQueries(numQueriesPerBin, i, splitIndices, indices, binSize, potPointQueries, potPointQueryAnswers, random);
         }
         // Now we know actual # queries, resize pointQueries array to be pointQueries[Main.numQueries]
-        pointQueries = new long[Main.numQueries][];
-        pointQueryAnswers = new int[Main.numQueries];
-        pointQueryBinNumber = new int[Main.numQueries];
-        System.arraycopy(pointQueriesEmpty, 0, pointQueries, 0, Main.numQueries);
-        System.arraycopy(pointQueryAnswersEmpty, 0, pointQueryAnswers, 0, Main.numQueries);
-        System.arraycopy(pointQueryBinNumberEmpty, 0, pointQueryBinNumber, 0, Main.numQueries);
-
-//        } else {
-//            pointQueries = new long[Main.numQueries][];
-//            pointQueryAnswers = new int[Main.numQueries];
-//            int binSize = indices.length / Main.numQueries;
-//            for (int i = 0; i < Main.numQueries; i++) {
-//                int startIndex = i * binSize;
-//                int endIndex = (i + 1) * binSize;
-//
-//                int randomIndex = indices[random.nextInt(endIndex - startIndex) + startIndex];
-//
-//                pointQueries[i] = potPointQueries[randomIndex];
-//                pointQueryAnswers[i] = potPointQueryAnswers[randomIndex];
-//            }
-//        }
+        pointQueries = new long[config.numQueries][];
+        pointQueryAnswers = new int[config.numQueries];
+        pointQueryBinNumber = new int[config.numQueries];
+        System.arraycopy(pointQueriesEmpty, 0, pointQueries, 0, config.numQueries);
+        System.arraycopy(pointQueryAnswersEmpty, 0, pointQueryAnswers, 0, config.numQueries);
+        System.arraycopy(pointQueryBinNumberEmpty, 0, pointQueryBinNumber, 0, config.numQueries);
 
         //sort map by value
         // add query of every bin to pointQueries
@@ -982,7 +850,7 @@ public class CleanDataset {
         // Check for every point query the number of attributes that are not -1.
         pointQueriesNumAttrs = new int[pointQueries.length];
         for (int i = 0; i < pointQueriesNumAttrs.length; i++) {
-            for (int j = 0; j < Main.numStoredAttributes; j++) {
+            for (int j = 0; j < config.numStoredAttributes; j++) {
                 if (pointQueries[i] == null) {
                     continue;
                 }
@@ -1023,10 +891,10 @@ public class CleanDataset {
             }
         }
         for (int randomIndex : randomIndices) {
-            pointQueriesEmpty[Main.numQueries] = potPointQueries[indices[randomIndex]];
-            pointQueryAnswersEmpty[Main.numQueries] = potPointQueryAnswers[indices[randomIndex]];
-            pointQueryBinNumberEmpty[Main.numQueries] = i;
-            Main.numQueries++;
+            pointQueriesEmpty[config.numQueries] = potPointQueries[indices[randomIndex]];
+            pointQueryAnswersEmpty[config.numQueries] = potPointQueryAnswers[indices[randomIndex]];
+            pointQueryBinNumberEmpty[config.numQueries] = i;
+            config.numQueries++;
         }
     }
     // Parser from index in new record to name of attribute in original record.
@@ -1035,7 +903,7 @@ public class CleanDataset {
         if (i == 0) {
             return "id";
         } else {
-            return Parser.getAttributeName(cleanIds[i - 1]);
+            return Parser.getAttributeName(cleanIds[i - 1], config.datasetName);
         }
     }
 
@@ -1044,7 +912,7 @@ public class CleanDataset {
         if (name.equals("id")) {
             org_pos = 0;
         } else {
-            org_pos = Parser.attrMap(name);// + 1;
+            org_pos = Parser.attrMap(name, config.datasetName);// + 1;
         }
         for (int i = 0; i < cleanIds.length; i++) {
             if (cleanIds[i] == org_pos) {
@@ -1056,14 +924,14 @@ public class CleanDataset {
 
     public void getDistributions() {
         // Use HashSet for faster lookup of unique values
-        HashSet<Long>[] unique = new HashSet[Main.numStoredAttributes];
+        HashSet<Long>[] unique = new HashSet[config.numStoredAttributes];
         for (int i = 0; i < unique.length; i++) {
             unique[i] = new HashSet<>();
         }
 
         // Count unique values for each attribute
         for (int i = 0; i < dataset.length; i++) {
-            for (int j = 0; j < Main.numStoredAttributes; j++) {
+            for (int j = 0; j < config.numStoredAttributes; j++) {
                 if (dataset[i][j + 1] != -1) {
                     unique[j].add(dataset[i][j + 1]);
                 }
@@ -1071,7 +939,7 @@ public class CleanDataset {
         }
 
         // Print number of unique values for each attribute
-        for (int i = 0; i < Main.numStoredAttributes; i++) {
+        for (int i = 0; i < config.numStoredAttributes; i++) {
             System.out.println("Attribute with index " + i + " ," + parseIndex(i + 1) + " has " + unique[i].size() + " unique values.");
         }
 
@@ -1104,7 +972,7 @@ public class CleanDataset {
 
 
     public long getMemoryUsage() {
-        long usg = (long) dataset.length * (Main.numStoredAttributes + 1) * 32L;
+        long usg = (long) dataset.length * (config.numStoredAttributes + 1) * 32L;
         return usg;
     }
 
@@ -1113,9 +981,9 @@ public class CleanDataset {
         // get numQueries from filename, it is between "_numQueries_" and ".csv"; not a fixed length.
         int start = fileName.indexOf("_numQueries_") + 12;
         int end = fileName.indexOf(".csv");
-        Main.numQueries = Integer.parseInt(fileName.substring(start, end));
-        System.out.println("NumQueries: " + Main.numQueries);
-        pointQueries = new long[Main.numQueries][];
+        config.numQueries = Integer.parseInt(fileName.substring(start, end));
+        System.out.println("NumQueries: " + config.numQueries);
+        pointQueries = new long[config.numQueries][];
         pointQueryAnswers = new int[pointQueries.length];
         pointQueryBinNumber = new int[pointQueries.length];
         pointQueriesNumAttrs = new int[pointQueries.length];
@@ -1155,7 +1023,7 @@ public class CleanDataset {
 
     private String fillQuery(String query, int numStoredAttributesInFile) {
         StringBuilder result = new StringBuilder(query);
-        for (int i = numStoredAttributesInFile; i < Main.numStoredAttributes; i++) {
+        for (int i = numStoredAttributesInFile; i < config.numStoredAttributes; i++) {
             result.append(parseIndex(i + 1)).append("=-1").append(", ");
         }
         return result.toString();
@@ -1163,9 +1031,9 @@ public class CleanDataset {
     }
 
     private void readWorkloadWithoutExact(String fileName, int numToKeep, double percToDelete, double maxPercToDelete) throws IOException, CsvValidationException {
-        pointQueries = new long[Main.numQueries][];
-        pointQueriesNumAttrs = new int[Main.numQueries];
-        pointQueryBinNumber = new int[Main.numQueries];
+        pointQueries = new long[config.numQueries][];
+        pointQueriesNumAttrs = new int[config.numQueries];
+        pointQueryBinNumber = new int[config.numQueries];
         // Read workload from file.
         CSVReader reader = new CSVReader(new FileReader(fileName));
         String[] nextLine;
@@ -1173,7 +1041,7 @@ public class CleanDataset {
         try {
             while ((nextLine = reader.readNext()) != null) {
                 int numStoredAttributes = Integer.parseInt(nextLine[0]);
-                if (numStoredAttributes != Main.numStoredAttributes) {
+                if (numStoredAttributes != config.numStoredAttributes) {
                     throw new RuntimeException("numStoredAttributes in workload file does not match numStoredAttributes in Main");
                 }
                 int queryId = Integer.parseInt(nextLine[1]);
@@ -1199,7 +1067,7 @@ public class CleanDataset {
     public String parsePointQueryToString(long[] pointQuery) {
         // Convert point query to string with attribute name + value if val != -1.
         StringBuilder result = new StringBuilder();
-        for (int i = 0; i < Main.numStoredAttributes; i++) {
+        for (int i = 0; i < config.numStoredAttributes; i++) {
             if (pointQuery[i] != -1) {
                 result.append(parseIndex(i + 1)).append("=").append(pointQuery[i]).append(", ");
             }
@@ -1210,8 +1078,8 @@ public class CleanDataset {
     public long[] parseStringToPointQuery(String query) {
         // Convert string to point query.
         String[] predicates = query.split(", ");
-        long[] pointQuery = new long[Main.numStoredAttributes];
-        for (int i = 0; i < Main.numStoredAttributes; i++) {
+        long[] pointQuery = new long[config.numStoredAttributes];
+        for (int i = 0; i < config.numStoredAttributes; i++) {
             pointQuery[i] = -1;
         }
         for (String s : predicates) {
@@ -1233,7 +1101,7 @@ public class CleanDataset {
                 - numNoiseUpdates, noiseUpdates, 0, numNoiseUpdates);
         System.out.println("Noise updates size: " + noiseUpdates.length);
         //computeGroundTruth(noiseUpdates, pointQueryAnswersDeletes, pointQueryUnionDeletes);
-        if (Main.spreadOutDeletes) {
+        if (config.spreadOutDeletes) {
             // Add all recs to datasetInsertsSpreadOut, shuffle, and decide when we can delete all noiseUpdates.
             // make array with indices of noiseUpdates
             long[] noiseIndices = Arrays.stream(noiseUpdates)
@@ -1353,11 +1221,10 @@ public class CleanDataset {
         return numToKeep;
     }
 
-    public void synthDev(double perc, double sizeFactor, int noiseSize, int numZipfianAttrs,
+    public void synthDev(double perc, double sizeFactor, int numZipfianAttrs,
                          double zipfAlpha, int numUniformAttrs) {
         this.sizeFactor = sizeFactor;
-        int numAttrs = Main.numAttributes;
-        Main.numQueries = 100;
+        int numAttrs = config.numAttributes;
         this.zipfAlpha = zipfAlpha;
         // Process: for each attribute, decide from which distribution to sample.
         // Generate records for dataset according to distributions.
@@ -1370,7 +1237,7 @@ public class CleanDataset {
         // Generate dataset
         int numModes = 15;
         double stdDev = 5;
-        generateSynthDataset(numAttrs, perc, sizeFactor, noiseSize, numZipfianAttrs, zipfAlpha,
+        generateSynthDataset(numAttrs, sizeFactor, numZipfianAttrs, zipfAlpha,
                 numUniformAttrs, numModes, stdDev);
         // Generate queries
         generateSynthQueries(numAttrs, perc, numZipfianAttrs);
@@ -1448,16 +1315,16 @@ public class CleanDataset {
 
         // now make sure we get Main.numQueries per numPreds, randomly sampled from the indicesPerNumPreds
         int filledQueries = 0;
-        long[][] newPointQueries = new long[maxNumPreds * Main.numQueries][];
-        int[] newPointQueryAnswers = new int[maxNumPreds * Main.numQueries];
-        int[] newPointQueriesNumAttrs = new int[maxNumPreds * Main.numQueries];
+        long[][] newPointQueries = new long[maxNumPreds * config.numQueries][];
+        int[] newPointQueryAnswers = new int[maxNumPreds * config.numQueries];
+        int[] newPointQueriesNumAttrs = new int[maxNumPreds * config.numQueries];
         int[] sampledQueriesPerNumPreds = new int[maxNumPreds];
         for (int i = 0; i < maxNumPreds; i++) {
-            if (indicesPerNumPreds[i].size() > Main.numQueries) {
+            if (indicesPerNumPreds[i].size() > config.numQueries) {
                 // Downsample
                 Random random = new Random(0);
                 Set<Integer> uniqueIndices = new HashSet<>();
-                while (uniqueIndices.size() < Main.numQueries) {
+                while (uniqueIndices.size() < config.numQueries) {
                     uniqueIndices.add(random.nextInt(indicesPerNumPreds[i].size()));
                 }
                 for (int new_i : uniqueIndices) {
@@ -1546,14 +1413,14 @@ public class CleanDataset {
     private void generateSynthQueries(int numAttrs, double percToDelete, int numZipfianAttrs) {
         // draw 1000 records from dataset
         Random random = new Random(repetition);
-        pointQueries = new long[Main.numQueries * numPredicates][];
+        pointQueries = new long[config.numQueries * numPredicates][];
 
 //        long[] recordOutOfDomain = new long[numAttrs];
 //        Arrays.fill(recordOutOfDomain, -1000);
 
 
         for (int p = 0; p < numPredicates; p++) {
-            for (int i = p * Main.numQueries; i < (p + 1) * Main.numQueries; i++) {
+            for (int i = p * config.numQueries; i < (p + 1) * config.numQueries; i++) {
                 int index = random.nextInt(dataset.length);
                 // pointQueries[i] = last numAttrs of dataset[index]
                 pointQueries[i] = new long[numAttrs];
@@ -1564,21 +1431,12 @@ public class CleanDataset {
                 }
             }
         }
-
-
-//        for (int i = 0; i < Main.numQueries; i++) {
-//            int index = random.nextInt(dataset.length);
-//            // pointQueries[i] = last numAttrs of dataset[index]
-//            pointQueries[i] = new long[numAttrs];
-//            System.arraycopy(dataset[index], 1, pointQueries[i], 0, numAttrs);
-//        }
-
         // mask some attributes with -1 such that number of predicates is numPredicates
 
         Random randomQueries = new Random(repetition);
 
         for (int p = 0; p < numPredicates; p++) {
-            for (int i = p * Main.numQueries; i < (p + 1) * Main.numQueries; i++) {
+            for (int i = p * config.numQueries; i < (p + 1) * config.numQueries; i++) {
                 int curNumPreds = 0;
                 while (curNumPreds < numAttrs - (p + 1)) {
                     int index = randomQueries.nextInt(numAttrs);
@@ -1652,11 +1510,11 @@ public class CleanDataset {
 
     }
 
-    private void generateSynthDataset(int numAttrs, double perc, double sizeFactor,
-                                      int noiseSize, int numZipfianAttrs,
+    private void generateSynthDataset(int numAttrs, double sizeFactor,
+                                      int numZipfianAttrs,
                                       double zipfAlpha, int numUniformAttrs, int numModes, double stdDev) {
         int totalRecords = (int) Math.pow(2, sizeFactor);
-        int domain = 100000;
+        int domain = 1000;
         // for each attribute, decide from which distribution to sample.
         boolean[] zipfianData = new boolean[numAttrs];
         for (int i = 0; i < numZipfianAttrs; i++) {
@@ -1701,6 +1559,10 @@ public class CleanDataset {
                 }
             }
         }
+//        int numRepeatedRecord = (int) (totalRecords * 0.8);
+//        long[] repeatedRecord = new long[numAttrs];
+//        Arrays.fill(repeatedRecord, 555);
+
 
         long[][] tempDataset = new long[totalRecords][];
         for (int i=0; i <totalRecords; i++ ) {
@@ -1781,5 +1643,57 @@ public class CleanDataset {
 
 
 
+    }
+
+    public void getUniqueRecords() {
+        System.out.println("Getting unique records.");
+        int numUniqueRecords;
+
+        // Use HashSet for faster lookup of unique values
+        HashMap<ArrayList<Long>, Integer> unique = new HashMap<>();
+        for (long[] longs : dataset) {
+            ArrayList<Long> record = new ArrayList<>();
+            for (int j = 0; j < config.numStoredAttributes; j++) {
+                record.add(longs[j + 1]);
+            }
+            if (!unique.containsKey(record)) {
+                unique.put(record, 1);
+            } else {
+                unique.put(record, unique.get(record) + 1);
+            }
+
+
+        }
+
+        numUniqueRecords = unique.size();
+        System.out.println("Dataset has " + dataset.length + " records.");
+        System.out.println("Dataset has " + numUniqueRecords + " unique records.");
+        // get count for topK duplicates
+        int topK = 10;
+        int[] topKCounts = new int[topK];
+        int i = 0;
+        for (Map.Entry<ArrayList<Long>, Integer> entry : unique.entrySet()) {
+            if (i < topK) {
+                topKCounts[i] = entry.getValue();
+            } else {
+                Arrays.sort(topKCounts);
+                if (entry.getValue() > topKCounts[0]) {
+                    topKCounts[0] = entry.getValue();
+                }
+            }
+            i++;
+        }
+        Arrays.sort(topKCounts);
+        System.out.println("Top " + topK + " duplicates have counts: " + Arrays.toString(topKCounts));
+
+
+    }
+
+    public double getDatasetSize() {
+        return dataset.length;
+    }
+
+    public long[][] getDataset() {
+        return datasetResidu;
     }
 }

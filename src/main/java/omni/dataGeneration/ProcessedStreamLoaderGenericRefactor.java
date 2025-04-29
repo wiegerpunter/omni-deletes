@@ -1,7 +1,10 @@
 package omni.dataGeneration;
 
-import omni.Record;
+import omni.Record.Record;
 import omni.*;
+import omni.Record.RecordCAIDA;
+import omni.Record.RecordSNMP;
+import omni.Record.RecordWC;
 import omni.structure.logEventInt;
 
 import java.io.*;

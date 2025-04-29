@@ -1,4 +1,4 @@
-package omni;
+package omni.Record;
 
 public class RecordSynth extends Record{
 
@@ -10,7 +10,7 @@ public class RecordSynth extends Record{
     RecordSynth(Record r){
         super();
     }
-    RecordSynth(int id, long[] record){
+    public RecordSynth(int id, long[] record){
         super(id, record);
     }
 

@@ -2,17 +2,15 @@ package omni.omniPQPrimitive;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import java.util.PriorityQueue;
 
-import java.util.ArrayList;
-import java.util.Random;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.stream.Collectors;
 
-public class CountMinS0PQ {
+public class CountMinS0ArrayList {
 
     //ArrayList<ArrayList<Sample>> CM = new ArrayList<>();
 
-    PriorityQueue<Long>[][] CM;
+    HashSet<Integer>[][] CM;
     //Tree[][] CMPQ;
     final int depth;
     final int width;
@@ -21,11 +19,12 @@ public class CountMinS0PQ {
     final int seed;
     int attr;
     HashFunction[] xx;
+    boolean[][] sortedCM;
     //final Random rn = new Random(Main.repetition);
 
     Random rn;
 
-    public CountMinS0PQ(int attr, int depth, int width, int sampleSize, int sampleBufferSize, int seed) {
+    public CountMinS0ArrayList(int attr, int depth, int width, int sampleSize, int sampleBufferSize, int seed) {
         this.attr = attr;
         this.depth = depth;
         this.width = width;
@@ -56,11 +55,13 @@ public class CountMinS0PQ {
 //        System.out.println("CMS0: hash_a = " + hash_a[0]);
 //        System.out.println("CMS0: hash_b = " + hash_b[0]);
 //        System.out.println("CMS0: hash_c = " + hash_c[0]);
-        CM = new PriorityQueue[depth][width];
+        CM = new HashSet[depth][width];
+        sortedCM = new boolean[depth][width];
 //        CMPQ = new PriorityQueue[depth][width];
         for (int j = 0; j < depth; j++) {
             for (int i = 0; i < width; i++) {
-                CM[j][i] = new PriorityQueue(sampleSize + sampleBufferSize);
+                CM[j][i] = new HashSet<Integer>();
+                sortedCM[j][i] = false;
 //                CMPQ[j][i] = new PriorityQueue(sampleSize + sampleBufferSize);
             }
         }
@@ -107,21 +108,21 @@ public class CountMinS0PQ {
 //            CM[j][w].add(id); // Hash in Sample based on id
 //        }
 //    }
-    public void ingest(long attrValue, long id, int sign) {
+    public void ingest(long attrValue, int id, int sign) {
         // Test if all element in A and B are consistent
-//        int idInt = (int) id;
         int[] hashes = hash(attrValue, depth, width);
         for (int j = 0; j < depth; j++) {
             int w = hashes[j];
             if (sign == 1) {
                 CM[j][w].add(id);
+                sortedCM[j][w] = false;
             } else {
                 CM[j][w].remove(id);
             }
         }
     }
 
-    public PriorityQueue<Long>[] query(long attrValue) {
+    public HashSet<Integer>[] query(long attrValue) {
         if (!toRemoveId.isEmpty()) { // otherwise, scaling is not correct
             removeList();
         }
@@ -129,12 +130,12 @@ public class CountMinS0PQ {
         int[] hashes = hash(attrValue, depth, width);
 //
 //         result;
-        PriorityQueue<Long>[] result = new PriorityQueue[depth];
+        HashSet<Integer>[] result = new HashSet[depth];
 
 //        PriorityQueue[] resultPQ = new PriorityQueue[depth];
         for (int j = 0; j < depth; j++) {
             int w = hashes[j];
-            result[j] = CM[j][w];
+            result[j] = getSortedArrayLists(j, w);
         }
 
         return result;
@@ -165,10 +166,9 @@ public class CountMinS0PQ {
         }
     }
 
-    ArrayList<Long> toRemoveId = new ArrayList<>();
+    private ArrayList<Integer> toRemoveId = new ArrayList<>();
 
-    public void removeId(long removeId) {
-//        int removeIdInt = (int) removeId;
+    public void removeId(int removeId) {
         toRemoveId.add(removeId);
         if (toRemoveId.size() > sampleBufferSize) {
             removeList();
@@ -176,17 +176,49 @@ public class CountMinS0PQ {
     }
 
     private void removeList() {
+//        Collections.sort(toRemoveId);
         for (int j = 0; j < depth; j++) {
             for (int i = 0; i < width; i++) {
-                CM[j][i].removeAll(toRemoveId);
 //                for (Long aLong : toRemoveId) {
 //                    CM[j][i].remove(aLong);
 //                }
+//                toRemoveIdSet.forEach(CM[j][i]::remove);
+//                Integer[] treeArray = CM[j][i].toArray();
+                toRemoveId.forEach(CM[j][i]::remove);
+                for (Integer integer : toRemoveId) {
+                    CM[j][i].remove(integer);
+                    //iterator.remove();
+                }
+                //CM[j][i].removeAll(toRemoveId);
+
+//                for (Integer aLong : toRemoveId) {
+////                    if (CM[j][i].isEmpty() || CM[j][i].first() < aLong) {
+////                        break;
+////                    }
+//
+//                    if (CM[j][i].isEmpty()) {
+//                        break;
+//                    }
+//                    CM[j][i].remove(aLong);
+//                }
+//                toRemoveId.forEach(CM[j][i]::remove);
+
+                //toremove id is sorted, treesets in CM are sorted, so we can break after first removal
+
             }
         }
         toRemoveId.clear();
     }
-
+    public HashSet<Integer> getSortedArrayLists(int row, int column) {
+        // copy of treeset for querying
+        if (!sortedCM[row][column]) {
+            CM[row][column] = CM[row][column].stream().sorted(Collections.reverseOrder()).collect(Collectors.toCollection(LinkedHashSet::new));
+            sortedCM[row][column] = true;
+        }
+//        ArrayList<Integer> sortedList = new ArrayList<>(CM[row][column]);
+//        sortedList.sort(Collections.reverseOrder());
+        return CM[row][column];
+    }
 
 //    public void sort() {
 //        // sort all arraylists in CM:

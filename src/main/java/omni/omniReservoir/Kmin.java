@@ -2,17 +2,9 @@ package omni.omniReservoir;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import it.unimi.dsi.fastutil.PriorityQueue;
-import it.unimi.dsi.fastutil.ints.IntCollection;
-import it.unimi.dsi.fastutil.ints.IntComparator;
-import omni.Formulas;
 //import omni.PriorityQueue.PriorityQueue;
 import it.unimi.dsi.fastutil.ints.IntHeapPriorityQueue;
 import it.unimi.dsi.fastutil.ints.IntComparators;
-
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Random;
 
 public class Kmin {
     public boolean exceedsNumberOfDeletes = false;

@@ -1,7 +1,7 @@
 package omni.baseline;
 
-import omni.Query;
-import omni.Record;
+import omni.Record.Query;
+import omni.Record.Record;
 
 import java.util.ArrayList;
 import java.util.Random;

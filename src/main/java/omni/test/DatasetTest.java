@@ -1,7 +1,7 @@
 package omni.test;
 
 import omni.DatasetRefactor;
-import omni.Record;
+import omni.Record.Record;
 
 public class DatasetTest {
     DatasetRefactor d;

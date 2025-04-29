@@ -14,14 +14,14 @@ public class AttributeStats {
     boolean categorical;
 
     // Stats per attribute
-    public AttributeStats(int i) {
+    public AttributeStats(int i, String datasetName) {
         attributeIndex = i;
-        attributeName = Parser.getAttributeName(i);
+        attributeName = Parser.getAttributeName(i, datasetName);
     }
     
-    public AttributeStats(String name) {
+    public AttributeStats(String name, String datasetName) {
         attributeName = name;
-        attributeIndex = Parser.attrMap(name);
+        attributeIndex = Parser.attrMap(name, datasetName);
     }
     
     String attributeName;

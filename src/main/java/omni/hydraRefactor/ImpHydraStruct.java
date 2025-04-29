@@ -4,6 +4,7 @@ package omni.hydraRefactor;
 import net.jpountz.xxhash.XXHash64;
 import net.jpountz.xxhash.XXHashFactory;
 import omni.*;
+import omni.Record.Query;
 
 import java.io.Serializable;
 import java.util.ArrayList;

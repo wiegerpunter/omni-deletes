@@ -1,5 +1,7 @@
 package omni;
 
+import omni.Record.Query;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -7,9 +9,8 @@ public class Parser {
     public static String[] getAttributeName;
     // Class processing queries to Query objects
     // Method mapping attribute name to attribute index
-
     public int queryId;
-    public Parser(int queryId) {
+    public Parser(int queryId, Config config) {
         this.queryId = queryId;
     }
     static int[] categoricalAttributesSNMP = new int[]{1, 3, 5};
@@ -33,8 +34,8 @@ public class Parser {
             "awcDot11DeauthenticateCount", "awcDot11DisassociateCount", "awcFtClientSTASelf", "awcFtBridgeSelf", "awcFtRepeaterSelf"));
 
     public static ArrayList<String> ordinalAttributesCAIDA = new ArrayList<String>(Arrays.asList("timestamp"));
-    public static int attrMap(String attrName) {
-        if (Main.datasetName.equals("SNMP")) {
+    public static int attrMap(String attrName, String datasetName) {
+        if (datasetName.equals("SNMP")) {
 
             return switch (attrName) {
                 case "timestamp" -> 0;
@@ -63,7 +64,7 @@ public class Parser {
                 case "awcFtRepeaterSelf" -> 23;
                 default -> throw new IllegalArgumentException("Unknown attribute name: " + attrName);
             };
-        } else if (Main.datasetName.equals("CAIDA")) {
+        } else if (datasetName.equals("CAIDA")) {
             return switch (attrName) {
                 case "timestamp" -> 0;
                 case "frameNumber" -> 1;
@@ -110,10 +111,10 @@ public class Parser {
     static String[] attributeNamesSynth = new String[]{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10","11","12",
     "13","14","15","16","17","18","19","20","21","22","23"};
 
-    public static String getAttributeName(int i) {
-        if (Main.datasetName.equals("SNMP")) {
+    public static String getAttributeName(int i, String datasetName) {
+        if (datasetName.equals("SNMP")) {
             return attributeNamesSNMP[i];
-        } else if (Main.datasetName.equals("CAIDA")) {
+        } else if (datasetName.equals("CAIDA")) {
             return attributeNamesCAIDA[i];
         } else {
             return String.valueOf(i);
@@ -121,7 +122,7 @@ public class Parser {
     }
 
 
-    public void setPredicate(Query q, String predicate) {
+    public void setPredicate(Query q, String predicate, String datasetName) {
         // Parse query string into Query object
         // Query string format: "attrName op value"
         // Example: "ifInOctets > 1000"
@@ -129,18 +130,18 @@ public class Parser {
         String attrName = queryParts[0];
         String op = queryParts[1];
         String value = queryParts[2];
-        int attrIndex = attrMap(attrName);
+        int attrIndex = attrMap(attrName, datasetName);
         q.addPredicate(attrIndex, op, value);
     }
 
-    public Query parse(String query) {
+    public Query parse(String query, String datasetName) {
         // Example: "timestamp > 1000 AND ifInOctets > 1000"
         String[] queryParts = query.split(" (A|a)(N|n)(D|d) ");
         Query q = new Query(queryId);
         q.predicates = query;
         for (String queryPart : queryParts) {
             if (!queryPart.equals("AND")) {
-                setPredicate(q, queryPart);
+                setPredicate(q, queryPart, datasetName);
             }
         }
         return q;

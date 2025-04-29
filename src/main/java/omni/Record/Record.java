@@ -1,4 +1,6 @@
-package omni;
+package omni.Record;
+
+import omni.Main;
 
 import java.io.*;
 import java.util.Arrays;
@@ -48,6 +50,9 @@ public abstract class Record implements Externalizable {
     }
     public long[] getRecord() {
         return record;
+    }
+    public long getTimestamp() {
+        return timestamp;
     }
 
     public String toString() {

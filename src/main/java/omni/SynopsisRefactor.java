@@ -19,6 +19,7 @@ public abstract class SynopsisRefactor {
     public boolean useNmax;
     public int seed;
     protected boolean useS0WithSampling;
+    public int s0Setting = 0;
 
     public SynopsisRefactor() {
 
@@ -43,4 +44,9 @@ public abstract class SynopsisRefactor {
     };
 
     public abstract int getFilledKSamples();
+
+    public String getSetting() {
+        return setting;
+    }
+
 }

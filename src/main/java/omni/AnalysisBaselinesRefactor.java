@@ -1,14 +1,18 @@
 package omni;
 //
 
+import com.opencsv.CSVWriter;
+
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class AnalysisBaselinesRefactor {
+    Config config;
     SynopsisRefactor s;
     CleanDataset d;
-    Helper h;
     //ExpWorkload ew;
 
     int[] estimatedAnswersPointQuery;
@@ -39,15 +43,14 @@ public class AnalysisBaselinesRefactor {
     int collisions;
     int repetition;
 
-    public AnalysisBaselinesRefactor(SynopsisRefactor s, CleanDataset cd, Helper h, long timepassed, int collisions, int repetition) throws IOException {
+    public AnalysisBaselinesRefactor(SynopsisRefactor s, CleanDataset cd,
+                                     long timepassed, int collisions, int repetition, Config config) throws IOException {
+        this.config = config;
         this.s = s;
         this.d = cd;
-        this.h = h;
         this.ingestionTime = timepassed;
         this.collisions = collisions;
         this.repetition = repetition;
-        //this.ew = ew;
-        h.setRamSettingInfo(d, s, timepassed);
         estimatedAnswersPointQuery = new int[cd.pointQueries.length];
         estimatedAnswersRangeQuery = new int[cd.pointQueries.length];
         SCap = new int[cd.pointQueries.length];
@@ -104,13 +107,10 @@ public class AnalysisBaselinesRefactor {
 
 
         // Write results to file
-        if (Main.rangeQueries) {
-            h.writeResultsToFileRangeQuery(s, d, ingestionTime, estimatedAnswersRangeQuery,
-                    queryExecutionTime);
-            //TODO: write range query results to file here
+        if (config.rangeQueries) {
+            throw new RuntimeException("Range queries file not implemented yet");
         } else {
-            h.setConditionInfo(intersectionOfR, unionOfR);
-            h.writeResultsToFilePointQuery(repetition, s, d, ingestionTime, collisions, estimatedAnswersPointQuery,
+            writeResultsToFilePointQuery(repetition, s, d, ingestionTime, collisions, estimatedAnswersPointQuery,
                     SCap, NMax, usedMaxSizes, jaccardEstimates2LHS, unionEstimates2LHS, witness2LHS, queryExecutionTime, totalQueryExecutionTime,
                     numberOfKmins, numberOfKminsExceedingBounds, case1, bound);
         }
@@ -177,15 +177,6 @@ public class AnalysisBaselinesRefactor {
 //            estimatedAnswersPointQuery[queryId] = s.query(q, numPreds, unionSize, queryInfo);
 //            res = s.checkConditions(q, numPreds, unionSize, queryInfo);
 //        } else {
-        if (queryId == 76) {
-            System.out.println("Query 76");
-        }
-        if (queryId == 77) {
-            System.out.println("Query 77");
-        }
-        if (queryId == 78) {
-            System.out.println("Query 78");
-        }
         estimatedAnswersPointQuery[queryId] = s.query(q, numPreds, queryInfo);
 //        }
         long endTime = System.currentTimeMillis();
@@ -239,6 +230,113 @@ public class AnalysisBaselinesRefactor {
 //        q.setResult(queryWithinBound);
 //        q.setBound(d.size * Main.eps);
 //        q.setEpsError(d.dataset.size());
+    }
+
+    private void writeResultsToFilePointQuery(int repetition, SynopsisRefactor s, CleanDataset d,
+                                             long timePassed, int collisions, int[] estimatedAnswersPointQuery,
+                                             int[] SCap, int[] NMax, int[] usedMaxSizes, double[] jaccardEstimates2LHS,
+                                             double[] unionEstimates2LHS, int[] witness2LHS, long[] queryExecutionTime,
+                                             long totalQueryExecutionTime,
+                                             int[] numberOfKmins, int[] numberOfKminsExceedingBounds, boolean[] case1, double[] bound) throws IOException {
+        // write string[] result to csvOutputFile using BufferedWriter
+        boolean init = false;
+        //String currentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+        String CSV_FILE_NAME = config.getOutputFolder() + "/pointQueries/" + config.datasetName + "/" + config.currentDate + "_" + config.experimentName + "_"
+                + config.setting + "_dataset_" + config.datasetName +
+                ".csv";
+        if (!new File(CSV_FILE_NAME).exists()) {
+            init = true;
+        }
+        CSVWriter writer = new CSVWriter(new FileWriter(CSV_FILE_NAME, true));
+
+        if (init) {
+            String[] header = new String[]{"repetition","totalStreamSize", "noiseUpdates", "streamSizeAfterDeletes",
+                    "numAttributes", "memUsageDataset", "RAM", "setting", "sampleType",
+                    "Avg Update Time", "memUsageSynopsis", "parameters", "numAttributesInWorkload",
+                    "queryID", "numPredicates","numZipfianPredicates","binNumber",
+                    "exactAnswer", "estimate", "absError",
+                    "relError", "epsError", "withinThreshold",
+                    "estTime",  "queryText", "SCap", "NMax","usedMaxSize","jacEstimate2LHS", "unionEstimate2LHS","witness2LHS",
+                    "intersectionSizeOfR","unionSizeOfR",
+                    "meanQueryTime","BetaKmin","numKSamples","KminDeletes","exactInDeletes","exactUnionDeletes","uniqueSamples",
+                    "numKmins","numKminsExceedingBounds","measuredSignatureCollisions","zipfAlpha", "case1", "bound"};
+            writer.writeNext(header);
+        }
+
+
+        String memUsageSyn = String.valueOf(s.getMemoryUsage());
+        for (int i = 0; i < d.pointQueries.length; i++) {
+            String[] result = new String[46];
+            // Dataset specific info;
+            result[0] = String.valueOf(repetition);
+            result[1] = String.valueOf(d.dataset.length);
+            if (d.noiseUpdates == null) {
+                result[2] = String.valueOf(d.datasetNegUpdates.length);
+            } else {
+                result[2] = String.valueOf(d.noiseUpdates.length);
+            }
+            result[3] = String.valueOf(d.datasetResidu.length);
+            result[4] = String.valueOf(config.numAttributes);
+
+            result[5] = String.valueOf(d.getMemoryUsage());
+            result[6] = String.valueOf(s.ram);
+            result[7] = s.setting;
+            result[8] = s.sampleType;
+            result[9] = String.valueOf(timePassed);
+            result[10] = memUsageSyn;
+            result[11] = Arrays.toString(s.parameters);
+            result[12] = String.valueOf(config.numStoredAttributes);
+            result[13] = String.valueOf(i);
+            result[14] = String.valueOf(d.pointQueriesNumAttrs[i]);
+            result[15] = String.valueOf(d.pointQueriesNumZipfian[i]);
+            result[16] = String.valueOf(d.pointQueryBinNumber[i]);
+            result[17] = String.valueOf(d.pointQueryAnswers[i]);
+            result[18] = String.valueOf(estimatedAnswersPointQuery[i]);
+            result[19] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]));
+            result[20] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) / d.pointQueryAnswers[i]);
+            result[21] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) / d.datasetResidu.length);
+            result[22] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) <= Main.eps * d.datasetResidu.length);
+            result[23] = String.valueOf(queryExecutionTime[i]);
+            result[24] = d.parsePointQueryToString(d.pointQueries[i]);
+            result[25] = String.valueOf(SCap[i]);
+            result[26] = String.valueOf(NMax[i]);
+            result[27] = String.valueOf(usedMaxSizes[i]);
+            result[28] = String.valueOf(jaccardEstimates2LHS[i]);
+            result[29] = String.valueOf(unionEstimates2LHS[i]);
+            result[30] = String.valueOf(witness2LHS[i]);
+            if (config.checkConditions) {
+                result[31] = String.valueOf(intersectionOfR[i]);
+                result[32] = String.valueOf(unionOfR[i]);
+            };
+            result[33] = String.valueOf(totalQueryExecutionTime);
+            result[34] = String.valueOf(s.useBetaKmin);
+            int numKSamples = 0;
+            if (!s.useTwoLHS & !s.useS0) {
+                numKSamples = s.getFilledKSamples();
+            }
+            result[35] = String.valueOf(numKSamples);
+            result[36] = String.valueOf(Main.kminDeletes);
+            result[37] = String.valueOf(d.pointQueryAnswersDeletes[i]);
+            result[38] = String.valueOf(d.pointQueryUnionDeletes[i]);
+            if (!Main.countUniqueSamples) {
+                result[39] = "0";
+            } else {
+                if (s.setting.contains("OmniSketch")) {
+                    result[39] = String.valueOf(Main.uniqueSamples.keySet().size());
+                } else {
+                    result[39] = String.valueOf(Main.uniqueSamplesReservoir.size());
+                }
+            }
+            result[40] = String.valueOf(numberOfKmins[i]);
+            result[41] = String.valueOf(numberOfKminsExceedingBounds[i]);
+            result[42] = String.valueOf(collisions);
+            result[43] = String.valueOf(d.zipfAlpha);
+            result[44] = String.valueOf(case1[i]);
+            result[45] = String.valueOf(bound[i]);
+            writer.writeNext(result);
+        }
+
+        writer.close();
     }
 
 }

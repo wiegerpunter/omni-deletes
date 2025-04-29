@@ -1,13 +1,10 @@
 package omni.dataGeneration;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import omni.*;
-import omni.Record;
 import omni.structure.logEventInt;
 
 public class ProcessedStreamLoaderGeneric {
@@ -101,103 +98,7 @@ public class ProcessedStreamLoaderGeneric {
 		return null;
 	}
 
-	public String readRecord(String line, int id, ArrayList<Record> d) {
-		//Record r = null;
-		Record r = null;
-		if (omni.Main.datasetName.equals("SNMP"))
-			r = new RecordSNMP(r);
-		else if (omni.Main.datasetName.equals("CAIDA"))
-			r = new RecordCAIDA(r);
-		else if (omni.Main.datasetName.equals("wc98"))
-			r = new RecordWC(r);
-		else {
-			throw new RuntimeException("Unknown dataset name");
-		}
-		//Record r = new Record(); // record to be potentially added to d.
-		r.setId(id);
 
-		try {
-			String b = line;
-			if (b == null)
-				throw new Exception("Null line");
-			if ('#' == b.charAt(0)) {
-				throw new Exception("Somehow got a comment line");
-			}
-			if (Main.datasetName.equals("SNMP") && !('s' == b.charAt(0))) {
-				throw new Exception("Somehow got a non-start line");
-			}
-
-			String[] a = b.split(",");
-			r.add(a); // Add the start line to the record.
-
-			b = bis.readLine(); // Read second line.
-			linesSeen++;
-
-			if (Main.datasetName.equals("SNMP")) {
-				// // Dont read attributes 3, 16, 17, 18, 19, 20.
-				b = b.replaceAll("\"", "");
-				a = b.split(",");
-				int cnt = 0;
-				while (true) {
-					if ('s' == a[0].charAt(0)) {
-						if (r.assembled) {
-							Record r2 = (Record) r;
-							r = null;
-							d.add(r2);
-						} else {
-							skip++;
-						}
-						return b;
-					} else if ('i' == a[0].charAt(0)) {
-
-						r.add(a);
-						cnt++; // 0 at start, 1 at second, 2 at third, 3 at fourth.
-					}
-					b = bis.readLine();
-					b = b.replaceAll("\"", "");
-					linesSeen++;
-					if (b == null) { // End of file.
-						skip++;
-						return null;
-					}
-					a = b.split(",");
-				}
-			} else {
-				if (b == null) { // End of file.
-					skip++;
-					return null;
-				}
-				b = b.replaceAll("\"", "");
-				r.assemble(id);
-				Record r2 = null;
-				if (Main.datasetName.equals("SNMP")) {
-
-
-					r2 = new Record( (RecordSNMP) r) {
-						@Override
-						public void assemble(int id) {
-							assembled = true;
-						}
-					};
-				} else {
-					r2 = new Record((RecordCAIDA) r) {
-						@Override
-						public void assemble(int id) {
-							assembled = true;
-						}
-					};
-				}
-				r = null;
-				d.add(r2);
-				return b;
-			}
-		}
-		catch (Exception ex) {
-			throw new RuntimeException(ex);
-		}
-	}
-
-	
 	public logEventInt readNextEvent() {
 		try {
 			int ipaddress = dis.readInt();

@@ -1,7 +1,10 @@
-package omni;
+package omni.parameterSetting;
+
+import omni.Main;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class RamToPar {
 
@@ -20,11 +23,7 @@ public class RamToPar {
             .4, .41, .42, .43, .44, .45, .46, .47, .48, .49, .5, .51, .52, .53, .54, .55, .56, .57, .58, .59,
             .6, .61, .62, .63, .64, .65, .66, .67, .68, .69, .7, .71, .72, .73, .74, .75, .76, .77, .78, .79, .8,
             .81, .82, .83, .84, .85, .86, .87, .88, .89, .9, .91, .92, .93, .94, .95, .96, .97, .98, .99};
-    HashMap<Long, double[]> ramToSketchTwoLHSParams = new HashMap<>();
-    HashMap<Long, double[]> ramToSketchKminParams = new HashMap<>();
-    HashMap<Long, double[]> ramToSketchKminParamsDynamic = new HashMap<>();
-
-    HashMap<Long, HashMap<Integer, HashMap<Integer, double[]>>> ramToSketchKminParamsGridSearch = new HashMap<>();
+    // Baseline hashmaps
     HashMap<Long, double[]> ramToKminParams = new HashMap<>();
 
     HashMap<Long, double[]> ramToCMBaseline = new HashMap<>();
@@ -33,107 +32,40 @@ public class RamToPar {
     HashMap<Long, double[]> ramToReservoir = new HashMap<>();
     HashMap<Long, double[]> ramToAdap = new HashMap<>();
     HashMap<Long, double[]> ramToCM = new HashMap<>();
+
+    // OmniSketch hashmaps ram to parameters
+
+    HashMap<Long, double[]> ramToSketchTwoLHSParams = new HashMap<>();
+    HashMap<Long, double[]> ramToSketchKminParams = new HashMap<>();
+    HashMap<Long, double[]> ramToSketchRefParams = new HashMap<>();
+    HashMap<Long, double[]> ramToSketchArrParams = new HashMap<>();
+    HashMap<Long, double[]> ramToSketchKminParamsDynamic = new HashMap<>();
+
+    HashMap<Long, HashMap<Integer, HashMap<Integer, double[]>>> ramToSketchKminParamsGridSearch = new HashMap<>();
+
+    // OmniSketch hashmaps sampleSize to parameters
+    HashMap<Integer, double[]> sampleSizeToSketchRefParams = new HashMap<>();
+
+
+
     int numAttrs;
     //int w;
     int d;
     int b;
-    int B;
-    int w;
     double parFactor;
-    double density;
     long[] ramVals;
 
-    public RamToPar(int numAttrsToUse) {
+    public RamToPar(int numAttrsToUse, List<Long> ramValsToUse) {
         this.numAttrs = numAttrsToUse;
-        //this.ramVals = ramValsToUse;
-        ramVals = Main.ramVals;
-        run();
-    }
-
-    public RamToPar(int numAttrsToUse, ArrayList<Long> ramValsToUse) {
-        this.numAttrs = numAttrsToUse;
-        //this.ramVals = ramValsToUse;
         ramVals = new long[ramValsToUse.size()];
         for (int i = 0; i < ramValsToUse.size(); i++) {
             ramVals[i] = ramValsToUse.get(i);
         }
-        run();
-    }
-    public RamToPar(int numAttrsToUse, int d, int b, double parFactor) {
-        this.numAttrs = numAttrsToUse;
-        this.d = d;
-        this.b = b;
-        this.parFactor = parFactor;
-        //this.ramVals = ramValsToUse;
-        ramVals = Main.ramVals;
-        run();
+        runBaselines();
     }
 
-    public RamToPar(int numAttrsToUse, int d, int b, int w, int B, double density) {
-        this.numAttrs = numAttrsToUse;
-        this.d = d;
-        this.b = b;
-        this.w = w;
-        this.B = B;
-        //this.w = w;
-        this.density = density;
-        //this.ramVals = ramValsToUse;
-        ramVals = Main.ramVals;
-        run();
-    }
-
-//    public RamToPar(int numAttrsToUse, double eps, double delta) {
-//        this.numAttrs = numAttrsToUse;
-//
-//        Main.eps = eps;
-//        Main.delta = delta;
-//        for (long r: Main.ramVals) {
-//            double[] pars = compParamsKmin(r, eps);
-//            //System.out.println("Info, Ram: " +  r + " usedRAM: "+ pars[0] + " B: " + pars[3] + " b: " + pars[4] + " width: " + pars[2] + " depth: " + pars[1]);
-//            ramToSketchKminParams.put(r, pars);
-//        }
-//
-//        for (long r: Main.ramVals) {
-//            double[] pars = compParamsKmin(r/2, eps);
-//            //System.out.println("Info, Ram: " +  r + " usedRAM: "+ pars[0] + " B: " + pars[3] + " b: " + pars[4] + " width: " + pars[2] + " depth: " + pars[1]);
-//            ramToSketchKminParams.put(r/2, pars);
-//        }
-//
-//        // Add params for hydra to ramToHydra based on main eps main delta
-//        for (long r: Main.ramVals) {
-//            double[] pars = compParamsHydra(r);
-//            ramToHydra.put(r, pars);
-//        }
-//        for (long r: Main.ramVals) {
-//            double[] pars = compParamsSingleKmin(r);
-//            ramToKminParams.put(r, pars);
-//        }
-//    }
-
-    public void run() {
+    private void runBaselines() {
         for (long ram : ramVals) {
-
-            double[] parsTwoLHS = compParamsOmniSketch(ram, true);
-            ramToSketchTwoLHSParams.put(ram, parsTwoLHS);
-            double[] parsOmniKmin = compParamsOmniSketch(ram, false);
-            //HashMap<Integer, HashMap<Integer, double[]>> paramsOmniKminGridSearch = compParamsOmniSketchKmin(ram,
-            //        Main.widthOptionsGridSearch, Main.depthOptionsGridSearch);
-            ramToSketchKminParams.put(ram, parsOmniKmin);
-            double[] parsOmniKminDynamic = compParamsOmniSketchDynamic(ram, false);
-
-            ramToSketchKminParamsDynamic.put(ram, parsOmniKminDynamic);
-
-            //ramToSketchKminParamsGridSearch.put(ram, paramsOmniKminGridSearch);
-//
-//            double[] parsCM = compParamsCMBaseline(ram);
-//            ramToCMBaseline.put(ram, parsCM);
-
-            double[] parsHydra = compParamsHydra(ram);
-            ramToHydra.put(ram, parsHydra);
-
-            double[] parsKmin = compParamsSingleKmin(ram);
-            ramToKminParams.put(ram , parsKmin);
-
             double[] parsReservoir = getParamsReservoir(ram);
             ramToReservoir.put(ram, parsReservoir);
 
@@ -143,28 +75,60 @@ public class RamToPar {
             double[] parsCM = compParamsCMBaseline(ram);
             ramToCM.put(ram, parsCM);
 
+            double[] parsHydra = compParamsHydra(ram);
+            ramToHydra.put(ram, parsHydra);
+
+            double[] parsKmin = compParamsSingleKmin(ram);
+            ramToKminParams.put(ram , parsKmin);
+        }
+        System.out.println("Done with reservoir sampling");
+    }
+
+    public void computeOmniSketchParametersFromRAM(int d, int b, double parFactor) {
+        this.d = d;
+        this.b = b;
+        this.parFactor = parFactor;
+        // empty the hashmaps
+        ramToSketchTwoLHSParams.clear();
+        ramToSketchKminParams.clear();
+        ramToSketchRefParams.clear();
+        ramToSketchArrParams.clear();
+        ramToSketchKminParamsDynamic.clear();
+
+        for (long ram : ramVals) {
+
+            double[] parsTwoLHS = compParamsOmniSketch(ram, true);
+            ramToSketchTwoLHSParams.put(ram, parsTwoLHS);
+            double[] parsOmniKmin = compParamsOmniSketch(ram, false);
+            //HashMap<Integer, HashMap<Integer, double[]>> paramsOmniKminGridSearch = compParamsOmniSketchKmin(ram,
+            //        Main.widthOptionsGridSearch, Main.depthOptionsGridSearch);
+            ramToSketchKminParams.put(ram, parsOmniKmin);
+
+            double[] parsOmniKminDynamic = compParamsOmniSketchDynamic(ram, false);
+            ramToSketchKminParamsDynamic.put(ram, parsOmniKminDynamic);
+
+            double[] parsOmniRef = compParamsRefParFactor(ram);
+            ramToSketchRefParams.put(ram, parsOmniRef);
+
+            double[] parsOmniArr = compParamsArrParFactor(ram);
+            ramToSketchArrParams.put(ram, parsOmniArr);
+
+        }
+    }
+
+    public void computeOmniSketchParametersFromSampleSize(int d, int b, double parFactor) {
+        this.d = d;
+        this.b = b;
+        this.parFactor = parFactor;
+
+        int[] sampleSizes = getSampleSizes();
+        for (int sampleSize : sampleSizes) {
+            double[] parsOmniRef = compParamsOmniSketchRefFromSampleSize(sampleSize);
+            sampleSizeToSketchRefParams.put(sampleSize, parsOmniRef);
         }
 
-//        for (long ram : Main.ramVals) {
-//
-//            double[] pars = gridSearchSketch(ram/2);
-//            //double[] pars;
-//            //pars = new double[]{5, 4, 30, 51200, 0.1, 0.0909, 0.1};
-//
-//            //Main.b = (int) Math.ceil(Math.log(4*Math.pow(51200, (double) 5/2)/Main.delta));
-//            ramToSketchParams.put(ram/2, pars);
-//            double[] parsCM = gridSearchCMBaseline(ram/2);
-//            ramToCMBaseline.put(ram/2, parsCM);
-//            double[] parsHydra = gridSearchHydra(ram/2);
-//            ramToHydra.put(ram/2, parsHydra);
-//
-//            double[] parsKmin = gridSearchKmin(ram/2);
-//            ramToKminParams.put(ram/2, parsKmin);
-//
-//        }
-        System.out.println("Done with grid search");
-
     }
+
 
     private double[] getParamsReservoir(long ram) {
         // memory usage of reservoir sampling is sample size * 32 * numAttrs
@@ -270,6 +234,104 @@ public class RamToPar {
         // throw exception if info is not set
         return info;
     }
+
+    private int computeArrB(long ram, int depth, int numAttrs, double parFactor, int B, int prevB, int iter) {
+        if (B <= 1) {
+            return B;
+        }
+        if (B >= Integer.MAX_VALUE) {
+            throw new RuntimeException("B is too large");
+        }
+
+        if (iter > 100) {
+            System.out.println("Too many iterations, ram " + ram + " newRam " +
+                    (numAttrs * depth * prevB * 32L + prevB * 32L) +
+                    " prevB " + prevB);
+            return prevB;
+        }
+        double v1 = 32L;
+        double newRam = numAttrs * depth * B * v1 + B * 32L;
+        // Return if distance between ram and newRam is less than 1 percent
+        if (((double) ram * 0.99999) <= newRam && newRam <= ram) {
+            System.out.println("ram: " + ram + " newRam: " + newRam + " B: " + B);
+            return B;
+        } else if (newRam < 0.99999 * ram) {
+            return computeArrB(ram, depth, numAttrs, parFactor, B*2, B, iter+1);
+        } else {
+            return computeArrB(ram, depth, numAttrs, parFactor, (int) (B + prevB)/2, prevB, iter + 1);
+
+        }
+    }
+
+
+    // Alternative to computeB:
+    private int computealtB(long ram, int depth, int numAttrs, double parFactor, int B, int prevB, int iter) {
+        if (B <= 1) {
+            return B;
+        }
+        if (B >= Integer.MAX_VALUE) {
+            throw new RuntimeException("B is too large");
+        }
+
+        if (iter > 100) {
+            double v1 = Math.log(prevB) / Math.log(2) + Math.log(Math.floor(prevB / parFactor)) / Math.log(2);
+            System.out.println("Too many iterations, ram " + ram + " newRam " +
+                    (numAttrs * depth * prevB * v1) +
+                    " prevB " + prevB);
+            return prevB;
+        }
+        double v1 = Math.log(B) / Math.log(2) + Math.log(Math.floor(B / parFactor)) / Math.log(2);
+        double newRam = numAttrs * depth * B * v1;
+        // Return if distance between ram and newRam is less than 1 percent
+        if (((double) ram * 0.99999) < newRam && newRam <= ram) {
+            System.out.println("ram: " + ram + " newRam: " + newRam + " B: " + B);
+            return B;
+        } else if (newRam < 0.99999 * ram) {
+            return computealtB(ram, depth, numAttrs, parFactor, B*2, B, iter+1);
+        } else {
+            return computealtB(ram, depth, numAttrs, parFactor, (int) (B + prevB)/2, prevB, iter + 1);
+
+        }
+    }
+
+    private double[] compParamsOmniSketchRefFromSampleSize(int sampleSize){
+        int depth = this.d;
+        int width = (int) Math.max(1, Math.floor(sampleSize / (parFactor)));
+        double memUsage = Formulas.ramOmniRef(numAttrs, depth, sampleSize, width);
+        return new double[]{memUsage, depth, width, sampleSize, b, parFactor};
+    }
+
+
+    private double[] compParamsRefParFactor(long ram) {
+        int depth = this.d;
+        double[] info;
+        int B = computealtB(ram, depth, numAttrs, parFactor, 2, 0, 0);
+        int width = (int) Math.floor(B / parFactor);
+        double memUsage = Formulas.ramOmniRef(numAttrs, depth, B, width);
+
+        if (memUsage <= ram) {
+            info = new double[]{memUsage, depth, width, B, b, parFactor};
+            return info;
+        }
+        throw new RuntimeException("No sketch found for ram " + ram + " and depth " + depth + " and width " + width);
+
+    }
+
+    private double[] compParamsArrParFactor(long ram) {
+        int depth = this.d;
+        double[] info;
+//        int B = (ram / (32L * ((long) numAttrs * depth + 1)) > 0) ? (int) (ram / (32L * numAttrs * depth)) : 1;
+        int B = (int) ((double) ram / (depth *numAttrs + 1) * (1/32.0));
+        int width = (int) Math.floor(B / parFactor);
+        double memUsage = Formulas.ramOmniArr(numAttrs, depth,B);
+        if (memUsage <= ram) {
+            info = new double[]{memUsage, depth, width, B, b, parFactor};
+            return info;
+        }
+        throw new RuntimeException("No sketch found for ram " + ram + " and depth " + depth + " and width " + width);
+
+    }
+
 
     private double[] compParamsKminParFactorDynamic(long ram, double parFactor) {
         int depth = this.d;
@@ -480,6 +542,10 @@ public class RamToPar {
         }
     }
     public int[] getParamsOmniSketchKmin(long ram) {
+        return getInts(ram, ramToSketchKminParams);
+    }
+
+    private int[] getInts(long ram, HashMap<Long, double[]> ramToSketchKminParams) {
         if (ramToSketchKminParams.containsKey(ram)) {
             double[] info = ramToSketchKminParams.get(ram);
             int d = (int) info[1];
@@ -493,18 +559,33 @@ public class RamToPar {
         }
     }
 
-    public int[] getParamsOmniSketchDynamic(long ram) {
-        if (ramToSketchKminParamsDynamic.containsKey(ram)) {
-            double[] info = ramToSketchKminParamsDynamic.get(ram);
+    private int[] getIntsFromSample(int sampleSize, HashMap<Integer, double[]> ramToSketchKminParams) {
+        if (ramToSketchKminParams.containsKey(sampleSize)) {
+            double[] info = ramToSketchKminParams.get(sampleSize);
             int d = (int) info[1];
             int w = (int) info[2];
             int B = (int) info[3];
             int b = (int) info[4];
-            int density = (int) (100 *info[5]);
-            return new int[]{d, w, B, b, density};
+            return new int[]{d, w, B, b};
         } else {
-            throw new IllegalArgumentException("RAM not found in ramToSketchParams");
+            throw new IllegalArgumentException("Sample size not found in ramToSketchParams");
         }
+    }
+
+    public int[] getParamsOmniSketchRef(long ram) {
+        return getInts(ram, ramToSketchRefParams);
+    }
+
+    public int[] getParamsOmniSketchRefFromSampleSize(int sampleSize) {
+        return getIntsFromSample(sampleSize, sampleSizeToSketchRefParams);
+    }
+
+    public int[] getParamsOmniSketchArrayList(long ram) {
+        return getInts(ram, ramToSketchArrParams);
+    }
+
+    public int[] getParamsOmniSketchDynamic(long ram) {
+        return getInts(ram, ramToSketchKminParamsDynamic);
     }
 
     public int[] getParamsOmniSketchGridSearch(long ram, int width, int depth) {
@@ -619,6 +700,22 @@ public class RamToPar {
             return new int[]{d, w};
         } else {
             throw new RuntimeException("Parameters not found for CountMin");
+        }
+    }
+
+    public int[] getSampleSizes() {
+        if (ramToReservoir.isEmpty()) {
+            throw new IllegalArgumentException("Reservoir sample list is empty");
+        } else {
+            int[] sampleSizes = new int[ramToReservoir.size()];
+            int i = 0;
+            for (long ram : ramToReservoir.keySet()) {
+                double[] info = ramToReservoir.get(ram);
+                int sampleSize = (int) info[0];
+                sampleSizes[i] = sampleSize;
+                i++;
+            }
+            return sampleSizes;
         }
     }
 //    public double[] getParamsHydra(long ram) {

@@ -1,18 +1,20 @@
 package omni;
 
 import com.opencsv.exceptions.CsvValidationException;
+import omni.Record.Record;
+import omni.Record.RecordSNMP;
+import omni.Record.RecordSynth;
 import omni.dataGeneration.ProcessedStreamLoaderGenericRefactor;
 
 import java.io.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 public class DatasetRefactor {
     //OmniSketch s;
     int size;
     String setting;
-    public ArrayList<Record> dataset = new ArrayList<>();
+    public ArrayList<omni.Record.Record> dataset = new ArrayList<>();
     private int totalRead;
     ArrayList<Integer> usedIDs = new ArrayList<>();
     Helper h;
@@ -136,7 +138,7 @@ public class DatasetRefactor {
             }
         }
         this.size = dataset.size();
-        dataset.sort(Comparator.comparingLong(o -> o.timestamp));
+        dataset.sort(Comparator.comparingLong(Record::getTimestamp));
         System.out.println("Dataset loaded with size: " + dataset.size());
     }
 
@@ -251,7 +253,7 @@ public class DatasetRefactor {
 
         //Check for whole dataset how many records have value -999 per attribute:
         int[] count = new int[Main.numAttributes];
-        for (Record r : dataset) {
+        for (omni.Record.Record r : dataset) {
             for (int i = 0; i < Main.numAttributes; i++) {
                 if (r.getRecord()[i] == -999) {
                     count[i]++;
@@ -263,11 +265,11 @@ public class DatasetRefactor {
         }
 
 
-        ArrayList<Record> validRecords = new ArrayList<>();
+        ArrayList<omni.Record.Record> validRecords = new ArrayList<>();
         boolean validRecord;
         HashSet<Integer> invalidIndices = new HashSet<>(Arrays.asList(3, 16, 17, 18, 19, 20));
 
-        for (Record record : dataset) {
+        for (omni.Record.Record record : dataset) {
             validRecord = true;
 
             long[] recordData = record.getRecord();
@@ -301,7 +303,7 @@ public class DatasetRefactor {
 
         // write dataset to file
         h.initSNMPDataset(this);
-        for (Record r : dataset) {
+        for (omni.Record.Record r : dataset) {
             h.writeSNMPDataset(((RecordSNMP) r).writeRecord());
         }
 
@@ -338,7 +340,7 @@ public class DatasetRefactor {
 
         //Check for whole dataset how many records have value -999 per attribute:
         int[] count = new int[Main.numAttributes];
-        for (Record r : dataset) {
+        for (omni.Record.Record r : dataset) {
             for (int i = 0; i < Main.numAttributes; i++) {
                 if (r.getRecord()[i] == -999) {
                     count[i]++;
@@ -350,11 +352,11 @@ public class DatasetRefactor {
         }
 
 
-        ArrayList<Record> validRecords = new ArrayList<>();
+        ArrayList<omni.Record.Record> validRecords = new ArrayList<>();
         boolean validRecord;
         HashSet<Integer> invalidIndices = new HashSet<>(Arrays.asList(3, 16, 17, 18, 19, 20));
 
-        for (Record record : dataset) {
+        for (omni.Record.Record record : dataset) {
             validRecord = true;
 
             long[] recordData = record.getRecord();

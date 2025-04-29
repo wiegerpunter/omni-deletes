@@ -1,10 +1,10 @@
 package omni.SketchZero;
 
-import omni.Record;
+import omni.Record.Query;
+import omni.Record.Record;
 import omni.*;
 import org.apache.commons.lang3.ArrayUtils;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.TreeSet;
 

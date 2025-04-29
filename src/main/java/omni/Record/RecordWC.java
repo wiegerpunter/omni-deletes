@@ -1,4 +1,7 @@
-package omni;
+package omni.Record;
+
+import omni.Main;
+import omni.Parser;
 
 import java.io.Externalizable;
 import java.util.Arrays;
@@ -257,32 +260,33 @@ public class RecordWC extends Record implements Externalizable {
     public void assemble(int id) {
         this.id = id;
         this.record = new long[Main.numAttributes];
-        this.record[Parser.attrMap("timestamp")] = timestamp;
-        if (Main.numAttributes > 1) {this.record[Parser.attrMap("AP")] = (long) AP;}
-        if (Main.numAttributes > 2) {this.record[Parser.attrMap("sysUpTime")] = sysUpTime;}
-        if (Main.numAttributes > 3) {this.record[Parser.attrMap("sysDescr")] = (long) sysDescr;}
+        String datasetName = "WC";
+        this.record[Parser.attrMap("timestamp", datasetName)] = timestamp;
+        if (Main.numAttributes > 1) {this.record[Parser.attrMap("AP", datasetName)] = (long) AP;}
+        if (Main.numAttributes > 2) {this.record[Parser.attrMap("sysUpTime", datasetName)] = sysUpTime;}
+        if (Main.numAttributes > 3) {this.record[Parser.attrMap("sysDescr", datasetName)] = (long) sysDescr;}
 
         // If
-        if (Main.numAttributes > 4) {this.record[Parser.attrMap("ifIndex")] = (long) ifIndex;}
-        if (Main.numAttributes > 5) {this.record[Parser.attrMap("ifDescr")] = (long) ifDescr;}
-        if (Main.numAttributes > 6) {this.record[Parser.attrMap("ifType")] = (long) ifType;}
-        if (Main.numAttributes > 7) {this.record[Parser.attrMap("ifSpeed")] = (long) ifSpeed;}
-        if (Main.numAttributes > 8) {this.record[Parser.attrMap("ifInOctets")] = ifInOctets;}
-        if (Main.numAttributes > 9) {this.record[Parser.attrMap("ifInUcastPkts")] = (long) ifInUcastPkts;}
-        if (Main.numAttributes > 10) {this.record[Parser.attrMap("ifInErrors")] = (long) ifInErrors;}
-        if (Main.numAttributes > 11) {this.record[Parser.attrMap("ifInDiscards")] = (long) ifInDiscards;}
-        if (Main.numAttributes > 12) {this.record[Parser.attrMap("ifOutOctets")] = ifOutOctets;}
-        if (Main.numAttributes > 13) {this.record[Parser.attrMap("ifOutUcastPkts")] = (long) ifOutUcastPkts;}
-        if (Main.numAttributes > 14) {this.record[Parser.attrMap("ifOutErrors")] = (long) ifOutErrors;}
-        if (Main.numAttributes > 15) {this.record[Parser.attrMap("ifOutDiscards")] = (long) ifOutDiscards;}
-        if (Main.numAttributes > 16) {this.record[Parser.attrMap("awcDot11AssociatedStationCount")] = (long) awcDot11AssociatedStationCount;}
-        if (Main.numAttributes > 17) {this.record[Parser.attrMap("awcDot11ReassociatedStationCount")] = (long) awcDot11ReassociatedStationCount;}
-        if (Main.numAttributes > 18) {this.record[Parser.attrMap("awcDot11RoamedStationCount")] = (long) awcDot11RoamedStationCount;}
-        if (Main.numAttributes > 19) {this.record[Parser.attrMap("awcDot11DeauthenticateCount")] = (long) awcDot11DeauthenticateCount;}
-        if (Main.numAttributes > 20) {this.record[Parser.attrMap("awcDot11DisassociateCount")] = (long) awcDot11DisassociateCount;}
-        if (Main.numAttributes > 21) {this.record[Parser.attrMap("awcFtClientSTASelf")] = (long) awcFtClientSTASelf;}
-        if (Main.numAttributes > 22) {this.record[Parser.attrMap("awcFtBridgeSelf")] = (long) awcFtBridgeSelf;}
-        if (Main.numAttributes > 23) {this.record[Parser.attrMap("awcFtRepeaterSelf")] = (long) awcFtRepeaterSelf;}
+        if (Main.numAttributes > 4) {this.record[Parser.attrMap("ifIndex", datasetName)] = (long) ifIndex;}
+        if (Main.numAttributes > 5) {this.record[Parser.attrMap("ifDescr", datasetName)] = (long) ifDescr;}
+        if (Main.numAttributes > 6) {this.record[Parser.attrMap("ifType", datasetName)] = (long) ifType;}
+        if (Main.numAttributes > 7) {this.record[Parser.attrMap("ifSpeed", datasetName)] = (long) ifSpeed;}
+        if (Main.numAttributes > 8) {this.record[Parser.attrMap("ifInOctets", datasetName)] = ifInOctets;}
+        if (Main.numAttributes > 9) {this.record[Parser.attrMap("ifInUcastPkts", datasetName)] = (long) ifInUcastPkts;}
+        if (Main.numAttributes > 10) {this.record[Parser.attrMap("ifInErrors", datasetName)] = (long) ifInErrors;}
+        if (Main.numAttributes > 11) {this.record[Parser.attrMap("ifInDiscards", datasetName)] = (long) ifInDiscards;}
+        if (Main.numAttributes > 12) {this.record[Parser.attrMap("ifOutOctets", datasetName)] = ifOutOctets;}
+        if (Main.numAttributes > 13) {this.record[Parser.attrMap("ifOutUcastPkts", datasetName)] = (long) ifOutUcastPkts;}
+        if (Main.numAttributes > 14) {this.record[Parser.attrMap("ifOutErrors", datasetName)] = (long) ifOutErrors;}
+        if (Main.numAttributes > 15) {this.record[Parser.attrMap("ifOutDiscards", datasetName)] = (long) ifOutDiscards;}
+        if (Main.numAttributes > 16) {this.record[Parser.attrMap("awcDot11AssociatedStationCount", datasetName)] = (long) awcDot11AssociatedStationCount;}
+        if (Main.numAttributes > 17) {this.record[Parser.attrMap("awcDot11ReassociatedStationCount", datasetName)] = (long) awcDot11ReassociatedStationCount;}
+        if (Main.numAttributes > 18) {this.record[Parser.attrMap("awcDot11RoamedStationCount", datasetName)] = (long) awcDot11RoamedStationCount;}
+        if (Main.numAttributes > 19) {this.record[Parser.attrMap("awcDot11DeauthenticateCount", datasetName)] = (long) awcDot11DeauthenticateCount;}
+        if (Main.numAttributes > 20) {this.record[Parser.attrMap("awcDot11DisassociateCount", datasetName)] = (long) awcDot11DisassociateCount;}
+        if (Main.numAttributes > 21) {this.record[Parser.attrMap("awcFtClientSTASelf", datasetName)] = (long) awcFtClientSTASelf;}
+        if (Main.numAttributes > 22) {this.record[Parser.attrMap("awcFtBridgeSelf", datasetName)] = (long) awcFtBridgeSelf;}
+        if (Main.numAttributes > 23) {this.record[Parser.attrMap("awcFtRepeaterSelf", datasetName)] = (long) awcFtRepeaterSelf;}
         // assess if this.record has no values equal to -999:
         this.assembled = true;
     }

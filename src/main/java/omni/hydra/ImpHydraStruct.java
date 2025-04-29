@@ -1,7 +1,8 @@
 /* (C)2021 */
 package omni.hydra;
 
-import omni.Record;
+import omni.Record.Query;
+import omni.Record.Record;
 import omni.*;
 import net.jpountz.xxhash.XXHash64;
 import net.jpountz.xxhash.XXHashFactory;

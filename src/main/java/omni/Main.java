@@ -1,5 +1,6 @@
 package omni;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.exceptions.CsvValidationException;
 //import omni.deprecated.*;
 //import omni.deprecated.CompareBaselinesRefactor;
@@ -7,12 +8,10 @@ import com.opencsv.exceptions.CsvValidationException;
 import org.pcap4j.core.NotOpenException;
 import org.pcap4j.core.PcapNativeException;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Objects;
+import java.util.*;
 
 import static java.lang.Integer.parseInt;
 
@@ -88,7 +87,7 @@ public class Main {
     public static String inputFolder;
 
     public static String readFolder;
-    public static int filesToRead = 5;//5;//5;
+    public static int filesToRead = 1;//5;//5;
     public static Helper h;
     public static boolean writeSNMP = false;
     public static int sensitivityNumberOfRecords = 5000000;
@@ -110,84 +109,78 @@ public class Main {
     static int[] sizeNoise;
 
     public static void main(String[] args) throws IOException, NotOpenException, PcapNativeException, CsvValidationException {
-        // Args
-        // Arg[0] = setting
-        // arg[1] = dataset name
-        // arg[2] = repetition
-        // arg[3] = runOnODC
-        // arg[4] = readFolder
-        // arg[5] = withDeletes
-        // arg[6] = spreadOutDeletes
-        // arg[7] = useExactUnionSize
-        // arg[8] = ramVals
-        // arg[9] = onlyKmin
-        // arg[10] = widthOptionsGridSearch
-        // arg[11] = depthOptionsGridSearch
 
-        //setParameters(eps: 0.1, delta: 0.05, maxLevel: 32, seed: 1, numAttributes: 2, qTarget: 0.01);
-        setting = args[0];
-        Main.datasetName = args[1];
-        Main.numRepetitions = parseInt(args[2]);
-        Main.runOnODC= Boolean.parseBoolean(args[3]);
-        Main.readFolder = args[4];
-        Main.withDeletes = Boolean.parseBoolean(args[5]);
-        Main.spreadOutDeletes = Boolean.parseBoolean(args[6]);
-        Main.useExactUnionSize = Boolean.parseBoolean(args[7]);
-        Main.ramVals = parseLongArray(args[8]);
-        for (int i = 0; i < Main.ramVals.length; i++) {
-            System.out.println("ramVals[" + i + "] = " + Main.ramVals[i]);
-        }
-        Main.noiseUpdateFractions = getDoubleArray(args[9]);
-        Main.bufferValuesOmni = getDoubleArray(args[10]);
-        Main.ingestBuffers = getDoubleArray(args[11]);
-//        Main.densityGridSearch = getDoubleArray(args[12]);
-        Main.dGridSearch = parseIntArray(args[12]);
-        Main.bGridSearch = parseIntArray(args[13]);
-        Main.parFactorGridSearch = getDoubleArray(args[14]);
-//        Main.wGridSearch = parseIntArray(args[15]);
-//        Main.BGridSearch = parseIntArray(args[16]);
-        Main.numBins = parseInt(args[15]);
-        Main.numPredicates = parseInt(args[16]);
-        Main.expOmniSenate = Boolean.parseBoolean(args[17]);
-        Main.expOmniHouse = Boolean.parseBoolean(args[18]);
-        Main.exp2LHS = Boolean.parseBoolean(args[19]);
-        Main.expaSH = Boolean.parseBoolean(args[20]);
-        Main.expHydra = Boolean.parseBoolean(args[21]);
-        Main.expResSample = Boolean.parseBoolean(args[22]);
-        Main.expCM = Boolean.parseBoolean(args[23]);
-        Main.expPerRow = Boolean.parseBoolean(args[24]);
-        Main.expCase1ReturnScap = Boolean.parseBoolean(args[25]);
-        Main.epsValues = getDoubleArray(args[26]);
-        Main.sizeFactorOptions = args[27];
-        Main.sizeNoise = parseIntArray(args[28]);
-        Main.experiment_name = args[29];
-        Main.useMultNumAttributes = Boolean.parseBoolean(args[30]);
-        Main.numSynthAttrs = parseInt(args[31]);
-        Main.numZipfianAttrs = parseInt(args[32]);
-        Main.zipfAlphas = getDoubleArray(args[33]);
-        Main.numUniformAttrs = parseInt(args[34]);
-        Main.useS0 = Boolean.parseBoolean(args[35]);
-        //Main.useExactUnionSize = Boolean.parseBoolean(args[3]);
+        String jsonFilePath = args[0];
+        ObjectMapper mapper = new ObjectMapper();
+        Config config = mapper.readValue(new File(jsonFilePath), Config.class);
 
-        if (Main.datasetName.equals("CAIDA")) {
-            Main.warmupNumber = 1000000;
-        } else if (Main.datasetName.equals("SNMP")) {
-            Main.warmupNumber = (int) 3e5;
-        } else {
-            Main.warmupNumber = (int) 3e5;
-        }
+//        setting = args[0];
+//        Main.datasetName = args[1];
+//        Main.numRepetitions = parseInt(args[2]);
+//        Main.runOnODC= Boolean.parseBoolean(args[3]);
+//        Main.readFolder = args[4];
+//        Main.withDeletes = Boolean.parseBoolean(args[5]);
+//        Main.spreadOutDeletes = Boolean.parseBoolean(args[6]);
+//        Main.useExactUnionSize = Boolean.parseBoolean(args[7]);
+//        Main.ramVals = parseLongArray(args[8]);
+//        for (int i = 0; i < Main.ramVals.length; i++) {
+//            System.out.println("ramVals[" + i + "] = " + Main.ramVals[i]);
+//        }
+//        Main.noiseUpdateFractions = getDoubleArray(args[9]);
+//        Main.bufferValuesOmni = getDoubleArray(args[10]);
+//        Main.ingestBuffers = getDoubleArray(args[11]);
+////        Main.densityGridSearch = getDoubleArray(args[12]);
+//        Main.dGridSearch = parseIntArray(args[12]);
+//        Main.bGridSearch = parseIntArray(args[13]);
+//        Main.parFactorGridSearch = getDoubleArray(args[14]);
+////        Main.wGridSearch = parseIntArray(args[15]);
+////        Main.BGridSearch = parseIntArray(args[16]);
+//        Main.numBins = parseInt(args[15]);
+//        Main.numPredicates = parseInt(args[16]);
+//        Main.expOmniSenate = Boolean.parseBoolean(args[17]);
+//        Main.expOmniHouse = Boolean.parseBoolean(args[18]);
+//        Main.exp2LHS = Boolean.parseBoolean(args[19]);
+//        Main.expaSH = Boolean.parseBoolean(args[20]);
+//        Main.expHydra = Boolean.parseBoolean(args[21]);
+//        Main.expResSample = Boolean.parseBoolean(args[22]);
+//        Main.expCM = Boolean.parseBoolean(args[23]);
+//        Main.expPerRow = Boolean.parseBoolean(args[24]);
+//        Main.expCase1ReturnScap = Boolean.parseBoolean(args[25]);
+//        Main.epsValues = getDoubleArray(args[26]);
+//        Main.sizeFactorOptions = args[27];
+//        Main.sizeNoise = parseIntArray(args[28]);
+//        Main.experiment_name = args[29];
+//        Main.useMultNumAttributes = Boolean.parseBoolean(args[30]);
+//        Main.numSynthAttrs = parseInt(args[31]);
+//        Main.numZipfianAttrs = parseInt(args[32]);
+//        Main.zipfAlphas = getDoubleArray(args[33]);
+//        Main.numUniformAttrs = parseInt(args[34]);
+//        Main.useS0 = Boolean.parseBoolean(args[35]);
+//        //Main.useExactUnionSize = Boolean.parseBoolean(args[3]);
+//
+//        if (Main.datasetName.equals("CAIDA")) {
+//            Main.warmupNumber = 1000000;
+//        } else if (Main.datasetName.equals("SNMP")) {
+//            Main.warmupNumber = (int) 3e5;
+//        } else {
+//            Main.warmupNumber = (int) 3e5;
+//        }
         outputFolder = readFolder + "output/";
         inputFolder = readFolder + "input/";
+        config.setCurrentDate();
         currentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
 
         Main.workloadFilename = "workload_" + Main.datasetName + "_N" + Main.filesToRead + ".csv";
-        h = new Helper();
+//        h = new Helper();
 
 //        if (Objects.equals(setting,"Compare Baselines Refactor")) {
 //            CompareBaselinesRefactor cb = new CompareBaselinesRefactor(h);
 //            cb.run();
-        if (Objects.equals(setting,"Test_two_LHS")) {
-            RunExperiments tt = new RunExperiments(h, sizeFactor);
+        if (Objects.equals(config.setting, "sampleFirstQLater")) {
+            omni.Experiments.RunExperiments runExperiments = new omni.Experiments.RunExperiments(config);
+            runExperiments.run();
+        } else if (Objects.equals(setting,"Test_two_LHS")) {
+            RunExperimentsOld tt = new RunExperimentsOld(config, sizeFactor);
             tt.run();
 //        } else if (Objects.equals(setting,"Delete Stream")) {
 //            DeleteStream ds = new DeleteStream(h);

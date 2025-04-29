@@ -1,11 +1,10 @@
 package omni.omniPQPrimitive;
 
-import com.sun.source.tree.Tree;
 import omni.*;
 
 import java.util.*;
 import omni.PriorityQueue.PriorityQueue;
-import omni.omniHouse.queryRes;
+import omni.parameterSetting.Formulas;
 
 import static java.lang.Math.*;
 
@@ -13,10 +12,13 @@ public class OmniSketch extends SynopsisRefactor {
     private final boolean dynamicSampleSizes;
     public AttributeSketch[] CMSketches;
     CountMinDyad[][] CMSketchesRange;
-    CountMinS0[] CMSketchesS0;
+    CountMinS0PriorityQueue[] CMSketchesS0;
+    CountMinS0ArrayList[] CMSketchesS0ArrayList;
+    CountMinS0Refactor[] CMSketchesS0Refactor;
+
     public final int depth;
     public int width;
-    private final int maxSize;
+    private int maxSize;
     private final int b;
     private double eps;
     private double delta;
@@ -32,11 +34,9 @@ public class OmniSketch extends SynopsisRefactor {
     boolean rangeQueries;
     Random randomHashG;
     final double BetaKmin;
-
-    private int sampleSize;
     private final int sampleBufferSize;
     private int sampleCount = 0;
-    private long[] sampledIds;
+    private int[] sampledIds;
 
     public OmniSketch(long ram, int numStoredAttributes, int[] parameters, int dyadicBits,
                       boolean useS0, boolean useS0WithSampling,
@@ -46,7 +46,9 @@ public class OmniSketch extends SynopsisRefactor {
                       boolean useFastTwoLHS, boolean useInvDistPaper2LHS,
                       boolean useMinEstimate, boolean checkExactUnion2LHS,
                       double BetaKmin, boolean dynamicResizing,
-                      boolean dynamicSampleSizes, boolean case1ReturnScap, boolean useNmax, double eps, int sampleBufferSize, int seed) {
+                      boolean dynamicSampleSizes, boolean case1ReturnScap, boolean useNmax,
+                      int s0Setting, double eps, int sampleBufferSize,
+                      int seed) {
         System.out.println("OmniSketch has stored attributes: " + numStoredAttributes);
         this.seed = seed;
         this.parameters = parameters;
@@ -70,27 +72,26 @@ public class OmniSketch extends SynopsisRefactor {
         this.dynamicSampleSizes = dynamicSampleSizes;
         this.case1ReturnScap = case1ReturnScap;
         this.useNmax = useNmax;
+        this.s0Setting = s0Setting;
         this.eps = eps;
         this.sampleBufferSize = sampleBufferSize;
         depth = parameters[0];
         width = parameters[1];
-        sampleSize = 0;
         if (useS0) {
             sampleType = "S0";
-
             numTwoLHSReps = -1;
             maxSize = parameters[2];
             b = parameters[3];
             if (useS0WithSampling) {
-                sampleType = "S0WithSampling_bufferSize:" + sampleBufferSize;
-                width = 300;
+                sampleType = "S0WithSampling_bufferSize:" + sampleBufferSize + "_s0Setting:" + s0Setting;
                 // sample size is dependent on ram, we have numStoredAttributes * depth * 32 bits.
-                sampleSize = (int) (ram / (numStoredAttributes * depth * 32L));
-
+//                sampleSize = maxSize;//(int) (ram / (numStoredAttributes * depth * 32L));
                 //sampleSize = width * maxSize;
-                System.out.println("Sample size: " + sampleSize);
-
-                sampledIds = new long[sampleSize];
+//                if (s0Setting == 0 || s0Setting == 1) {
+//                    maxSize = (int) (ram / (numStoredAttributes * depth * 32L));
+//                }
+                System.out.println("Sample size: " + maxSize);
+                sampledIds = new int[maxSize];
             }
         } else if (useTwoLHS) {
             StringBuilder sb = new StringBuilder();
@@ -157,6 +158,10 @@ public class OmniSketch extends SynopsisRefactor {
             b = parameters[3];
             numTwoLHSReps = -1;
         }
+
+        System.out.println("----------------");
+        System.out.println(sampleType);
+        System.out.println("---------------");
         initSketch();
     }
 
@@ -198,10 +203,25 @@ public class OmniSketch extends SynopsisRefactor {
 
         } else {
             if (useS0) {
-                CMSketchesS0 = new CountMinS0[numStoredAttributes];
-                for (int i = 0; i < numStoredAttributes; i++) {
-                    CMSketchesS0[i] = new CountMinS0(i, depth, width, sampleSize, sampleBufferSize, seed);
+                if (s0Setting == 0) {
+                    CMSketchesS0ArrayList = new CountMinS0ArrayList[numStoredAttributes];
+                    for (int i = 0; i < numStoredAttributes; i++) {
+                        CMSketchesS0ArrayList[i] = new CountMinS0ArrayList(i, depth, width, maxSize, sampleBufferSize, seed);
+                    }
+                } else if (s0Setting == 1) {
+                    CMSketchesS0 = new CountMinS0PriorityQueue[numStoredAttributes];
+                    for (int i = 0; i < numStoredAttributes; i++) {
+                        CMSketchesS0[i] = new CountMinS0PriorityQueue(i, depth, width, maxSize, sampleBufferSize, seed);
+                    }
+                } else if (s0Setting == 2) {
+                    CMSketchesS0Refactor = new CountMinS0Refactor[numStoredAttributes];
+                    for (int i = 0; i < numStoredAttributes; i++) {
+                        CMSketchesS0Refactor[i] = new CountMinS0Refactor(i, depth, width, maxSize, sampleBufferSize, seed);
+                    }
+                } else {
+                    throw new IllegalArgumentException("Invalid useArrayList value: " + s0Setting);
                 }
+
             } else {
                 CMSketches = new AttributeSketch[numStoredAttributes];
                 for (int i = 0; i < numStoredAttributes; i++) {
@@ -283,32 +303,60 @@ public class OmniSketch extends SynopsisRefactor {
         } else {
             if (useS0) {
                 if (useS0WithSampling) {
-                    if (sampleCount < sampleSize) {
+                    if (sampleCount < maxSize) {
                         for (int i = 0; i < numStoredAttributes; i++) {
-                            CMSketchesS0[i].ingest(record[i + 1], id, sign);
+
+                            if (s0Setting == 0) {
+                                CMSketchesS0ArrayList[i].ingest(record[i + 1], hx[0], sign);
+                            } else if (s0Setting == 1) {
+                                CMSketchesS0[i].ingest(record[i + 1], hx[0], sign);
+                            } else if (s0Setting == 2) {
+                                CMSketchesS0Refactor[i].ingest(record[i + 1], sampleCount, sign);
+                            } else {
+                                throw new IllegalArgumentException("Invalid useArrayList value: " + s0Setting);
+                            }
                         }
-                        sampledIds[sampleCount] = id;
+                        if (s0Setting!=2) {
+                            sampledIds[sampleCount] = hx[0];
+                        }
                     } else {
                         // Bucket is full. Now we need to sample.
                         // we pick one random id from the sample and replace it with the new id.
-                        int replace = sampleRn.nextInt(sampleCount + 1);
-                        if (replace < sampleSize) {
-                            long replace_id = sampledIds[replace];
+                        int replace = sampleRn.nextInt(sampleCount);
+                        if (replace < maxSize) {
 
                             // now we need to go over all S0 sketches and remove the id.
-                            for (int i = 0; i < numStoredAttributes; i++) {
-                                CMSketchesS0[i].removeId(replace_id); // removes id if present.
+                            if (s0Setting!= 2) {
+                                int replace_id = sampledIds[replace];
+                                for (int i = 0; i < numStoredAttributes; i++) {
+                                    if (s0Setting == 0) {
+                                        CMSketchesS0ArrayList[i].removeId(replace_id); // removes id if present.
+                                    } else {
+                                        CMSketchesS0[i].removeId(replace_id); // removes id if present.
+                                    }
+                                }
                             }
                             for (int i = 0; i < numStoredAttributes; i++) {
-                                CMSketchesS0[i].ingest(record[i + 1], id, sign);
+                                 if (s0Setting == 0) {
+                                     CMSketchesS0ArrayList[i].ingest(record[i + 1], hx[0], sign);
+                                 } else if (s0Setting == 1) {
+                                     CMSketchesS0[i].ingest(record[i + 1], hx[0], sign);
+                                 } else if (s0Setting == 2) {
+                                     CMSketchesS0Refactor[i].ingest(record[i + 1], replace, sign);
+                                 } else{
+                                     throw new IllegalArgumentException("Invalid useArrayList value: " + s0Setting);
+                                }
                             }
-                            sampledIds[replace] = id;
+                            if (s0Setting!= 2) {
+                                // now we need to add the new id to the sample.
+                                sampledIds[replace] = hx[0];
+                            }
                         }
                     }
                     sampleCount++;
                 } else {
                     for (int i = 0; i < numStoredAttributes; i++) {
-                        CMSketchesS0[i].ingest(record[i + 1], id, sign);
+                        CMSketchesS0[i].ingest(record[i + 1], hx[0], sign);
                     }
                 }
             }
@@ -358,7 +406,20 @@ public class OmniSketch extends SynopsisRefactor {
     @Override
     public int query(long[] query, int numPreds, QueryInfo queryInfo) {
         if (useS0) {
-            return queryEstS0(getS0Buckets(query, numPreds), queryInfo);
+//            return queryEstS0(getS0Buckets(query, numPreds), queryInfo);
+
+            if (s0Setting == 0) {
+                return queryEstS0ArrayList(getS0BucketsArrayList(query, numPreds), queryInfo);
+            } else if (s0Setting == 1){
+                // using Priority Queue
+                return queryEstS0(getS0Buckets(query, numPreds), queryInfo);
+            } else if (s0Setting == 2) {
+                return queryEstS0Refactor(getS0BucketsRefactor(query, numPreds), queryInfo);
+//                return queryEstS0(getS0Buckets(query, numPreds), queryInfo);
+            }
+            else {
+                throw new IllegalArgumentException("Invalid useArrayList value: " + s0Setting);
+            }
         }
         if (useTwoLHS) {
             int result;
@@ -388,84 +449,217 @@ public class OmniSketch extends SynopsisRefactor {
         }
     }
 
-    private int queryEstS0(TreeSet<Long>[] samples, QueryInfo queryInfo) {
+    private HashSet<Integer>[] getS0BucketsRefactor(long[] q, int numPreds) {
+        HashSet<Integer>[] result = new HashSet[depth * numPreds];
+        int attrWithoutPred = 0;
+        for (int i = 0; i < q.length; i++) {
+            if (q[i] != -1) {
+                HashSet<Integer>[] temp = CMSketchesS0Refactor[i].query(q[i]);
+                if (depth >= 0) {
+                    System.arraycopy(temp, 0, result, (i - attrWithoutPred) * depth, depth);
+                }
+            } else {
+                attrWithoutPred++;
+            }
+        }
+        return result;
+    }
+
+    private int queryEstS0ArrayList(HashSet<Integer>[] samples, QueryInfo queryInfo) {
+        int intersectionCount =0;
         // Intersect all buckets and return the size of the intersection.
-        int intersectionCount = 0;
+        Arrays.sort(samples, Comparator.comparingInt(HashSet::size));
         int numJoins = samples.length;
         if (numJoins == 1) {
             return samples[0].size();
         }
-//        PriorityQueue[] samples = new PriorityQueue[numJoins];
-//        for (int i = 0; i < numJoins; i++) {
-//            // sort the buckets
-//            samples[i] = new PriorityQueue(s0TreeSets[i]);
-//        }
-        Long[] currentValues = new Long[numJoins];
-//        int[] currentValues = new int[numJoins];
-        // initialize to the first element of each bucket
+        Integer[] currentValues = new Integer[numJoins];
+        Iterator<Integer>[] iters = new Iterator[numJoins];
         for (int i = 0; i < numJoins; i++) {
-            if (!samples[i].isEmpty()) {
-//                currentValues[i] = samples[i].peek();
-                currentValues[i] = samples[i].first();
+            iters[i] = samples[i].iterator();
+        }
+
+
+        // Initialize each queue's current value
+        for (int i = 0; i < numJoins; i++) {
+            if (iters[i].hasNext()) {
+                currentValues[i] = iters[i].next();
             } else {
-                return 0;
+                return 0; // If any queue is empty, intersection count is zero
             }
         }
+
         while (true) {
-            Long minCurrent = currentValues[0];
-//            int minCurrent = currentValues[0];
-            for (int i = 1; i < numJoins; i++) {
+            // Find the maximum value among the current values
+            int minCurrent = currentValues[0];
+            for (int i = 1; i < numJoins; i++) { // We can skip the first one, since we just set it to minCurrent.
                 if (currentValues[i] < minCurrent) {
                     minCurrent = currentValues[i];
                 }
             }
+
+            // Check if all current values match the maxCurrent
             boolean allMatch = true;
             for (int i = 0; i < numJoins; i++) {
-                if (!Objects.equals(currentValues[i], minCurrent)) {
+                if (currentValues[i] != minCurrent) {
                     allMatch = false;
                     break;
                 }
             }
+
+            // If all queues have the same current value, count it as an intersection
             if (allMatch) {
                 intersectionCount++;
+                // Advance all iterators to the next element
                 for (int i = 0; i < numJoins; i++) {
-//                    samples[i].poll();
-                    samples[i].pollFirst();
-                    if (!samples[i].isEmpty()) {
-//                        currentValues[i] = samples[i].peek();
-                        currentValues[i] = samples[i].first();
+                    if (iters[i].hasNext()) {
+                        currentValues[i] = iters[i].next();
                     } else {
-                        return (int) (intersectionCount * (Math.max((double) sampleCount / sampleSize, 1)));
+                        return (int) (intersectionCount * (Math.max((double) sampleCount / maxSize, 1)));
                     }
                 }
             } else {
+                // Advance only iterators of queues with current values < maxCurrent
                 for (int i = 0; i < numJoins; i++) {
                     while (currentValues[i] > minCurrent) {
-//                        samples[i].poll();
-                        samples[i].pollFirst();
-                        if (!samples[i].isEmpty()) {
-//                            currentValues[i] = samples[i].peek();
-                            currentValues[i] = samples[i].first();
+                        if (iters[i].hasNext()) {
+                            currentValues[i] = iters[i].next();
                         } else {
-                            return (int) (intersectionCount * (Math.max((double) sampleCount / sampleSize, 1)));
+                            return (int) (intersectionCount * (Math.max((double) sampleCount / maxSize, 1)));
+                            // End if any queue is exhausted
                         }
                     }
                 }
             }
         }
+
+        //return (int) (intersectionCount * (Math.max((double) sampleCount / sampleSize, 1)));
     }
 
-    public TreeSet<Long>[] getS0Buckets(long[] q, int numPreds) {
-//        TreeSet<Long>[] result = new TreeSet[depth * numPreds];
-        TreeSet<Long>[] resultPQ = new TreeSet[depth * numPreds];
+    private int queryEstS0(PriorityQueue[] samples, QueryInfo queryInfo) {
+        // Intersect all buckets and return the size of the intersection.
+        int intersectionCount = getAltEstKMV(samples);//
+        return (int) (intersectionCount * (Math.max((double) sampleCount / maxSize, 1)));
+        // 0;
+//        int numJoins = samples.length;
+//        if (numJoins == 1) {
+//            return samples[0].size();
+//        }
+//        Integer[] currentValues = new Integer[numJoins];
+//
+//        // initialize to the first element of each bucket
+//        for (int i = 0; i < numJoins; i++) {
+//            if (!samples[i].isEmpty()) {
+//                currentValues[i] = samples[i].peek();
+////                currentValues[i] = samples[i].first();
+////                currentValues[i] = samples[i].get(0);
+//            } else {
+//                return 0;
+//            }
+//        }
+//        while (true) {
+//            Integer minCurrent = currentValues[0];
+////            int minCurrent = currentValues[0];
+//            for (int i = 1; i < numJoins; i++) {
+//                if (currentValues[i] < minCurrent) {
+//                    minCurrent = currentValues[i];
+//                }
+//            }
+//            boolean allMatch = true;
+//            for (int i = 0; i < numJoins; i++) {
+//                if (!Objects.equals(currentValues[i], minCurrent)) {
+//                    allMatch = false;
+//                    break;
+//                }
+//            }
+//            if (allMatch) {
+//                intersectionCount++;
+//                for (int i = 0; i < numJoins; i++) {
+//                    samples[i].poll();
+////                    samples[i].pollFirst();
+////                    samples[i].remove(0);
+//                    if (!samples[i].isEmpty()){
+//                        currentValues[i] = samples[i].peek();
+////                        currentValues[i] = samples[i].first();
+////                        currentValues[i] = samples[i].get(0);
+//                    } else {
+//                        return (int) (intersectionCount * (Math.max((double) sampleCount / sampleSize, 1)));
+//                    }
+//                }
+//            } else {
+//                for (int i = 0; i < numJoins; i++) {
+//                    while (currentValues[i] > minCurrent) {
+//                        samples[i].poll();
+////                        samples[i].pollFirst();
+////                        samples[i].remove(0);
+//                        if (!samples[i].isEmpty()) {
+//                            currentValues[i] = samples[i].peek();
+////                            currentValues[i] = samples[i].first();
+////                            currentValues[i] = samples[i].get(0);
+//                        } else {
+//                            return (int) (intersectionCount * (Math.max((double) sampleCount / sampleSize, 1)));
+//                        }
+//                    }
+//                }
+//            }
+//        }
+    }
+
+
+    private int queryEstS0Refactor(HashSet<Integer>[] samples, QueryInfo queryInfo) {
+        // Intersect all buckets and return the size of the intersection.
+
+        int numJoins = samples.length;
+        if (numJoins == 1) {
+            return samples[0].size() * (int) (Math.max((double) sampleCount / maxSize, 1));
+        }
+        Arrays.sort(samples, Comparator.comparingInt(HashSet::size));
+//        HashSet<Integer> temp = new HashSet<>();
+        int intersectionCount = 0;
+        boolean inIntersection = true;
+        for (int i : samples[0]) {
+            for (int j = 1; j < numJoins; j++) {
+                if (!samples[j].contains(i)) {
+                    inIntersection = false;
+                    break;
+                }
+            }
+            // TODO: when we're doing per row, we need to add to temp.
+            if (inIntersection) {
+                intersectionCount++;
+            }
+            inIntersection = true;
+        }
+
+//        Set<Integer> intersectionSet = new HashSet<>(samples[0]);
+//
+//        for (int i = 1; i < numJoins; i++) {
+//            intersectionSet.retainAll(samples[i]);
+//        }
+//        intersectionCount = intersectionSet.size();
+//        if (intersectionCount != intersectionCountCustom) {
+//            System.out.println("Intersection count mismatch: " + intersectionCount + " != " + intersectionCountCustom);
+//            throw new RuntimeException("Intersection count mismatch");
+//        }
+        return intersectionCount * (int) (Math.max((double) sampleCount / maxSize, 1));
+    }
+
+
+    public PriorityQueue[] getS0Buckets(long[] q, int numPreds) {
+//        TreeSet<Integer>[] result = new TreeSet[depth * numPreds];
+        PriorityQueue[] result = new PriorityQueue[depth * numPreds];
+//        ArrayList<Integer>[] result = new ArrayList[depth * numPreds];
         int attrWithoutPred = 0;
         for (int i = 0; i < q.length; i++) {
             if (q[i] != -1) {
-                TreeSet<Long>[] temp = CMSketchesS0[i].query(q[i]);
+//                TreeSet<Integer>[] temp = CMSketchesS0[i].query(q[i]);
+                PriorityQueue[] temp = CMSketchesS0[i].query(q[i]);
+//                TreeSet<Integer>[] temp = CMSketchesS0Refactor[i].query(q[i]);
+//                ArrayList<Integer>[] temp = CMSketchesS0[i].query(q[i]);
 //                java.util.PriorityQueue<Long>[] tempPQ = CMSketchesS0[i].query(q[i]);
 //                PriorityQueue[] tempPQ = CMSketchesS0[i].query(q[i]);
                 if (depth >= 0) {
-                    System.arraycopy(temp, 0, resultPQ, (i - attrWithoutPred) * depth, depth);
+                    System.arraycopy(temp, 0, result, (i - attrWithoutPred) * depth, depth);
                 }
             } else {
                 attrWithoutPred++;
@@ -477,7 +671,35 @@ public class OmniSketch extends SynopsisRefactor {
 //            // sort the buckets
 //            samples[i] = new PriorityQueue(result[i]);
 //        }
-        return resultPQ;
+        return result;
+    }
+
+    public HashSet<Integer>[] getS0BucketsArrayList(long[] q, int numPreds) {
+//        TreeSet<Integer>[] result = new TreeSet[depth * numPreds];
+        HashSet<Integer>[] result = new HashSet[depth * numPreds];
+//        ArrayList<Integer>[] result = new ArrayList[depth * numPreds];
+        int attrWithoutPred = 0;
+        for (int i = 0; i < q.length; i++) {
+            if (q[i] != -1) {
+//                TreeSet<Integer>[] temp = CMSketchesS0[i].query(q[i]);
+                HashSet<Integer>[] temp = CMSketchesS0ArrayList[i].query(q[i]);
+//                ArrayList<Integer>[] temp = CMSketchesS0[i].query(q[i]);
+//                java.util.PriorityQueue<Long>[] tempPQ = CMSketchesS0[i].query(q[i]);
+//                PriorityQueue[] tempPQ = CMSketchesS0[i].query(q[i]);
+                if (depth >= 0) {
+                    System.arraycopy(temp, 0, result, (i - attrWithoutPred) * depth, depth);
+                }
+            } else {
+                attrWithoutPred++;
+            }
+        }
+
+//        PriorityQueue[] samples = new PriorityQueue[result.length];
+//        for (int i = 0; i < result.length; i++) {
+//            // sort the buckets
+//            samples[i] = new PriorityQueue(result[i]);
+//        }
+        return result;
     }
 
     public Kmin[] getSamplesKmin(long[] q, int numPreds) {
@@ -542,6 +764,8 @@ public class OmniSketch extends SynopsisRefactor {
             return samples[0].size + 1; // One predicate and either per row or one row.
         }
         int intersectionCount = -1;
+
+        Arrays.sort(samples, Comparator.comparingInt(PriorityQueue::size));
 
         // Array to track the current value from each iterator
         int[] currentValues = new int[numJoins];
@@ -1403,6 +1627,11 @@ public class OmniSketch extends SynopsisRefactor {
                 maxMemoryUsage = maxMemoryUsage * (
                         ((long) numTwoLHSReps * CMSketches[0].CMTwoLHS[0][0][0].bitSize * (
                                 CMSketches[0].CMTwoLHS[0][0][0].bitSize + 1) * 32));
+            } else if (useS0 && s0Setting == 2) {
+                maxMemoryUsage = (long) (this.depth * this.numStoredAttributes * this.maxSize *
+                        (Math.log(this.maxSize) / Math.log(2) + Math.log(this.width) / Math.log(2)));
+            } else if (useS0 && s0Setting == 0) {
+                maxMemoryUsage = this.depth * this.numStoredAttributes * this.maxSize * 32L;
             } else {
                 maxMemoryUsage = maxMemoryUsage * Formulas.ramSingleKmin(maxSize,b);
                 //(maxSize * (b + 3 *32 + 1) + 32));
@@ -1430,7 +1659,15 @@ public class OmniSketch extends SynopsisRefactor {
                 }
             } else {
                 if (useS0) {
-                    memoryUsage += CMSketchesS0[i].getMemoryUsage();
+                    if (s0Setting == 0) {
+                        memoryUsage += CMSketchesS0ArrayList[i].getMemoryUsage();
+                    } else if (s0Setting == 1){
+                        memoryUsage += CMSketchesS0[i].getMemoryUsage();
+                    } else if (s0Setting == 2) {
+                        memoryUsage += CMSketchesS0Refactor[i].getMemoryUsage();
+                    } else {
+                        System.err.println("Error: s0Setting not set correctly");
+                    }
                 }
                 else {
                     memoryUsage += CMSketches[i].getMemoryUsage();
@@ -1462,7 +1699,15 @@ public class OmniSketch extends SynopsisRefactor {
                 }
             } else {
                 if (useS0) {
-                    CMSketchesS0[i].reset();
+                    if (s0Setting == 0) {
+                        CMSketchesS0ArrayList[i].reset();
+                    } else if (s0Setting == 1) {
+                        CMSketchesS0[i].reset();
+                    } else if (s0Setting == 2) {
+                        CMSketchesS0Refactor[i].reset();
+                    } else {
+                        throw new IllegalArgumentException("Error: s0Setting not set correctly");
+                    }
                 } else {CMSketches[i].reset();
                 }
             }

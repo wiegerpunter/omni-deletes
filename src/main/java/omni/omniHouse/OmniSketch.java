@@ -1,7 +1,7 @@
 package omni.omniHouse;
 
 //import it.unimi.dsi.fastutil.ints.IntHeapPriorityQueue;
-import omni.Formulas;
+import omni.parameterSetting.Formulas;
 import omni.Main;
 import omni.QueryInfo;
 import omni.SynopsisRefactor;

@@ -1,4 +1,6 @@
-package omni;
+package omni.parameterSetting;
+
+import omni.Main;
 
 public class DetermineB {
 

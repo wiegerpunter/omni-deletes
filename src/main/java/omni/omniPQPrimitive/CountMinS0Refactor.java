@@ -2,17 +2,16 @@ package omni.omniPQPrimitive;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import com.sun.source.tree.Tree;
 import omni.PriorityQueue.PriorityQueue;
-import org.w3c.dom.Attr;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
-public class CountMinS0 {
+public class CountMinS0Refactor {
 
     //ArrayList<ArrayList<Sample>> CM = new ArrayList<>();
 
-    TreeSet<Integer>[][] CM;
+    HashSet<Integer>[][] CM;
     //Tree[][] CMPQ;
     final int depth;
     final int width;
@@ -22,10 +21,11 @@ public class CountMinS0 {
     int attr;
     HashFunction[] xx;
     //final Random rn = new Random(Main.repetition);
+    int[][] maintained_rids;
 
     Random rn;
 
-    public CountMinS0(int attr, int depth, int width, int sampleSize, int sampleBufferSize, int seed) {
+    public CountMinS0Refactor(int attr, int depth, int width, int sampleSize, int sampleBufferSize, int seed) {
         this.attr = attr;
         this.depth = depth;
         this.width = width;
@@ -48,7 +48,7 @@ public class CountMinS0 {
 
 
     public void initSketch() {
-
+        maintained_rids = new int[sampleSize][depth]; // For each sample, row, we maintain the column index at that row.
 //        int[][] primes = Hash.randomPrimes(depth, attr);
 //        hash_a = primes[0];
 //        hash_b = primes[1];
@@ -56,11 +56,11 @@ public class CountMinS0 {
 //        System.out.println("CMS0: hash_a = " + hash_a[0]);
 //        System.out.println("CMS0: hash_b = " + hash_b[0]);
 //        System.out.println("CMS0: hash_c = " + hash_c[0]);
-        CM = new TreeSet[depth][width];
+        CM = new HashSet[depth][width];
 //        CMPQ = new PriorityQueue[depth][width];
         for (int j = 0; j < depth; j++) {
             for (int i = 0; i < width; i++) {
-                CM[j][i] = new TreeSet<Integer>(Comparator.reverseOrder());
+                CM[j][i] = new HashSet<>(sampleSize / width);
 //                CMPQ[j][i] = new PriorityQueue(sampleSize + sampleBufferSize);
             }
         }
@@ -107,28 +107,28 @@ public class CountMinS0 {
 //            CM[j][w].add(id); // Hash in Sample based on id
 //        }
 //    }
-    public void ingest(long attrValue, int id, int sign) {
+    public void ingest(long attrValue, int sampleToReplace, int sign) {
         // Test if all element in A and B are consistent
         int[] hashes = hash(attrValue, depth, width);
+        int[] oldHashes = maintained_rids[sampleToReplace];
         for (int j = 0; j < depth; j++) {
             int w = hashes[j];
             if (sign == 1) {
-                CM[j][w].add(id);
+                int oldHash = oldHashes[j];
+                if (oldHash != w) {
+                    CM[j][oldHash].remove(sampleToReplace);
+                    CM[j][w].add(sampleToReplace);
+                    oldHashes[j] = w;
+                }
             } else {
-                CM[j][w].remove(id);
+                CM[j][w].remove(sampleToReplace);
             }
         }
     }
 
-    public TreeSet<Integer>[] query(long attrValue) {
-        if (!toRemoveId.isEmpty()) { // otherwise, scaling is not correct
-            removeList();
-        }
-
+    public HashSet<Integer>[] query(long attrValue) {
         int[] hashes = hash(attrValue, depth, width);
-//
-//         result;
-        TreeSet<Integer>[] result = new TreeSet[depth];
+        HashSet<Integer>[] result = new HashSet[depth];
 
 //        PriorityQueue[] resultPQ = new PriorityQueue[depth];
         for (int j = 0; j < depth; j++) {
@@ -140,19 +140,15 @@ public class CountMinS0 {
     }
 
     public long getMemoryUsage() {
-        if (!toRemoveId.isEmpty()) {
-            removeList();
-        }
         long memoryUsage = 0;
+        double sizeSigSample = Math.log(sampleSize) / Math.log(2);
         for (int j = 0; j < depth; j++) {
             for (int i = 0; i < width; i++) {
                 //System.out.println("CM[" + j + "][" + i + "].curSampleSize = " + CM.get(j).get(i).curSampleSize);
-                memoryUsage += CM[j][i].size() * 32L;
+                memoryUsage += (long) (CM[j][i].size() * sizeSigSample);
             }
         }
-        if (memoryUsage/ 32L > (long) depth * sampleSize) {
-            System.out.println("Too many samples in CMS0 of attr " + attr + ": " + memoryUsage/ 32);
-        }
+        memoryUsage += (long) (maintained_rids.length * depth * Math.log(width)/Math.log(2));
         return memoryUsage;
     }
 
@@ -162,48 +158,18 @@ public class CountMinS0 {
                 CM[j][i].clear();
             }
         }
+        maintained_rids = new int[sampleSize][depth];
     }
 
-    ArrayList<Integer> toRemoveId = new ArrayList<>();
+//    public TreeSet<Integer> getCopy(int row, int column) {
+//        // copy of treeset for querying
+//        return new TreeSet<>(CM[row][column]);
+//    }
 
-    public void removeId(int removeId) {
-        toRemoveId.add(removeId);
-        if (toRemoveId.size() > sampleBufferSize) {
-            removeList();
-        }
-    }
+    public HashSet<Integer> getCopy(int row, int column) {
+//        return new HashSet<>(CM[row][column]);
+        return CM[row][column];
 
-    private void removeList() {
-        Collections.sort(toRemoveId);
-        for (int j = 0; j < depth; j++) {
-            for (int i = 0; i < width; i++) {
-//                for (Long aLong : toRemoveId) {
-//                    CM[j][i].remove(aLong);
-//                }
-//                toRemoveIdSet.forEach(CM[j][i]::remove);
-//                Integer[] treeArray = CM[j][i].toArray();
-                for (Integer aLong : toRemoveId) {
-//                    if (CM[j][i].isEmpty() || CM[j][i].first() < aLong) {
-//                        break;
-//                    }
-
-                    if (CM[j][i].isEmpty()) {
-                        break;
-                    }
-                    CM[j][i].remove(aLong);
-                }
-//                toRemoveId.forEach(CM[j][i]::remove);
-
-                //toremove id is sorted, treesets in CM are sorted, so we can break after first removal
-
-            }
-        }
-        toRemoveId.clear();
-    }
-
-    public TreeSet<Integer> getCopy(int row, int column) {
-        // copy of treeset for querying
-        return new TreeSet<>(CM[row][column]);
     }
 
 //    public void sort() {

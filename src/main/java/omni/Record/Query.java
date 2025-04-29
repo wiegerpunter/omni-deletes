@@ -1,4 +1,6 @@
-package omni;
+package omni.Record;
+
+import omni.Main;
 
 import java.io.IOException;
 import java.io.ObjectInput;
