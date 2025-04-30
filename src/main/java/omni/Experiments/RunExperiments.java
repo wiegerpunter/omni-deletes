@@ -2,10 +2,13 @@ package omni.Experiments;
 
 import com.opencsv.exceptions.CsvValidationException;
 import omni.*;
+import omni.omniFactory.OmniSketch;
+import omni.omniFactory.OmniSketchBuilder;
 import omni.parameterSetting.RamToPar;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class RunExperiments {
@@ -64,7 +67,7 @@ public class RunExperiments {
     }
 
     private void runAllExperiments(int repetition) throws IOException {
-        config.ramMBToBits();
+
         RamToPar rtp = new RamToPar(config.numStoredAttributes, config.ramVals);
 
         for (long ram : config.ramVals) {
@@ -97,7 +100,7 @@ public class RunExperiments {
         if (config.expCM) enabledExperiments.add("CountMin");
         if (config.expResSample) enabledExperiments.add("ReservoirSampling");
 //        enabledExperiments.add("OmniSketchSampleFirstQLater");
-//        enabledExperiments.add("OmniSketchVLDB");
+        enabledExperiments.add("OmniSketchVLDB");
         enabledExperiments.add("OmniSketchSampleFirstQLaterWithSampleSize");
         // Add other experiments here
         return enabledExperiments;
@@ -142,9 +145,6 @@ public class RunExperiments {
             time_passed = runSynWithoutWarmup(syn);
         }
 
-        if (syn.getSetting().equals("OmniSketch") && !syn.useTwoLHS && config.withDeletes) {
-            System.out.println("Actual deletes from Kmin: " + Main.kminDeletes);
-        }
         System.out.println("Time passed for updates synopsis " + syn.getSetting() + " is: " + time_passed + " ms, average: " + (double) time_passed / (cd.getDatasetSize() + 2 * cd.numDeletes) + " ms");
         System.out.println("Memory usage synopsis " + syn.getSetting() + ": " + syn.getMemoryUsage());
         System.out.println("Memory usage dataset: " + cd.getMemoryUsage());
@@ -250,5 +250,21 @@ public class RunExperiments {
         }
         throw new RuntimeException("Not reading real dataset yet, refactoring needed");
         //d = new DatasetRefactor(Main.datasetName, h);
+    }
+
+    static void omniExperiment(long ram, int repetition, Config config, int[] params, OmniSketchBuilder omniSketchBuilder, RunExperiments runExperiments) throws IOException {
+        System.out.println("Running OmniSketch with parameters: " + Arrays.toString(params));
+
+        OmniSketch omniSketch = omniSketchBuilder
+                .setRam(ram)
+                .setNumStoredAttributes(config.numStoredAttributes)
+                .setParams(params)
+                .setSeed(repetition)
+                .build();
+
+        omniSketch.printParams();
+        long synMem = runExperiments.runSynopsisRamBased(omniSketch, repetition);
+        omniSketch.reset();
+        System.gc();
     }
 }

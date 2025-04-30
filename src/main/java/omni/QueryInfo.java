@@ -21,6 +21,7 @@ public class QueryInfo {
     public int exactUnion;
     public int exactIntersection;
     public double bound;
+    private int estimate;
 
     public QueryInfo() {
         CMRow = 0;
@@ -79,5 +80,13 @@ public class QueryInfo {
     public void addJaccardEstimate(double jaccardEstimate, int witness2LHS) {
         this.jaccardEstimates.add(jaccardEstimate);
         this.witnessEstimates.add(witness2LHS);
+    }
+
+    public void setEstimate(int estimate) {
+        this.estimate = estimate;
+    }
+
+    public int getEstimate() {
+        return estimate;
     }
 }

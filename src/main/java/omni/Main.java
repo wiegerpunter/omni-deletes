@@ -168,6 +168,7 @@ public class Main {
         outputFolder = readFolder + "output/";
         inputFolder = readFolder + "input/";
         config.setCurrentDate();
+        config.ramMBToBits();
         currentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
 
         Main.workloadFilename = "workload_" + Main.datasetName + "_N" + Main.filesToRead + ".csv";

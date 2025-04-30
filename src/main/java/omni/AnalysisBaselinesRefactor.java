@@ -280,7 +280,7 @@ public class AnalysisBaselinesRefactor {
 
             result[5] = String.valueOf(d.getMemoryUsage());
             result[6] = String.valueOf(s.ram);
-            result[7] = s.setting;
+            result[7] = s.getSetting();
             result[8] = s.sampleType;
             result[9] = String.valueOf(timePassed);
             result[10] = memUsageSyn;
@@ -310,11 +310,7 @@ public class AnalysisBaselinesRefactor {
             };
             result[33] = String.valueOf(totalQueryExecutionTime);
             result[34] = String.valueOf(s.useBetaKmin);
-            int numKSamples = 0;
-            if (!s.useTwoLHS & !s.useS0) {
-                numKSamples = s.getFilledKSamples();
-            }
-            result[35] = String.valueOf(numKSamples);
+            result[35] = String.valueOf(0);
             result[36] = String.valueOf(Main.kminDeletes);
             result[37] = String.valueOf(d.pointQueryAnswersDeletes[i]);
             result[38] = String.valueOf(d.pointQueryUnionDeletes[i]);
