@@ -103,13 +103,13 @@ public class RunExperiments {
         if (config.expHydra) enabledExperiments.add("Hydra");
         if (config.expCM) enabledExperiments.add("CountMin");
         if (config.expResSample) enabledExperiments.add("ReservoirSampling");
-        enabledExperiments.add("OmniSketchSampleFirstQLater");
-        enabledExperiments.add("OmniSketchSampleFirstQLaterPerRow");
-
-//        enabledExperiments.add("OmniSketchVLDBSampleSize");
-//        enabledExperiments.add("OmniSketchSFQLSampleSize");
-//        enabledExperiments.add("OmniSketchSFQLSampleSizePerRow");
-//        enabledExperiments.add("OmniSketchSFQLSampleSizeTestHashSet");
+        if (config.expOmniSketchSampleFirstQLater) enabledExperiments.add("OmniSketchSampleFirstQLater");
+        if (config.expOmniSketchSampleFirstQLaterPerRow) enabledExperiments.add("OmniSketchSampleFirstQLaterPerRow");
+        if (config.expOmniSketchVLDB) enabledExperiments.add("OmniSketchVLDB");
+        if (config.expOmniSketchVLDBSampleSize) enabledExperiments.add("OmniSketchVLDBSampleSize");
+        if (config.expOmniSketchSFQLSampleSize) enabledExperiments.add("OmniSketchSFQLSampleSize");
+        if (config.expOmniSketchSFQLSampleSizePerRow) enabledExperiments.add("OmniSketchSFQLSampleSizePerRow");
+        if (config.expOmniSketchSFQLSampleSizeTestHashSet) enabledExperiments.add("OmniSketchSFQLSampleSizeTestHashSet");
 
         // Add other experiments here
         return enabledExperiments;

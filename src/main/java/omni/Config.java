@@ -22,6 +22,13 @@ public class Config {
     public List<Double> parFactorGridSearch;
     public int numBins;
     public int numPredicates;
+    public boolean expOmniSketchSampleFirstQLater;
+    public boolean expOmniSketchSampleFirstQLaterPerRow;
+    public boolean expOmniSketchVLDB;
+    public boolean expOmniSketchVLDBSampleSize;
+    public boolean expOmniSketchSFQLSampleSize;
+    public boolean expOmniSketchSFQLSampleSizePerRow;
+    public boolean expOmniSketchSFQLSampleSizeTestHashSet;
     public boolean expOmniSet;
     public boolean expOmniHouse;
     public boolean exp2LHS;

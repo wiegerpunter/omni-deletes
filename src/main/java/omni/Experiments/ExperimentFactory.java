@@ -13,13 +13,12 @@ public class ExperimentFactory {
         // Add other experiments here
         experiments.put("OmniSketchSampleFirstQLater", new OmniSampleFirstQLaterExperiment());
         experiments.put("OmniSketchSampleFirstQLaterPerRow", new OmniSampleFirstQLaterPerRowExperiment());
-
-
         experiments.put("OmniSketchVLDB", new OmniVLDBExperiment());
+
+        // Sample size as input
         experiments.put("OmniSketchSFQLSampleSize", new OmniSFQLSampleSizeExperiment());
         experiments.put("OmniSketchSFQLSampleSizePerRow", new OmniSFQLSampleSizePerRowExperiment());
-
-//        experiments.put("OmniSketchSFQLSampleSizeTestHashSet", new OmniSFQLSampleSizeTestHashSetExperiment());
+        experiments.put("OmniSketchSFQLSampleSizeTestHashSet", new OmniSFQLSampleSizeTestHashSetExperiment());
         experiments.put("OmniSketchVLDBSampleSize", new OmniVLDBSampleSizeExperiment());
 
     }
