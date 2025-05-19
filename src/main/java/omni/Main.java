@@ -177,7 +177,7 @@ public class Main {
 //        if (Objects.equals(setting,"Compare Baselines Refactor")) {
 //            CompareBaselinesRefactor cb = new CompareBaselinesRefactor(h);
 //            cb.run();
-        if (Objects.equals(config.setting, "sampleFirstQLater")) {
+        if (Objects.equals(config.setting, "Compare Synopses")) {
             omni.Experiments.RunExperiments runExperiments = new omni.Experiments.RunExperiments(config);
             runExperiments.run();
         } else if (Objects.equals(setting,"Test_two_LHS")) {
