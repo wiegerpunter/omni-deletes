@@ -17,7 +17,6 @@ import java.util.HashSet;
 
 
 public class RunExperimentsOld {
-    Helper h;
     DatasetRefactor d;
     CleanDataset cd;
     //ExpWorkload ew;
@@ -107,7 +106,7 @@ public class RunExperimentsOld {
             Main.numFiles = Integer.parseInt(conditions[i]);
         }
 
-        d = new DatasetRefactor(Main.datasetName, h);
+        d = new DatasetRefactor(Main.datasetName);
     }
 
     private void runSyns(int i, int repetition) throws IOException {

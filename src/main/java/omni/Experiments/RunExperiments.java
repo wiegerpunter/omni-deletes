@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class RunExperiments {
+    DatasetRefactor d;
     CleanDataset cd;
     String[] conditions;
     static Config config;
@@ -53,7 +54,6 @@ public class RunExperiments {
         double sizeFactor = 0;
         if (config.datasetName.equals("SNMP") || config.datasetName.equals("CAIDA")) {
             config.fileStartCondition = conditions[conditionIndex];
-
             readRealDataset(conditionIndex);
         } else {
             sizeFactor = Double.parseDouble(config.sizeFactorOptions[conditionIndex]);
@@ -138,7 +138,7 @@ public class RunExperiments {
                 cd.synthDev(perc, sizeFactor, config.numZipfAttributes , zipfAlpha, config.numUniformAttributes);
             }
             case "Test" -> cd.testDataset();
-            default -> throw new RuntimeException("Unknown dataset name"); // clean dataset here cd.CleanDataset(d, perc, maxPerc);
+            default -> cd.cleanDataset(d, perc, noiseSize);
         }
 
         // get number of unique full records, ignoring the id
@@ -264,8 +264,7 @@ public class RunExperiments {
             // Convert conditions[i] to int
             Main.numFiles = Integer.parseInt(conditions[i]);
         }
-        throw new RuntimeException("Not reading real dataset yet, refactoring needed");
-        //DatasetRefactor d = new DatasetRefactor(Main.datasetName, h);
+        d = new DatasetRefactor(config.datasetName);
     }
 
     static void omniExperiment(long ram, int repetition, Config config, int[] params, OmniSketchBuilder omniSketchBuilder, RunExperiments runExperiments) throws IOException {

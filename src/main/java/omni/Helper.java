@@ -519,28 +519,8 @@ public class Helper {
 //        writer.writeNext(header);
 //    }
     //endregion
-    public void initSNMPDataset(DatasetRefactor d) throws IOException {
-        //initialize csv file
-        String CSV_FILE_NAME = Main.inputFolder + "/data/" + Main.datasetName +
-                "/SNMPDataset_" + Main.datasetName + "_"+ Main.fileStartCondition + ".csv";
-        CSVWriter writer = new CSVWriter(new FileWriter(CSV_FILE_NAME, true));
-        String[] header;
-        header = new String[]{"id", "timestamp", "AP", "sysUpTime", "sysDescr", "ifIndex", "ifDescr", "ifType", "ifSpeed",
-                "ifInOctets", "ifInUcastPkts", "ifInErrors", "ifInDiscards", "ifOutOctets", "ifOutUcastPkts", "ifOutErrors", "ifOutDiscards",
-                "awcDot11AssociatedStationCount", "awcDot11ReassociatedStationCount", "awcDot11RoamedStationCount", "awcDot11DeauthenicateCount",
-                "awcDot11DisassociateCount", "awcFtClientSTASelf", "awcFtBridgeSelf", "awcFtRepeaterSelf"};
 
-        writer.writeNext(header);
-    }
 
-    public void writeSNMPDataset(String[] data) throws IOException {
-        // write string[] result to csvOutputFile using BufferedWriter
-        String CSV_FILE_NAME = Main.inputFolder + "/data/" + Main.datasetName +
-                "/SNMPDataset_" + Main.datasetName + "_"+ Main.fileStartCondition + ".csv";
-        CSVWriter writer = new CSVWriter(new FileWriter(CSV_FILE_NAME, true));
-        writer.writeNext(data);
-        writer.close();
-    }
     public ArrayList<omni.Record.Record> readSNMPDataset() throws IOException, CsvValidationException {
         ArrayList<omni.Record.Record> dataset = new ArrayList<>();
         //String currentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
