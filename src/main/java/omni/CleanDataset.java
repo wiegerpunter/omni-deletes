@@ -1690,7 +1690,7 @@ public class CleanDataset {
     }
 
     public double getDatasetSize() {
-        return dataset.length;
+        return datasetResidu.length;
     }
 
     public long[][] getDataset() {

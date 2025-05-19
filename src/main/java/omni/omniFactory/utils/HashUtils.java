@@ -12,4 +12,12 @@ public class HashUtils {
             hashes[i] = hash;
         }
     }
+
+    public static int computeHashes(HashFunction hashFunction, long attrValue, int width) {
+        int hash = (hashFunction.hashLong(attrValue).asInt() % width);
+        if (hash < 0) {
+            hash += width;
+        }
+        return hash;
+    }
 }

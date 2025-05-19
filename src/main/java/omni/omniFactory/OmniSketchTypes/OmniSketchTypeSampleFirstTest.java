@@ -2,26 +2,27 @@ package omni.omniFactory.OmniSketchTypes;
 
 import omni.QueryInfo;
 import omni.omniFactory.OmniSketchConfig;
-import omni.omniFactory.attributeSketchTypes.AttrSketchHashSet;
+import omni.omniFactory.attributeSketchTypes.AttrSketchHashSetGuava;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashSet;
+import java.util.BitSet;
 import java.util.Random;
 
-public class OmniSketchTypeSampleFirst extends OmniSketchType {
+public class OmniSketchTypeSampleFirstTest extends OmniSketchType {
     private final int sampleSize;
-    private AttrSketchHashSet[] attributeSketches;
+    private AttrSketchHashSetGuava[] attributeSketches;
 
     private int sampleCount;
     private final Random randomInt;
     double lastTermInBoundAcrossRows;
     double lastTermInBoundPerRow;
 
-    private final double delta;
-    private final double eps;
+    private double delta;
+    private double eps;
+    private int capacity;
 
-    public OmniSketchTypeSampleFirst(OmniSketchConfig sketchConfig) {
+    public OmniSketchTypeSampleFirstTest(OmniSketchConfig sketchConfig) {
         this.sketchConfig = sketchConfig;
         this.depth = sketchConfig.getParams()[0];
         this.width = sketchConfig.getParams()[1];
@@ -31,15 +32,16 @@ public class OmniSketchTypeSampleFirst extends OmniSketchType {
         this.delta = 2/Math.pow(Math.exp(1), depth);
         this.eps = sketchConfig.getEps();
         this.randomInt = new Random(sketchConfig.getSeed());
+        this.capacity = sketchConfig.getParams()[3];
         initialize();
     }
 
     @Override
     public void initialize() {
         // Initialize the sketch with sample-first logic
-        attributeSketches = new AttrSketchHashSet[numStoredAttributes];
+        attributeSketches = new AttrSketchHashSetGuava[numStoredAttributes];
         for (int i = 0; i < numStoredAttributes; i++) {
-            attributeSketches[i] = new AttrSketchHashSet(sketchConfig, depth, width, sampleSize);
+            attributeSketches[i] = new AttrSketchHashSetGuava(sketchConfig, depth, width, sampleSize, capacity);
         }
 
         lastTermInBoundAcrossRows = 3 *Math.log(4 * depth * Math.sqrt(sampleSize)/ delta) / Math.log(Math.exp(1))/(eps * eps);
@@ -50,7 +52,7 @@ public class OmniSketchTypeSampleFirst extends OmniSketchType {
     public void ingest(long[] record, int sign) {
         if (sampleCount < sampleSize) {
             for (int i = 0; i < numStoredAttributes; i++) {
-                attributeSketches[i].ingest(record[i + 1], sampleCount, sign);
+                attributeSketches[i].ingestFirstRecords(record[i + 1], sampleCount, sign);
             }
         } else {
             int replace = randomInt.nextInt(sampleCount);
@@ -87,12 +89,12 @@ public class OmniSketchTypeSampleFirst extends OmniSketchType {
         return memoryFootprint;
     }
 
-    private HashSet<Integer>[] hashSetsInQuery(long[] q, int numPreds) {
-        HashSet<Integer>[] result = new HashSet[depth * numPreds];
+    private BitSet[] hashSetsInQuery(long[] q, int numPreds) {
+        BitSet[] result = new BitSet[depth * numPreds];
         int attrWithoutPred = 0;
         for (int i = 0; i < q.length; i++) {
             if (q[i] != -1) {
-                HashSet<Integer>[] temp = attributeSketches[i].query(q[i]);
+                BitSet[] temp = attributeSketches[i].query(q[i]);
                 if (depth >= 0) {
                     System.arraycopy(temp, 0, result, (i - attrWithoutPred) * depth, depth);
                 }
@@ -104,25 +106,25 @@ public class OmniSketchTypeSampleFirst extends OmniSketchType {
     }
 
 
-    private int queryHashSets(HashSet<Integer>[] samples, QueryInfo queryInfo, int numPreds) {
+    private int queryHashSets(BitSet[] samples, QueryInfo queryInfo, int numPreds) {
         // Intersect all buckets and return the size of the intersection.
 
         int numJoins = samples.length;
         if (numJoins == 1) {
             return samples[0].size() * (int) (Math.max((double) sampleCount / sampleSize, 1));
         }
-        Arrays.sort(samples, Comparator.comparingInt(HashSet::size));
+        Arrays.sort(samples, Comparator.comparingInt(BitSet::size));
 
         int intersectionCount = 0;
         boolean inIntersection = true;
-        for (int i : samples[0]) {
+        for (int i = 0; i < samples[0].size(); i++) {
             for (int j = 1; j < numJoins; j++) {
-                if (!samples[j].contains(i)) {
+                if (!samples[j].get(i)) {
                     inIntersection = false;
                     break;
                 }
+                // TODO: when we're doing per row, we need to add to temp.
             }
-            // TODO: when we're doing per row, we need to add to temp.
             if (inIntersection) {
                 intersectionCount++;
             }

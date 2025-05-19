@@ -12,8 +12,16 @@ public class ExperimentFactory {
         experiments.put("ReservoirSampling", new ReservoirExperiment());
         // Add other experiments here
         experiments.put("OmniSketchSampleFirstQLater", new OmniSampleFirstQLaterExperiment());
+        experiments.put("OmniSketchSampleFirstQLaterPerRow", new OmniSampleFirstQLaterPerRowExperiment());
+
+
         experiments.put("OmniSketchVLDB", new OmniVLDBExperiment());
-        experiments.put("OmniSketchSampleFirstQLaterWithSampleSize", new OmniSFQLSampleSizeExperiment());
+        experiments.put("OmniSketchSFQLSampleSize", new OmniSFQLSampleSizeExperiment());
+        experiments.put("OmniSketchSFQLSampleSizePerRow", new OmniSFQLSampleSizePerRowExperiment());
+
+//        experiments.put("OmniSketchSFQLSampleSizeTestHashSet", new OmniSFQLSampleSizeTestHashSetExperiment());
+        experiments.put("OmniSketchVLDBSampleSize", new OmniVLDBSampleSizeExperiment());
+
     }
 
     public static Experiment getExperiment(String experimentName) {

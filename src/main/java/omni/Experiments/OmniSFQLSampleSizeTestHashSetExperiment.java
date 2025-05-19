@@ -1,0 +1,30 @@
+package omni.Experiments;
+
+import omni.Config;
+import omni.omniFactory.OmniSketchBuilder;
+import omni.parameterSetting.RamToPar;
+
+import java.io.IOException;
+
+public class OmniSFQLSampleSizeTestHashSetExperiment implements Experiment {
+    private RunExperiments runExperiments;
+    private final OmniSketchBuilder omniSketchBuilder;
+    public OmniSFQLSampleSizeTestHashSetExperiment() {
+        omniSketchBuilder = OmniSketchBuilder.sampleFirstQLaterTest();
+    }
+    @Override
+    public void run(long ram, RamToPar rtp, int repetition, Config config) throws IOException {
+        int sampleSize = rtp.getParamsReservoirSampling(ram)[0];
+        rtp.computeOmniSketchParametersFromSampleSize(config.d, config.b, config.parFactor);
+        int[] params = rtp.getParamsOmniSketchRefFromSampleSize(sampleSize);
+        RunExperiments.omniExperiment(ram, repetition, config, params, omniSketchBuilder, runExperiments);
+    }
+
+
+
+    @Override
+    public void setRunExperiments(RunExperiments runExperiments) {
+        this.runExperiments = runExperiments;
+    }
+
+}

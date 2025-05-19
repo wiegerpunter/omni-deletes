@@ -69,25 +69,29 @@ public class RunExperiments {
     private void runAllExperiments(int repetition) throws IOException {
 
         RamToPar rtp = new RamToPar(config.numStoredAttributes, config.ramVals);
-
-        for (long ram : config.ramVals) {
-            for (String experimentName : getEnabledExperiments()) {
-                Experiment experiment = ExperimentFactory.getExperiment(experimentName);
-                if (experiment != null) {
-                    experiment.setRunExperiments(this);
-                    if (experimentName.contains("OmniSketch")) {
-                        for (int d : config.dGridSearch) {
-                            config.d = d;
-                            for (int b : config.bGridSearch) {
-                                config.b = b;
-                                for (double parFactor : config.parFactorGridSearch) {
-                                    config.parFactor = parFactor;
-                                    experiment.run(ram, rtp, repetition, config);
+        for (double noiseUpdateFraction : config.noiseUpdateFractions) {
+            int numNoiseUpdates = (int) (cd.getDatasetSize() * noiseUpdateFraction);
+            System.out.println("Running with " + numNoiseUpdates + " deletes out of " + cd.getDatasetSize());
+            cd.setNoiseUpdates(numNoiseUpdates);
+            for (long ram : config.ramVals) {
+                for (String experimentName : getEnabledExperiments()) {
+                    Experiment experiment = ExperimentFactory.getExperiment(experimentName);
+                    if (experiment != null) {
+                        experiment.setRunExperiments(this);
+                        if (experimentName.contains("OmniSketch")) {
+                            for (int d : config.dGridSearch) {
+                                config.d = d;
+                                for (int b : config.bGridSearch) {
+                                    config.b = b;
+                                    for (double parFactor : config.parFactorGridSearch) {
+                                        config.parFactor = parFactor;
+                                        experiment.run(ram, rtp, repetition, config);
+                                    }
                                 }
                             }
+                        } else {
+                            experiment.run(ram, rtp, repetition, config);
                         }
-                    } else {
-                        experiment.run(ram, rtp, repetition, config);
                     }
                 }
             }
@@ -99,9 +103,14 @@ public class RunExperiments {
         if (config.expHydra) enabledExperiments.add("Hydra");
         if (config.expCM) enabledExperiments.add("CountMin");
         if (config.expResSample) enabledExperiments.add("ReservoirSampling");
-//        enabledExperiments.add("OmniSketchSampleFirstQLater");
-        enabledExperiments.add("OmniSketchVLDB");
-        enabledExperiments.add("OmniSketchSampleFirstQLaterWithSampleSize");
+        enabledExperiments.add("OmniSketchSampleFirstQLater");
+        enabledExperiments.add("OmniSketchSampleFirstQLaterPerRow");
+
+//        enabledExperiments.add("OmniSketchVLDBSampleSize");
+//        enabledExperiments.add("OmniSketchSFQLSampleSize");
+//        enabledExperiments.add("OmniSketchSFQLSampleSizePerRow");
+//        enabledExperiments.add("OmniSketchSFQLSampleSizeTestHashSet");
+
         // Add other experiments here
         return enabledExperiments;
     }

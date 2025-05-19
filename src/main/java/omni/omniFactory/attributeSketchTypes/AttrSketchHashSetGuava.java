@@ -4,11 +4,11 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import omni.omniFactory.OmniSketchConfig;
 import omni.omniFactory.utils.HashUtils;
-
 import java.util.HashSet;
+import java.util.BitSet;
 
-public class AttrSketchHashSet {
-    HashSet<Integer>[][] sketch;
+public class AttrSketchHashSetGuava {
+    BitSet[][] sketch;
     int[][] sketchIndex;
 
     HashFunction[] xx;
@@ -18,18 +18,19 @@ public class AttrSketchHashSet {
     final int width;
     final int sampleSize;
     int[] reusableHashes;
+    private int compacterizeCounter = 0;
 
-    public AttrSketchHashSet(OmniSketchConfig sketchConfig, int depth, int width, int sampleSize) {
+    public AttrSketchHashSetGuava(OmniSketchConfig sketchConfig, int depth, int width, int sampleSize, int capacity) {
         this.sketchConfig = sketchConfig;
         this.depth = depth;
         this.reusableHashes = new int[depth];
         this.width = width;
         this.sampleSize = sampleSize;
         this.sketchIndex = new int[sampleSize][depth];
-        this.sketch = new HashSet[depth][width];
+        this.sketch = new BitSet[depth][width];
         for (int i = 0; i < depth; i++) {
             for (int j = 0; j < width; j++) {
-                sketch[i][j] = new HashSet<>(2* sampleSize/width);
+                sketch[i][j] = new BitSet(0);
             }
         }
 
@@ -39,30 +40,44 @@ public class AttrSketchHashSet {
         }
     }
 
-    private void hash(long attrValue) {
-        HashUtils.computeHashes(xx, attrValue, depth, width, reusableHashes);
+    private void hash(long attrValue) {HashUtils.computeHashes(xx, attrValue, depth, width, reusableHashes);
+    }
+
+    public void ingestFirstRecords(long attrValue, int sampleToReplace, int sign) {
+        hash(attrValue);
+        compacterizeCounter++;
+        for (int j = 0; j < depth; j++) {
+            int w = reusableHashes[j];
+            if (sign == 1) {
+                sketch[j][w].set(sampleToReplace);
+                sketchIndex[sampleToReplace][j] = w;
+            } else {
+                sketch[j][w].clear(sampleToReplace);
+            }
+        }
     }
 
     public void ingest(long attrValue, int sampleToReplace, int sign) {
         hash(attrValue);
+        compacterizeCounter++;
         for (int j = 0; j < depth; j++) {
             int w = reusableHashes[j];
             if (sign == 1) {
                 int oldHash = sketchIndex[sampleToReplace][j];
                 if (oldHash != w) {
-                    sketch[j][oldHash].remove(sampleToReplace);
-                    sketch[j][w].add(sampleToReplace);
+                    sketch[j][oldHash].clear(sampleToReplace);
+                    sketch[j][w].set(sampleToReplace);
                     sketchIndex[sampleToReplace][j] = w;
                 }
             } else {
-                sketch[j][w].remove(sampleToReplace);
+                sketch[j][w].clear(sampleToReplace);
             }
         }
     }
 
-    public HashSet<Integer>[] query(long attrValue) {
+    public BitSet[] query(long attrValue) {
         hash(attrValue);
-        HashSet<Integer>[] result = new HashSet[depth];
+        BitSet[] result = new BitSet[depth];
         for (int j = 0; j < depth; j++) {
             int w = reusableHashes[j];
             result[j] = sketch[j][w];
@@ -75,8 +90,9 @@ public class AttrSketchHashSet {
         double sizeSigSample = Math.log(sampleSize) / Math.log(2);
         for (int j = 0; j < depth; j++) {
             for (int i = 0; i < width; i++) {
+                // number of bits set to true
                 //System.out.println("CM[" + j + "][" + i + "].curSampleSize = " + CM.get(j).get(i).curSampleSize);
-                memoryUsage += (long) (sketch[j][i].size() * sizeSigSample);
+                memoryUsage += (long) (sketch[j][i].size());// 0sizeSigSample);
             }
         }
         memoryUsage += (long) (sketchIndex.length * depth * Math.log(width)/Math.log(2));

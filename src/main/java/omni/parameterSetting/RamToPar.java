@@ -45,7 +45,7 @@ public class RamToPar {
 
     // OmniSketch hashmaps sampleSize to parameters
     HashMap<Integer, double[]> sampleSizeToSketchRefParams = new HashMap<>();
-
+    HashMap<Integer, double[]> sampleSizeToSketchKminParams = new HashMap<>();
 
 
     int numAttrs;
@@ -125,6 +125,8 @@ public class RamToPar {
         for (int sampleSize : sampleSizes) {
             double[] parsOmniRef = compParamsOmniSketchRefFromSampleSize(sampleSize);
             sampleSizeToSketchRefParams.put(sampleSize, parsOmniRef);
+            double[] parsOmniKmin = compParamsOmniSketchKminFromSampleSize(sampleSize);
+            sampleSizeToSketchKminParams.put(sampleSize, parsOmniKmin);
         }
 
     }
@@ -216,6 +218,14 @@ public class RamToPar {
 
     }
 
+    private double[] compParamsOmniSketchKminFromSampleSize(int sampleSize){
+        int depth = this.d;
+        int width = (int) Math.sqrt((double) sampleSize / parFactor);
+        int B = (int) Math.floor((double) sampleSize/width);
+        double memUsage = Formulas.ramOmniKmin(numAttrs, depth, width, B, b);
+        return new double[]{memUsage, depth, width, B, b, parFactor};
+    }
+
     private double[] compParamsKminParFactor(long ram, double parFactor) {
         int depth = this.d;
         double[] info = new double[8];
@@ -300,6 +310,7 @@ public class RamToPar {
         double memUsage = Formulas.ramOmniRef(numAttrs, depth, sampleSize, width);
         return new double[]{memUsage, depth, width, sampleSize, b, parFactor};
     }
+
 
 
     private double[] compParamsRefParFactor(long ram) {
@@ -578,6 +589,10 @@ public class RamToPar {
 
     public int[] getParamsOmniSketchRefFromSampleSize(int sampleSize) {
         return getIntsFromSample(sampleSize, sampleSizeToSketchRefParams);
+    }
+
+    public int[] getParamsOmniSketchKminFromSampleSize(int sampleSize) {
+        return getIntsFromSample(sampleSize, sampleSizeToSketchKminParams);
     }
 
     public int[] getParamsOmniSketchArrayList(long ram) {

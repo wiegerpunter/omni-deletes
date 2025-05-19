@@ -108,6 +108,26 @@ public class OmniSketchBuilder {
                 .setSketchType("SampleFirst");
     }
 
+    public static OmniSketchBuilder sampleFirstQLaterPerRow() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(false)
+                .setUseS0(true)
+                .setUseS0WithSampling(true)
+                .setUseOnlyBestRow(true)
+                .setUseBetaKmin(true)
+                .setSketchType("SampleFirstPerRow");
+    }
+
+    public static OmniSketchBuilder sampleFirstQLaterTest() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(true)
+                .setUseS0(true)
+                .setUseS0WithSampling(true)
+                .setUseOnlyBestRow(true)
+                .setUseBetaKmin(true)
+                .setSketchType("SampleFirstTest");
+    }
+
     public static OmniSketchBuilder QFirstSampleLater() {
         return new OmniSketchBuilder()
                 .setUseAcrossRows(true)

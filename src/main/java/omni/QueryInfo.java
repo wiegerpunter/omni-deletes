@@ -59,6 +59,7 @@ public class QueryInfo {
         this.exactIntersection = qi.exactIntersection;
         this.exactUnion = qi.exactUnion;
         this.witness2LHS = qi.witness2LHS;
+        this.estimate = qi.estimate;
     }
 
     public void setCMRow(int CMRow) {
@@ -88,5 +89,13 @@ public class QueryInfo {
 
     public int getEstimate() {
         return estimate;
+    }
+
+    public int getScap() {
+        return Scap;
+    }
+
+    public boolean isCase1() {
+        return case1;
     }
 }

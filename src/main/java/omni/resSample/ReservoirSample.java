@@ -48,6 +48,46 @@ public class ReservoirSample extends SynopsisRefactor {
     }
 
     @Override
+    public void delete(long[] r) {
+        long[] attr;
+        if (count < size) {
+            attr = new long[r.length - 1];
+            System.arraycopy(r, 1, attr, 0, r.length - 1); // ignore RID
+            for (int i = 0; i < count; i++) {
+                // go over all attributes and see if match
+                if (delete(r, attr, i)) break;
+            }
+        } else {
+            int replace = rn.nextInt(count + 1);
+            if (replace < size) {
+                attr = new long[r.length - 1];
+                System.arraycopy(r, 1, attr, 0, r.length - 1); // ignore RID
+                for (int i = 0; i < reservoir.length; i++) {
+                    // go over all attributes and see if match
+                    if (delete(r, attr, i)) break;
+                }
+            }
+        }
+        count--;
+    }
+
+    private boolean delete(long[] r, long[] attr, int i) {
+        boolean match = true;
+        for (int j = 0; j < reservoir[i].length; j++) {
+            if (reservoir[i][j] != attr[j]) {
+                match = false;
+                break;
+            }
+        }
+        if (match) {
+            reservoir[i] = new long[r.length - 1];
+            return true;
+        }
+        return false;
+    }
+
+
+    @Override
     public int query(long[] query, int numPreds) {
         throw new UnsupportedOperationException();
     }
@@ -88,10 +128,6 @@ public class ReservoirSample extends SynopsisRefactor {
         reservoir = new long[size][reservoir[0].length];
     }
 
-    @Override
-    public void delete(long[] r) {
-        throw new UnsupportedOperationException();
-    }
 
     @Override
     public int getFilledKSamples() {
