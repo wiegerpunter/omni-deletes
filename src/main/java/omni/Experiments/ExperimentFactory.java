@@ -1,7 +1,4 @@
 package omni.Experiments;
-
-import omni.omniPQPrimitive.OmniSketchBuilder;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,7 +7,9 @@ public class ExperimentFactory {
 
     static {
         experiments.put("ReservoirSampling", new ReservoirExperiment());
-        // Add other experiments here
+        experiments.put("aSH", new aSHExperiment());
+
+        // OmniSketch based on RAM values
         experiments.put("OmniSketchSampleFirstQLater", new OmniSampleFirstQLaterExperiment());
         experiments.put("OmniSketchSampleFirstQLaterPerRow", new OmniSampleFirstQLaterPerRowExperiment());
         experiments.put("OmniSketchVLDB", new OmniVLDBExperiment());

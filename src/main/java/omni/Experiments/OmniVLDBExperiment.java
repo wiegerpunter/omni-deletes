@@ -1,14 +1,9 @@
 package omni.Experiments;
 
 import omni.Config;
-//import omni.omniPQPrimitive.OmniSketch;
-//import omni.omniPQPrimitive.OmniSketchBuilder;
 import omni.parameterSetting.RamToPar;
-import omni.omniFactory.OmniSketch;
 import omni.omniFactory.OmniSketchBuilder;
-
 import java.io.IOException;
-import java.util.Arrays;
 
 public class OmniVLDBExperiment implements Experiment {
     private RunExperiments runExperiments;
@@ -16,6 +11,7 @@ public class OmniVLDBExperiment implements Experiment {
     public OmniVLDBExperiment() {
         this.omniSketchBuilder = OmniSketchBuilder.QFirstSampleLater();
     }
+
     @Override
     public void run(long ram, RamToPar rtp, int repetition, Config config) throws IOException {
         rtp.computeOmniSketchParametersFromRAM(config.d, config.b, config.parFactor);

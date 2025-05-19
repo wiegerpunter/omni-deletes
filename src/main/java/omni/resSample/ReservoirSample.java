@@ -1,19 +1,12 @@
 package omni.resSample;
-
-import omni.AnalysisBaselinesRefactor;
 import omni.QueryInfo;
 import omni.SynopsisRefactor;
-
-import java.util.HashMap;
-import java.util.List;
 import java.util.Random;
 
 public class ReservoirSample extends SynopsisRefactor {
     private long[][] reservoir;
     private int count;
     private final int size;
-    HashMap<List<Long>, Integer> sketch;
-
     Random rn;
 
     public ReservoirSample(long ram, int numAttributes, int[] parameters, int repetition) {
@@ -25,7 +18,6 @@ public class ReservoirSample extends SynopsisRefactor {
         this.count = 0;
         this.rn = new Random(repetition);
         //this.memUsageSynopsis = (long) size * numAttributes * 32;
-
     }
 
     @Override

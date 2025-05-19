@@ -12,10 +12,8 @@ public class Config {
     public String readFolder;
     public boolean withDeletes;
     public boolean spreadOutDeletes;
-    public boolean useExactUnionSize;
     public List<Long> ramVals;
     public List<Double> noiseUpdateFractions;
-    public List<Double> bufferValuesOmni;
     public List<Double> ingestBuffers;
     public List<Integer> dGridSearch;
     public List<Integer> bGridSearch;
@@ -29,16 +27,10 @@ public class Config {
     public boolean expOmniSketchSFQLSampleSize;
     public boolean expOmniSketchSFQLSampleSizePerRow;
     public boolean expOmniSketchSFQLSampleSizeTestHashSet;
-    public boolean expOmniSet;
-    public boolean expOmniHouse;
-    public boolean exp2LHS;
     public boolean expASH;
     public boolean expHydra;
     public boolean expResSample;
     public boolean expCM;
-    public boolean expPerRow;
-    public boolean expCase1ReturnSCap;
-    public List<Double> epsValues;
     public String[] sizeFactorOptions;
     public List<Integer> sizeNoise;
     public String experimentName;
@@ -47,10 +39,8 @@ public class Config {
     public int numZipfAttributes;
     public List<Double> zipfAlphas;
     public int numUniformAttributes;
-    public boolean useS0;
     public int numQueries;
     public String fileStartCondition;
-    public int warmupNumber;
     public boolean rangeQueries;
     public int numAttributes;
     public int numStoredAttributes;
@@ -59,6 +49,19 @@ public class Config {
     public int d;
     public int b;
     public double parFactor;
+    public double betaBuffer;
+
+    // Old parameters, might use them in the future
+//    public List<Double> bufferValuesOmni;
+//    public boolean expOmniSet;
+//    public boolean expOmniHouse;
+//    public boolean exp2LHS;
+//    public int warmupNumber;
+//    public boolean useS0;
+//    public boolean expPerRow;
+//    public boolean expCase1ReturnSCap;
+//    public List<Double> epsValues;
+
 
     public String getInputFolder() {
         return readFolder + "/input/";

@@ -52,6 +52,8 @@ public class RunExperiments {
     private void prepareDataset(int conditionIndex, double zipfAlpha, int noiseSize) throws IOException, CsvValidationException {
         double sizeFactor = 0;
         if (config.datasetName.equals("SNMP") || config.datasetName.equals("CAIDA")) {
+            config.fileStartCondition = conditions[conditionIndex];
+
             readRealDataset(conditionIndex);
         } else {
             sizeFactor = Double.parseDouble(config.sizeFactorOptions[conditionIndex]);
@@ -89,6 +91,11 @@ public class RunExperiments {
                                     }
                                 }
                             }
+                        } else if (experimentName.contains("aSH")) {
+                            for (double betaBuffer: config.ingestBuffers) {
+                                config.betaBuffer = betaBuffer;
+                                experiment.run(ram, rtp, repetition, config);
+                            }
                         } else {
                             experiment.run(ram, rtp, repetition, config);
                         }
@@ -103,6 +110,7 @@ public class RunExperiments {
         if (config.expHydra) enabledExperiments.add("Hydra");
         if (config.expCM) enabledExperiments.add("CountMin");
         if (config.expResSample) enabledExperiments.add("ReservoirSampling");
+        if (config.expASH) enabledExperiments.add("aSH");
         if (config.expOmniSketchSampleFirstQLater) enabledExperiments.add("OmniSketchSampleFirstQLater");
         if (config.expOmniSketchSampleFirstQLaterPerRow) enabledExperiments.add("OmniSketchSampleFirstQLaterPerRow");
         if (config.expOmniSketchVLDB) enabledExperiments.add("OmniSketchVLDB");
@@ -111,7 +119,6 @@ public class RunExperiments {
         if (config.expOmniSketchSFQLSampleSizePerRow) enabledExperiments.add("OmniSketchSFQLSampleSizePerRow");
         if (config.expOmniSketchSFQLSampleSizeTestHashSet) enabledExperiments.add("OmniSketchSFQLSampleSizeTestHashSet");
 
-        // Add other experiments here
         return enabledExperiments;
     }
 
@@ -209,7 +216,7 @@ public class RunExperiments {
         return processDataset(syn, cd.datasetAllSpreadOut, cd.isDelete, config.withDeletes, true);
     }
 
-    private void readDatasetSettings() throws CsvValidationException, IOException {
+    private void readDatasetSettings() {
 
         switch (config.datasetName) {
             case "SNMP" -> {
@@ -258,7 +265,7 @@ public class RunExperiments {
             Main.numFiles = Integer.parseInt(conditions[i]);
         }
         throw new RuntimeException("Not reading real dataset yet, refactoring needed");
-        //d = new DatasetRefactor(Main.datasetName, h);
+        //DatasetRefactor d = new DatasetRefactor(Main.datasetName, h);
     }
 
     static void omniExperiment(long ram, int repetition, Config config, int[] params, OmniSketchBuilder omniSketchBuilder, RunExperiments runExperiments) throws IOException {
@@ -272,7 +279,7 @@ public class RunExperiments {
                 .build();
 
         omniSketch.printParams();
-        long synMem = runExperiments.runSynopsisRamBased(omniSketch, repetition);
+        runExperiments.runSynopsisRamBased(omniSketch, repetition);
         omniSketch.reset();
         System.gc();
     }

@@ -1,6 +1,5 @@
 package omni.aSH;
 
-import omni.AnalysisBaselinesRefactor;
 import omni.QueryInfo;
 import omni.SynopsisRefactor;
 
@@ -23,12 +22,12 @@ public class aSH extends SynopsisRefactor{
     boolean useBufferInQuery;
 
     public int numRemovals = 0;
-    public int sameRecCounter = 0;
+    public int sameRecCounter;
 
     public aSH(long ram, int numAttributes, int[] parameters, int repetition, boolean useBufferInQuery, double ingestBuffer) {
         setting = "aSH";
         if (useBufferInQuery) {
-            setting += "useBuffer";
+            setting += "_buffer_" + ingestBuffer;
         }
         this.size=0;
         this.maxSize = parameters[0] + parameters[1];
@@ -37,14 +36,13 @@ public class aSH extends SynopsisRefactor{
 //        this.bufferSize = parameters[1];
         this.parameters = parameters;
         this.ram = ram;
-        this.sketch = new HashMap<List<Long>, Double[]>(parameters[0] + parameters[1]);
+        this.sketch = new HashMap<>(parameters[0] + parameters[1]);
         //this.buffer = new HashMap<long[], Double[]>(parameters[1]);
         this.bufferFactor = ingestBuffer;
         this.seed = repetition;
         this.useBufferInQuery = useBufferInQuery;
         int firstSeed = 12 +  seed;
         int secondSeed = 10 + seed;
-        System.out.println("Seed: " + firstSeed + " secondSeed: " + secondSeed);
         rn = new Random(firstSeed);
         rn1 = new Random(secondSeed);
         this.sameRecCounter = 0;
@@ -224,7 +222,7 @@ public class aSH extends SynopsisRefactor{
 
     @Override
     public void reset() {
-        sketch = new HashMap<List<Long>, Double[]>(parameters[0] + parameters[1]);
+        sketch = new HashMap<>(parameters[0] + parameters[1]);
         size = 0;
         count = 0;
     }
