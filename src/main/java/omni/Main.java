@@ -24,12 +24,9 @@ public class Main {
     public static int numStoredAttributes;
 
     public static int streamSize;
-    public static int maxSize;
     public static int b;
     public static String datasetName;
     public static int dyadicRangeBits = 33;
-    public static boolean useExactUnionSize;
-    public static boolean withDeletes;
     public static int kminDeletes = 0;
     public static boolean rangeQueries = false;
 
@@ -37,7 +34,6 @@ public class Main {
     public static String inputFolder;
 
     public static String readFolder;
-    public static int filesToRead = 1;
     public static String currentDate;
     public static boolean countUniqueSamples = false;
     public static HashMap<Long, Integer> uniqueSamples = new HashMap<>();

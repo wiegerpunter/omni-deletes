@@ -38,7 +38,7 @@ public class CleanDataset {
     public int[] pointQueryUnion;
     public int[] pointQueryUnionDeletes;
     int size;
-    int[] cleanIds;
+    public int[] cleanIds;
     boolean[] neverDeleted;
     public ArrayList<Integer>[] toDelete;
     public long[][] datasetInsertsSpreadOut;
@@ -727,12 +727,14 @@ public class CleanDataset {
         HashMap<Long[], Integer> potQueries = new HashMap<>();
         // initialize with -1s
         int generatedQueries = 0;
-
+        Random rn = new Random(0);
         for (long[] longs : dataset) {
             // Select random record from dataset with probability 0.05%.
             Long[] query = new Long[config.numStoredAttributes];
             // Convert k to binary string.
-
+            if (rn.nextDouble() > 0.0005) {
+                continue;
+            }
             for (int l = 0; l < config.numStoredAttributes; l++) {
                 if (l < numPredicates) {
                     query[l] = longs[l + 1];

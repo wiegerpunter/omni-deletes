@@ -258,7 +258,9 @@ public class runQueries {
             result[12] = String.valueOf(config.numStoredAttributes);
             result[13] = String.valueOf(i);
             result[14] = String.valueOf(d.pointQueriesNumAttrs[i]);
-            result[15] = String.valueOf(d.pointQueriesNumZipfian[i]);
+            if (d.pointQueriesNumZipfian != null) {
+                result[15] = String.valueOf(d.pointQueriesNumZipfian[i]);
+            }
             result[16] = String.valueOf(d.pointQueryBinNumber[i]);
             result[17] = String.valueOf(d.pointQueryAnswers[i]);
             result[18] = String.valueOf(estimatedAnswersPointQuery[i]);

@@ -36,5 +36,6 @@
   "expASH": true,
   "expHydra": false,
   "expResSample": false,
-  "expCM": false
+  "expCM": false,
+  "filesToRead": 5
 }

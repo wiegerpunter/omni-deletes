@@ -35,14 +35,14 @@ public class RunExperiments {
                 for (int i = 0; i < conditions.length; i++) {
                     for (int n : config.sizeNoise) {
                         if (config.useMultNumAttributes) {
-                            for (int j = 2; j < config.numAttributes; j++) {
+                            for (int j = 2; j < cd.cleanIds.length; j++) {
                                 config.numStoredAttributes = j + 1;
                                 System.out.println("Running with " + config.numStoredAttributes + " attributes");
                                 prepareDataset(i, zipfAlpha, n); // prepare dataset
                                 runAllExperiments(repetition); // run all experiments in factory
                             }
                         } else {
-                            config.numStoredAttributes = config.numAttributes;
+                            config.numStoredAttributes = cd.cleanIds.length;
                             System.out.println("Running with " + config.numStoredAttributes + " attributes");
                             prepareDataset(i, zipfAlpha, n); // prepare dataset
                             runAllExperiments(repetition); // run all experiments in factory
@@ -241,7 +241,7 @@ public class RunExperiments {
                 config.numAttributes = 24;
             }
             case "CAIDA" -> {
-                this.conditions = new String[]{Integer.toString(Main.filesToRead)};//, "4", "5", "6", "7", "8", "9", "10", "11", "12"};
+                this.conditions = new String[]{Integer.toString(config.filesToRead)};//, "4", "5", "6", "7", "8", "9", "10", "11", "12"};
                 config.numAttributes = 11;//10; //actually 7; can be 10;
             }
             case "Test" -> {
