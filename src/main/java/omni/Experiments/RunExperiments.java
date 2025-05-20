@@ -262,9 +262,9 @@ public class RunExperiments {
             config.fileStartCondition = conditions[i];
         } else {
             // Convert conditions[i] to int
-            Main.numFiles = Integer.parseInt(conditions[i]);
+            config.numFiles = Integer.parseInt(conditions[i]);
         }
-        d = new DatasetRefactor(config.datasetName);
+        d = new DatasetRefactor(config);
     }
 
     static void omniExperiment(long ram, int repetition, Config config, int[] params, OmniSketchBuilder omniSketchBuilder, RunExperiments runExperiments) throws IOException {

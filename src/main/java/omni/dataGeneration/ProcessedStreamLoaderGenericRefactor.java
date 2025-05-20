@@ -17,7 +17,7 @@ import java.util.zip.GZIPOutputStream;
 
 public class ProcessedStreamLoaderGenericRefactor {
 	static boolean compression=true;
-
+	public Config config;
 	public int skip=0;
 	public int linesSeen = 0;
 	public void setFilename(String filename) {
@@ -55,25 +55,24 @@ public class ProcessedStreamLoaderGenericRefactor {
 		}
 	}
 
-	public ProcessedStreamLoaderGenericRefactor(String filename, boolean compression) {
-		//int bufferSize = 32768*256*16;//1024*1024;
-//		System.err.println("Buffer size is " + bufferSize);
+	public ProcessedStreamLoaderGenericRefactor(String filename, boolean compression, Config config) {
 		this.filename = filename;
 		this.compression = compression;
+		this.config = config;
 		try {
-			if (compression) {
-				BufferedInputStream in = new BufferedInputStream(new GZIPInputStream(new FileInputStream(filename)));
+            BufferedInputStream in;
+            if (compression) {
+                in = new BufferedInputStream(new GZIPInputStream(new FileInputStream(filename)));
 				//dis = new DataInputStream(in);
-				bis = new BufferedReader(new InputStreamReader(in));
 
-				//DataInputStream dis = new DataInputStream(new BufferedInputStream(new GZIPInputStream(new FileInputStream(filename))));
+                //DataInputStream dis = new DataInputStream(new BufferedInputStream(new GZIPInputStream(new FileInputStream(filename))));
 
 			} else {
-				BufferedInputStream in = new BufferedInputStream(new FileInputStream(filename));
+                in = new BufferedInputStream(new FileInputStream(filename));
 				//dis = new DataInputStream((new BufferedInputStream(new FileInputStream(filename))));
-				bis = new BufferedReader(new InputStreamReader(in));
-			}
-			//start = dis.readInt();
+            }
+            bis = new BufferedReader(new InputStreamReader(in));
+            //start = dis.readInt();
 			//stop = dis.readInt();
 		} catch (Exception e){
 			e.printStackTrace();
@@ -130,15 +129,11 @@ public class ProcessedStreamLoaderGenericRefactor {
 	public StringBuilder readRecord(StringBuilder line, int id, ArrayList<Record> d) {
 		//Record r = null;
 		Record r = null;
-		if (Main.datasetName.equals("SNMP"))
-			r = new RecordSNMP(r);
-		else if (Main.datasetName.equals("CAIDA"))
-			r = new RecordCAIDA(r, dot);
-		else if (Main.datasetName.equals("wc98"))
-			r = new RecordWC(r);
-		else {
-			throw new RuntimeException("Unknown dataset name");
-		}
+        r = switch (config.datasetName) {
+            case "SNMP" -> new RecordSNMP(r, config);
+            case "CAIDA" -> new RecordCAIDA(r, dot, config);
+            default -> throw new RuntimeException("Unknown dataset name");
+        };
 		//Record r = new Record(); // record to be potentially added to d.
 		r.setId(id);
 
@@ -150,7 +145,7 @@ public class ProcessedStreamLoaderGenericRefactor {
 			if ('#' == line.charAt(0)) {
 				throw new Exception("Somehow got a comment line");
 			}
-			if (Main.datasetName.equals("SNMP") && !('s' == line.charAt(0))) {
+			if (config.datasetName.equals("SNMP") && !('s' == line.charAt(0))) {
 				throw new Exception("Somehow got a non-start line");
 			}
 
@@ -161,7 +156,7 @@ public class ProcessedStreamLoaderGenericRefactor {
 			b = bis.readLine(); // Read second line.
 			linesSeen++;
 
-			if (Main.datasetName.equals("SNMP")) {
+			if (config.datasetName.equals("SNMP")) {
 				// // Dont read attributes 3, 16, 17, 18, 19, 20.
 				line = replace(b);//b.replaceAll("\"", "");
 				a = split(line, ",");
@@ -212,99 +207,94 @@ public class ProcessedStreamLoaderGenericRefactor {
 			throw new RuntimeException(ex);
 		}
 	}
-
-	
-	public logEventInt readNextEvent() {
-		try {
-			int ipaddress = dis.readInt();
-			int seconds = dis.readInt();
-			int file = dis.readInt();
-			int streamid = dis.readInt();
-			return new logEventInt(ipaddress, seconds, file, streamid);
-		} catch (Exception e) {
-		}
-		return null;
-	}
-
-	public logEventInt readNextEvent(int numberOfStreams) {
-		try {
-			int ipaddress = dis.readInt();
-			int seconds = dis.readInt();
-			int file = dis.readInt();
-			int streamid = dis.readInt();
-			if (numberOfStreams>0)
-				streamid = ipaddress%numberOfStreams;
-			return new logEventInt(ipaddress, seconds, file, streamid);
-		} catch (Exception e) {
-		}
-		return null;
-	}
-
-	public logEventInt readDump(int timeUntil, int numberOfStreams) {
-		byte[] bb = new byte[1024*1024];
-		try {
-		while (true) {
-			dis.readFully(bb);
-			logEventInt levent = this.readNextEvent(numberOfStreams);
-			if (levent.seconds>timeUntil) return levent;
-		}
-		}catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-
-	public void readFile () {
-		logEventInt l = readNextEvent();
-		long checksum=0;
-		HashSet<Integer> streams=new HashSet<>();
-		while (l!=null) {
-			checksum+=(l.ipaddress+l.seconds+l.file+l.streamid)%10;
-			streams.add(l.streamid);
-			l = readNextEvent();
-		}
-		System.err.println("Read checksum is " + checksum % 100000);
-		System.err.println("Number of streams is " + streams.size());
-	}
-	
-	public static void mainReadOnly(String[]args) {
-		ProcessedStreamLoaderGenericRefactor psl  = new ProcessedStreamLoaderGenericRefactor(args[0], compression);
-		psl.readFile();
-	}
-	
-	public static void main(String[] args) throws Exception {
-		if (args[args.length-1].equals("compress"))
-			compression=true;
-		System.err.println("Compress is " + compression);
-		long startTime= System.currentTimeMillis();
-		convert(args[0]);
-		long stopTime= System.currentTimeMillis();
-		System.err.println("Write took "+ (stopTime-startTime)/1000);
-		
-		String outfile=null;
-		if (compression) {
-			if (args[0].contains("wc-part")) {
-				outfile = "wc-part.binary.gz";
-			} else if (args[0].contains("wc-")) {
-				outfile = "wc-all.binary.gz";
-			} else {
-				outfile = "snmp.binary.gz";
-			}
-		} else {
-			if (args[0].contains("wc-part")) {
-				outfile = "wc-part.binary";
-			} else if (args[0].contains("wc-")) {
-				outfile = "wc-all.binary";
-			} else {
-				outfile = "snmp.binary";
-			}
-		}
-		ProcessedStreamLoaderGenericRefactor psl  = new ProcessedStreamLoaderGenericRefactor(outfile, compression);
-		psl.readFile();
-		long newstopTime= System.currentTimeMillis();
-		System.err.println("Read took "+ (newstopTime-stopTime)/1000);
-
-	}
+//
+//
+//	public logEventInt readNextEvent() {
+//		try {
+//			int ipaddress = dis.readInt();
+//			int seconds = dis.readInt();
+//			int file = dis.readInt();
+//			int streamid = dis.readInt();
+//			return new logEventInt(ipaddress, seconds, file, streamid);
+//		} catch (Exception e) {
+//		}
+//		return null;
+////	}
+//
+//	public logEventInt readNextEvent(int numberOfStreams) {
+//		try {
+//			int ipaddress = dis.readInt();
+//			int seconds = dis.readInt();
+//			int file = dis.readInt();
+//			int streamid = dis.readInt();
+//			if (numberOfStreams>0)
+//				streamid = ipaddress%numberOfStreams;
+//			return new logEventInt(ipaddress, seconds, file, streamid);
+//		} catch (Exception e) {
+//		}
+//		return null;
+//	}
+//
+//	public logEventInt readDump(int timeUntil, int numberOfStreams) {
+//		byte[] bb = new byte[1024*1024];
+//		try {
+//		while (true) {
+//			dis.readFully(bb);
+//			logEventInt levent = this.readNextEvent(numberOfStreams);
+//			if (levent.seconds>timeUntil) return levent;
+//		}
+//		}catch (Exception e) {
+//			e.printStackTrace();
+//		}
+//		return null;
+//	}
+////
+//	public void readFile () {
+//		logEventInt l = readNextEvent();
+//		long checksum=0;
+//		HashSet<Integer> streams=new HashSet<>();
+//		while (l!=null) {
+//			checksum+=(l.ipaddress+l.seconds+l.file+l.streamid)%10;
+//			streams.add(l.streamid);
+//			l = readNextEvent();
+//		}
+//		System.err.println("Read checksum is " + checksum % 100000);
+//		System.err.println("Number of streams is " + streams.size());
+//	}
+//
+//	public static void main(String[] args) throws Exception {
+//		if (args[args.length-1].equals("compress"))
+//			compression=true;
+//		System.err.println("Compress is " + compression);
+//		long startTime= System.currentTimeMillis();
+//		convert(args[0]);
+//		long stopTime= System.currentTimeMillis();
+//		System.err.println("Write took "+ (stopTime-startTime)/1000);
+//
+//		String outfile=null;
+//		if (compression) {
+//			if (args[0].contains("wc-part")) {
+//				outfile = "wc-part.binary.gz";
+//			} else if (args[0].contains("wc-")) {
+//				outfile = "wc-all.binary.gz";
+//			} else {
+//				outfile = "snmp.binary.gz";
+//			}
+//		} else {
+//			if (args[0].contains("wc-part")) {
+//				outfile = "wc-part.binary";
+//			} else if (args[0].contains("wc-")) {
+//				outfile = "wc-all.binary";
+//			} else {
+//				outfile = "snmp.binary";
+//			}
+//		}
+//		ProcessedStreamLoaderGenericRefactor psl  = new ProcessedStreamLoaderGenericRefactor(outfile, compression);
+//		psl.readFile();
+//		long newstopTime= System.currentTimeMillis();
+//		System.err.println("Read took "+ (newstopTime-stopTime)/1000);
+//
+//	}
 
 	public void close() {
 		try {

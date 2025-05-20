@@ -15,10 +15,8 @@ public abstract class Record implements Externalizable {
     long timestamp = 0;
     public boolean assembled = false;
 
-
     public Record() {
     }
-
 
     public Record(int id, long[] record) {
         this.record = record;

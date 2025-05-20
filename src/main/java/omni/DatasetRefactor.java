@@ -15,29 +15,32 @@ public class DatasetRefactor {
     int size;
     public ArrayList<omni.Record.Record> dataset = new ArrayList<>();
     private int totalRead;
+    public Config config;
 
-    public DatasetRefactor(String setting) throws IOException, CsvValidationException {
-        switch (setting) {
+    public DatasetRefactor(Config config) throws IOException, CsvValidationException {
+        this.config = config;
+        switch (config.datasetName) {
             case "SNMP" -> {
                 // Check if file exists
-                String CSV_FILE_NAME = Main.inputFolder + "/data/" + Main.datasetName + "/SNMPDataset_" + Main.datasetName + "_"+ Main.fileStartCondition + ".csv";
+                String CSV_FILE_NAME = config.getInputFolder() + "/data/" + config.datasetName +
+                        "/SNMPDataset_" + config.datasetName + "_"+ config.fileStartCondition + ".csv";
                 File f = new File(CSV_FILE_NAME);
+                boolean writeSNMP = true;
                 if (!f.exists()) {
                     SNMPDataset();
-                    Main.writeSNMP = false;
+                    writeSNMP = false;
                 } else {
                     System.out.println("Loading dataset from file, name: " + CSV_FILE_NAME);
-                    dataset = Main.h.readSNMPDataset();
-                    System.out.println("Loaded size: " + dataset.size());
+                    throw new RuntimeException("implement read in datasetRefactor");
+                    //dataset = Main.h.readSNMPDataset();
+                    //System.out.println("Loaded size: " + dataset.size());
                 }
             }
             case "CAIDA" -> {
                 CAIDADataset();
             }
             default -> {
-//                Main.logger.severe("Invalid setting");
-                System.out.println("Invalid setting");
-                System.exit(0);
+                throw new RuntimeException("Dataset " + config.datasetName + " not found");
             }
         }
         this.size = dataset.size();
@@ -52,7 +55,7 @@ public class DatasetRefactor {
 
     public void CAIDADataset() throws RuntimeException {
         String dir;
-        dir = Main.inputFolder + "/data/" + Main.datasetName;
+        dir = config.getInputFolder() + "/data/" + config.datasetName;
         loadCAIDAFile(dir);
     }
 
@@ -67,7 +70,7 @@ public class DatasetRefactor {
             for (File child : filesList) {
                 if (child.getName().endsWith(".pcap.csv")) {
                     System.out.println(child.getName());
-                    ProcessedStreamLoaderGenericRefactor psl = new ProcessedStreamLoaderGenericRefactor(child.getPath(), false);
+                    ProcessedStreamLoaderGenericRefactor psl = new ProcessedStreamLoaderGenericRefactor(child.getPath(), false, config);
                     psl.reset();
                     int cnt = 0;
 
@@ -87,10 +90,10 @@ public class DatasetRefactor {
                     this.totalRead += psl.linesSeen;
                     psl.close();
                     filesSeen++;
-                    if (filesSeen >= Main.numFiles) {
+                    if (filesSeen >= config.numFiles) {
                         break;
                     }
-                    if (!Main.readAllFiles) {
+                    if (!config.readAllFiles) {
                         break;
                     }
                 }
@@ -99,9 +102,9 @@ public class DatasetRefactor {
     }
 
     public void SNMPDataset() throws RuntimeException, IOException {
-        if (Main.readAllFiles) {
+        if (config.readAllFiles) {
             //String directory = "C:/Users/s162378/OneDrive - TU Eindhoven/Documents/GitHub/DSCM/fall03.tar/fall03/fall03/";
-            String directory = Main.inputFolder +"/data/" + Main.datasetName;
+            String directory = config.getInputFolder() +"/data/" + config.datasetName;
             File dir = new File(directory);
 
             String[] directoryListing = dir.list((current, name) -> new File(current, name).isDirectory());
@@ -109,8 +112,8 @@ public class DatasetRefactor {
             if (directoryListing != null) {
                 for (String child : directoryListing) {
                     String path = directory + child;
-                    if (Main.fileStartCondition.contains("_OR_")) {
-                        String[] conditions = Main.fileStartCondition.split("_OR_");
+                    if (config.fileStartCondition.contains("_OR_")) {
+                        String[] conditions = config.fileStartCondition.split("_OR_");
                         boolean skip = true;
                         for (String condition : conditions) {
                             if (child.startsWith(condition)) {
@@ -121,7 +124,7 @@ public class DatasetRefactor {
                         if (skip) {
                             continue;
                         }
-                    } else if (!child.startsWith(Main.fileStartCondition)) {
+                    } else if (!child.startsWith(config.fileStartCondition)) {
                         continue;
                     }
                     loadFileSNMP(path);
@@ -132,20 +135,20 @@ public class DatasetRefactor {
 //            Main.logger.info("All files read.");
             System.out.println("All files read.");
         } else {
-            String smallPath = Main.readFolder + "/SNMP/031101/";
+            String smallPath = config.readFolder + "/SNMP/031101/";
             loadFileSNMP(smallPath);
         }
 
         //Check for whole dataset how many records have value -999 per attribute:
-        int[] count = new int[Main.numAttributes];
+        int[] count = new int[config.numAttributes];
         for (omni.Record.Record r : dataset) {
-            for (int i = 0; i < Main.numAttributes; i++) {
+            for (int i = 0; i < config.numAttributes; i++) {
                 if (r.getRecord()[i] == -999) {
                     count[i]++;
                 }
             }
         }
-        for (int i = 0; i < Main.numAttributes; i++) {
+        for (int i = 0; i < config.numAttributes; i++) {
             System.out.println("Attribute " + i + " has " + count[i] + " records with value -999");
         }
 
@@ -170,9 +173,11 @@ public class DatasetRefactor {
             }
         }
         dataset = validRecords;
-        initSNMPDataset(this);
+        String CSV_FILE_NAME = config.getInputFolder() + "/data/" + config.datasetName +
+                "/SNMPDataset_" + config.datasetName + "_"+ config.fileStartCondition + ".csv";
+        initSNMPDataset(this, CSV_FILE_NAME);
         for (omni.Record.Record r : dataset) {
-            writeSNMPDataset(((RecordSNMP) r).writeRecord());
+            writeSNMPDataset(((RecordSNMP) r).writeRecord(), CSV_FILE_NAME);
         }
         System.out.println("Skipped " + totalSkip + " records");
         System.out.println("Read " + totalRead + " records");
@@ -187,7 +192,7 @@ public class DatasetRefactor {
             for (File child : filesList) {
                 if (child.getName().endsWith(".snmp.gz")) {
                     //System.out.println("Processing " + child.getPath());
-                    ProcessedStreamLoaderGenericRefactor psl = new ProcessedStreamLoaderGenericRefactor(child.getPath(), true);
+                    ProcessedStreamLoaderGenericRefactor psl = new ProcessedStreamLoaderGenericRefactor(child.getPath(), true, config);
                     psl.reset();
                     //psl.readHeader();
 
@@ -213,10 +218,8 @@ public class DatasetRefactor {
         }
     }
 
-    public static void initSNMPDataset(DatasetRefactor d) throws IOException {
+    public static void initSNMPDataset(DatasetRefactor d, String CSV_FILE_NAME) throws IOException {
         //initialize csv file
-        String CSV_FILE_NAME = Main.inputFolder + "/data/" + Main.datasetName +
-                "/SNMPDataset_" + Main.datasetName + "_"+ Main.fileStartCondition + ".csv";
         CSVWriter writer = new CSVWriter(new FileWriter(CSV_FILE_NAME, true));
         String[] header;
         header = new String[]{"id", "timestamp", "AP", "sysUpTime", "sysDescr", "ifIndex", "ifDescr", "ifType", "ifSpeed",
@@ -227,11 +230,8 @@ public class DatasetRefactor {
         writer.writeNext(header);
     }
 
-
-    public static void writeSNMPDataset(String[] data) throws IOException {
+    public static void writeSNMPDataset(String[] data, String CSV_FILE_NAME) throws IOException {
         // write string[] result to csvOutputFile using BufferedWriter
-        String CSV_FILE_NAME = Main.inputFolder + "/data/" + Main.datasetName +
-                "/SNMPDataset_" + Main.datasetName + "_"+ Main.fileStartCondition + ".csv";
         CSVWriter writer = new CSVWriter(new FileWriter(CSV_FILE_NAME, true));
         writer.writeNext(data);
         writer.close();

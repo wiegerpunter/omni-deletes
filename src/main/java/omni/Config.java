@@ -50,6 +50,8 @@ public class Config {
     public int b;
     public double parFactor;
     public double betaBuffer;
+    public boolean readAllFiles;
+    public int numFiles;
 
     // Old parameters, might use them in the future
 //    public List<Double> bufferValuesOmni;

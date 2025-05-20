@@ -142,7 +142,6 @@ public class CleanDataset {
         clean();
         // warmupDataset is a subset of dataset, first Main.warmupNumber records.
         int numToKeep = splitDeletes(percToDelete);
-        getUniqueRecords();
 
         if (config.rangeQueries) {
             getRangeQueries();
