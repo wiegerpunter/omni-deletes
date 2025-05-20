@@ -1,5 +1,6 @@
 package omni.synopses.baselines.hydraRefactor;
 
+import omni.Config;
 import omni.Main;
 
 import java.util.ArrayList;
@@ -15,10 +16,10 @@ public class SubPopMap {
     private AttributeStats[] dstats;
 
 
-    public SubPopMap(int numAttributes) {
-        if (Main.datasetName.equals("SNMP")) {
+    public SubPopMap(int numAttributes, Config config) {
+        if (config.datasetName.equals("SNMP")) {
             this.attrsIdx = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ,12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23));
-        } else if (Main.datasetName.equals("CAIDA")) {
+        } else if (config.datasetName.equals("CAIDA")) {
             this.attrsIdx = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9));
         } else {
             this.attrsIdx = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
@@ -61,103 +62,6 @@ public class SubPopMap {
             newCombination.remove(newCombination.size() - 1);
         }
     }
-
-
-//    public void initSubPop() {
-//
-////        for (int i = 0; i < Main.numAttributes; i++) {
-////            boolean[] attrs = new boolean[Main.numAttributes];
-////            for (int k = 0; k < Main.numAttributes; k++) {
-////                attrs[k] = false;
-////            }
-////            attrs[i] = true;
-////            subPopOneAttr.put(cnt, true);
-////            subPopulations.put(cnt, attrs);
-////            cnt++;
-////            if (i >= Main.numAttributes - 1) {
-////                continue;
-////            }
-////            recurSubPopInit(i, attrs);
-////        }
-////        if (cnt != subPopulations.size()) {
-////            throw new RuntimeException("cnt != CMSketches.length");
-////        }
-////        for (int subPop : subPopulations.keySet()) {
-////            for (int attr_idx = 0; attr_idx < subPopulations.get(subPop).length; attr_idx++) {
-////                boolean[] attrs = subPopulations.get(subPop);
-////                for (int i = 0; i < Main.numAttributes; i++) {
-////                    if (attrs[i] && !Main.createNewWorkload && !attrsInWorkload[i] ) {
-////                        validSubPopMap.put(subPop, false);
-////                        break;
-////                    }
-////                }
-////                validSubPopMap.put(subPop, true);
-////            }
-////        }
-//
-//        for (int i = 0; i < Main.numAttributes; i++) {
-//            boolean[] attrs = new boolean[Main.numAttributes];
-//            for (int k = 0; k < Main.numAttributes; k++) {
-//                attrs[k] = false;
-//            }
-//            attrs[i] = true;
-//            subPopOneAttr.put(cnt, true);
-//            subPopulations.put(cnt, attrs);
-//            cnt++;
-//            if (i >= Main.numAttributes - 1) {
-//                continue;
-//            }
-//            recurSubPopInit(i, attrs);
-//        }
-//        if (cnt != subPopulations.size()) {
-//            throw new RuntimeException("cnt != CMSketches.length");
-//        }
-//        for (int subPop : subPopulations.keySet()) {
-//            boolean valSubPop = true;
-//            for (int attr_idx = 0; attr_idx < subPopulations.get(subPop).length; attr_idx++) {
-//                boolean[] attrs = subPopulations.get(subPop);
-//                for (int i = 0; i < Main.numAttributes; i++) {
-//                    if (attrs[i] && !Main.createNewWorkload && !attrsInWorkload[i] ) {
-//                        valSubPop = false;
-//                        break;
-//                    }
-//                }
-//                validSubPopMap.put(subPop, valSubPop);
-//            }
-//        }
-//        //Make reverse map
-//        for (int subPop : subPopulations.keySet()) {
-//            subPopulationsReverse.put(subPopulations.get(subPop), subPop);
-//        }
-//
-//    }
-//
-//    public void recurSubPopInit(int i, boolean[] attrs) {
-//        for (int j = i + 1; j < Main.numAttributes; j++) {
-//            boolean[] attrsCopy;
-//            attrsCopy = attrs.clone();
-//            attrsCopy[j] = true;
-//            subPopulations.put(cnt, attrsCopy);
-//            cnt++;
-//            if (i == Main.numAttributes - 1) {
-//                return;
-//            }
-//            recurSubPopInit(j, attrsCopy);
-//        }
-//
-//    }
-//
-//    public ArrayList<boolean[]> getValidSubPopulations() {
-//        // get all subpopulations that are valid
-//        ArrayList<boolean[]> validSubPopulations = new ArrayList<>();
-//        for (int subPop : subPopulations.keySet()) {
-//            if (validSubPopMap.get(subPop)) {
-//                validSubPopulations.add(subPopulations.get(subPop));
-//            }
-//        }
-//        return validSubPopulations;
-//    }
-
 
     public int getSubPop(ArrayList<Integer> attrsList) {
 

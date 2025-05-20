@@ -24,8 +24,6 @@ public class Main {
     public static int numStoredAttributes;
 
     public static int streamSize;
-    public static int b;
-    public static String datasetName;
     public static int dyadicRangeBits = 33;
     public static int kminDeletes = 0;
     public static boolean rangeQueries = false;

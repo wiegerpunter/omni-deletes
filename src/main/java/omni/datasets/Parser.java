@@ -19,10 +19,10 @@ public class Parser {
 
     static int[] categoricalAttributesCAIDA = new int[]{};
 
-    public static int[] getCatAttr() {
-        if (Main.datasetName.equals("SNMP"))
+    public static int[] getCatAttr(Config config) {
+        if (config.datasetName.equals("SNMP"))
             return categoricalAttributesSNMP;
-        else if (Main.datasetName.equals("CAIDA"))
+        else if (config.datasetName.equals("CAIDA"))
             return categoricalAttributesCAIDA;
         else
             throw new RuntimeException("Unknown dataset name");
