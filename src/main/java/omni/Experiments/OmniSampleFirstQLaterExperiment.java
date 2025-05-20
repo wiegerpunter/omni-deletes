@@ -3,12 +3,10 @@ package omni.Experiments;
 import omni.Config;
 //import omni.omniPQPrimitive.OmniSketch;
 //import omni.omniPQPrimitive.OmniSketchBuilder;
-import omni.omniFactory.OmniSketch;
-import omni.omniFactory.OmniSketchBuilder;
-import omni.parameterSetting.RamToPar;
+import omni.synopses.omniFactory.OmniSketchBuilder;
+import omni.Experiments.parameterSetting.RamToPar;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 public class OmniSampleFirstQLaterExperiment implements Experiment {
     private RunExperiments runExperiments;

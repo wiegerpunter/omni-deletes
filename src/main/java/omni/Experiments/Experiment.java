@@ -1,7 +1,7 @@
 package omni.Experiments;
 
 import omni.Config;
-import omni.parameterSetting.RamToPar;
+import omni.Experiments.parameterSetting.RamToPar;
 
 import java.io.IOException;
 

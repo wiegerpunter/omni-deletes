@@ -2,9 +2,12 @@ package omni.Experiments;
 
 import com.opencsv.exceptions.CsvValidationException;
 import omni.*;
-import omni.omniFactory.OmniSketch;
-import omni.omniFactory.OmniSketchBuilder;
-import omni.parameterSetting.RamToPar;
+import omni.datasets.CleanDataset;
+import omni.datasets.DatasetRefactor;
+import omni.synopses.SynopsisRefactor;
+import omni.synopses.omniFactory.OmniSketch;
+import omni.synopses.omniFactory.OmniSketchBuilder;
+import omni.Experiments.parameterSetting.RamToPar;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -168,7 +171,7 @@ public class RunExperiments {
         System.out.println("\n");
         int collisions = 0;
 
-        AnalysisBaselinesRefactor ab = new AnalysisBaselinesRefactor(syn, cd, time_passed, collisions, repetition, config);
+        runQueries ab = new runQueries(syn, cd, time_passed, collisions, repetition, config);
         ab.run();
         long synMem = syn.getMemoryUsage();
         syn.reset();

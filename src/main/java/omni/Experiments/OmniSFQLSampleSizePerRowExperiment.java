@@ -1,8 +1,8 @@
 package omni.Experiments;
 
 import omni.Config;
-import omni.omniFactory.OmniSketchBuilder;
-import omni.parameterSetting.RamToPar;
+import omni.synopses.omniFactory.OmniSketchBuilder;
+import omni.Experiments.parameterSetting.RamToPar;
 
 import java.io.IOException;
 

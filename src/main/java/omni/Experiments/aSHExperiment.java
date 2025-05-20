@@ -1,8 +1,8 @@
 package omni.Experiments;
 
 import omni.Config;
-import omni.aSH.aSH;
-import omni.parameterSetting.RamToPar;
+import omni.synopses.baselines.aSH.aSH;
+import omni.Experiments.parameterSetting.RamToPar;
 
 import java.io.IOException;
 import java.util.Arrays;

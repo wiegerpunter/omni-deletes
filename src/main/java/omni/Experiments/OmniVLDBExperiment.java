@@ -1,8 +1,8 @@
 package omni.Experiments;
 
 import omni.Config;
-import omni.parameterSetting.RamToPar;
-import omni.omniFactory.OmniSketchBuilder;
+import omni.Experiments.parameterSetting.RamToPar;
+import omni.synopses.omniFactory.OmniSketchBuilder;
 import java.io.IOException;
 
 public class OmniVLDBExperiment implements Experiment {

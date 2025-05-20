@@ -1,10 +1,8 @@
 package omni.Experiments;
 
 import omni.Config;
-import omni.Main;
-import omni.Synopsis;
-import omni.parameterSetting.RamToPar;
-import omni.resSample.ReservoirSample;
+import omni.Experiments.parameterSetting.RamToPar;
+import omni.synopses.baselines.resSample.ReservoirSample;
 
 import java.io.IOException;
 import java.util.Arrays;
