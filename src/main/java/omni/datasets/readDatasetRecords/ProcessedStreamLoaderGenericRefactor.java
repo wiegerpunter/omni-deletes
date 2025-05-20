@@ -21,15 +21,8 @@ public class ProcessedStreamLoaderGenericRefactor {
 	public void setFilename(String filename) {
 		this.filename = filename;
 	}
-	DataInputStream dis;
 	BufferedReader bis;
-	int start,stop;
-	public int getStart(){
-		return start;
-	}
-	public int getStop() {
-		return stop;
-	}
+
 	int recSkippedBecauseEarlyStart=0;
 	String filename = null;
 	public void reset() {
@@ -89,13 +82,8 @@ public class ProcessedStreamLoaderGenericRefactor {
 		return sb;
 	}
 
-	public StringBuilder[] split(StringBuilder s, String regex) {
-		String[] a = s.toString().split(regex);
-		StringBuilder[] sb = new StringBuilder[a.length];
-		for (int i=0;i<a.length;i++) {
-			sb[i] = new StringBuilder(a[i]);
-		}
-		return sb;
+	public String[] split(StringBuilder s, String regex) {
+        return s.toString().split(regex);
 	}
 	public StringBuilder readFirst() {
 		try {
@@ -147,7 +135,7 @@ public class ProcessedStreamLoaderGenericRefactor {
 				throw new Exception("Somehow got a non-start line");
 			}
 
-			StringBuilder[] a = split(line, ",");//.split(","); //StringBuilder cant handle split and replaceAll. String is inefficient. Solution:
+			String[] a = split(line, ",");//.split(","); //StringBuilder cant handle split and replaceAll. String is inefficient. Solution:
 
 			r.add(a); // Add the start line to the record.
 

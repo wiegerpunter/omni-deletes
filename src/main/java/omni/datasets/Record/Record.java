@@ -83,11 +83,7 @@ public abstract class Record implements Externalizable {
     }
 
     public abstract void assemble(int id);
-
     public void add(String[] a) {
-        System.out.println("Record.add() called");
-    }
-    public void add(StringBuilder[] a) {
         System.out.println("Record.add() called");
     }
 

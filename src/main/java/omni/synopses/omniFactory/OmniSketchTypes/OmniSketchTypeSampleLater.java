@@ -27,6 +27,8 @@ public class OmniSketchTypeSampleLater extends OmniSketchType {
     double lastTermInBoundAcrossRows;
     double lastTermInBoundPerRow;
 
+    private int[] hx;
+
     public OmniSketchTypeSampleLater(OmniSketchConfig sketchConfig, String KminType) {
         this.sketchConfig = sketchConfig;
         this.KminType = KminType;
@@ -37,6 +39,7 @@ public class OmniSketchTypeSampleLater extends OmniSketchType {
         this.numStoredAttributes = sketchConfig.getNumStoredAttributes();
         delta = 2/(Math.pow(Math.exp(1), depth));
         eps = sketchConfig.getEps();
+        this.hx = new int[depth];
         initialize();
     }
 
@@ -61,7 +64,6 @@ public class OmniSketchTypeSampleLater extends OmniSketchType {
     @Override
     public void ingest(long[] record, int sign) {
         long id = record[0];
-        int[] hx = new int[depth];
         hx[0] = signatureHash(id, 0);
         if (sketchConfig.isUseAcrossRows()) {
             for (int i = 1; i < depth; i++) {

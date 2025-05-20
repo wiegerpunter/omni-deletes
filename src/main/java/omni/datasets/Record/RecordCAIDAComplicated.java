@@ -75,14 +75,14 @@ public class RecordCAIDAComplicated extends Record implements Externalizable {
     int arpDstProtoIpv4 = ph;
 
 
-    private Integer convStringToInt(StringBuilder s) {
-        if (s.toString().isEmpty()) {
+    private Integer convStringToInt(String s) {
+        if (s.isEmpty()) {
             return ph;
         }
-        return Integer.parseInt(String.valueOf(s));
+        return Integer.parseInt(s);
     }
 
-    @Override public void add(StringBuilder[] a) {
+    @Override public void add(String[] a) {
         //TODO: get rid of replaceAll or make it more memory efficient.
         // String frameNumberString = a[0].replaceAll("\"", "");
 //        frameNumber = convStringToInt(a[0]);

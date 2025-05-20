@@ -36,7 +36,6 @@ public class ReservoirSample extends SynopsisRefactor {
             }
         }
         count++;
-
     }
 
     @Override
@@ -131,6 +130,6 @@ public class ReservoirSample extends SynopsisRefactor {
 
     }
     public long getMemoryUsage() {
-        return ((long) size * reservoir[0].length * 32);
+        return ((long) size * reservoir[0].length * 255);
     }
 }

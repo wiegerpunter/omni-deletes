@@ -241,7 +241,7 @@ public class RunExperiments {
                 config.numAttributes = 24;
             }
             case "CAIDA" -> {
-                this.conditions = new String[]{Integer.toString(config.filesToRead)};//, "4", "5", "6", "7", "8", "9", "10", "11", "12"};
+                this.conditions = new String[]{"1"};//, "4", "5", "6", "7", "8", "9", "10", "11", "12"};
                 config.numAttributes = 11;//10; //actually 7; can be 10;
             }
             case "Test" -> {
@@ -263,9 +263,6 @@ public class RunExperiments {
     private void readRealDataset(int i) throws CsvValidationException, IOException {
         if (config.datasetName.equals("SNMP")) {
             config.fileStartCondition = conditions[i];
-        } else {
-            // Convert conditions[i] to int
-            config.numFiles = Integer.parseInt(conditions[i]);
         }
         d = new DatasetRefactor(config);
     }

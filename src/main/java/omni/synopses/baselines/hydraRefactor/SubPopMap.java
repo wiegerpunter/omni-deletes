@@ -77,8 +77,6 @@ public class SubPopMap {
         this.dstats = dStats;
     }
 
-
-
     public LinkedHashMap<Integer, LinkedHashMap<Integer, ArrayList<Integer>>> splitLinkedHashMap(LinkedHashMap<Integer, ArrayList<Integer>> originalMap, int numAttributes) {
         LinkedHashMap<Integer, LinkedHashMap<Integer, ArrayList<Integer>>> result = new LinkedHashMap<>();
 

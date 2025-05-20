@@ -33,9 +33,9 @@
   "expOmniSketchSFQLSampleSize": false,
   "expOmniSketchSFQLSampleSizePerRow": false,
   "expOmniSketchSFQLSampleSizeTestHashSet": false,
-  "expASH": true,
+  "expASH": false,
   "expHydra": false,
   "expResSample": true,
   "expCM": false,
-  "filesToRead":5
+  "numFiles": 2
 }

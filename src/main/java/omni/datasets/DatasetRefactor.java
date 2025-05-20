@@ -91,11 +91,11 @@ public class DatasetRefactor {
                     this.totalRead += psl.linesSeen;
                     psl.close();
                     filesSeen++;
-                    if (filesSeen >= config.numFiles) {
-                        break;
-                    }
+
                     if (!config.readAllFiles) {
-                        break;
+                        if (filesSeen >= config.numFiles) {
+                            break;
+                        }
                     }
                 }
             }

@@ -37,5 +37,5 @@
   "expHydra": false,
   "expResSample": false,
   "expCM": false,
-  "filesToRead": 5
+  "numFiles": 2
 }
