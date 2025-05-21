@@ -20,6 +20,9 @@ public class ExperimentFactory {
         experiments.put("OmniSketchSFQLSampleSizeTestHashSet", new OmniSFQLSampleSizeTestHashSetExperiment());
         experiments.put("OmniSketchVLDBSampleSize", new OmniVLDBSampleSizeExperiment());
 
+        // OmniSketch based on custom parameters;
+        experiments.put("OmniSketchVLDBCustom", new OmniVLDBCustomExperiment());
+
     }
 
     public static Experiment getExperiment(String experimentName) {
