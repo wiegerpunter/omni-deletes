@@ -16,6 +16,10 @@ public class KminUtils {
             return estimatePriorityQueue(kminArray, queryInfo, bound, numPreds);
         }
 
+        if (Objects.equals(kminArray[0].getKminType(), "KminPQOptimized")) {
+            return estimatePriorityQueueOptimized(kminArray, queryInfo, bound, numPreds);
+        }
+
         if (Objects.equals(kminArray[0].getKminType(), "KminHashSet")) {
             return intersectHashSet((HashSet[]) kminArray);
         }
@@ -54,6 +58,33 @@ public class KminUtils {
         return (int) ((long) S_cap * n_max[0] / n_max[1]);
     }
 
+    private static int estimatePriorityQueueOptimized(Kmin[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
+        // Implement the logic to intersect and scale PriorityQueue kminArray
+        int S_cap = 0;
+        int[] n_max = new int[4];
+        PriorityQueue[] flatSamples = new PriorityQueue[kminArray.length];
+        for (int i = 0; i < kminArray.length; i++) {
+            flatSamples[i] = (PriorityQueue) kminArray[i].query();
+        }
+
+        int[] nres = getNCountUsingB(kminArray);
+        n_max[0] = nres[0];
+        n_max[1] = nres[1];
+        n_max[2] = nres[2];
+        int[] temp = intersectionPQCountNewB(flatSamples, nres[4]);
+        S_cap = temp[0];
+        n_max[3] = temp[1];
+
+        queryInfo.setScap(S_cap, n_max[0], n_max[1], false);
+        bound = Math.ceil(bound + Math.log(Math.sqrt(n_max[1]) * numPreds));
+        if (S_cap < bound) {
+            queryInfo.case1 = true;
+        }
+        int estimate1 = (int) ((long) S_cap * n_max[0] / n_max[1]);
+        int estimate2 = (int) ((long) S_cap * n_max[2] / n_max[3]);
+        return Math.min(estimate1, estimate2);
+    }
+
     private static int[] getNmax(Kmin[] kminArray) {
         int[] nmax = new int[2];
         for (Kmin kmin : kminArray) {
@@ -65,12 +96,32 @@ public class KminUtils {
         return nmax;
     }
 
+    private static int[] getNCountUsingB(Kmin[] kminArray) {
+        int[] nmin = new int[5];
+        nmin[0] = Integer.MIN_VALUE;
+        nmin[2] = Integer.MAX_VALUE;
+        for (int i = 0; i < kminArray.length; i++) {
+            Kmin kmin = kminArray[i];
+            if (kmin.getN() > nmin[0]) {
+                nmin[0] = kmin.getN();
+                nmin[1] = kmin.getCurSampleSize();
+            }
+            if (kmin.getN() < nmin[2]) {
+                nmin[2] = kmin.getN();
+                nmin[3] = kmin.getCurSampleSize();
+                nmin[4] = i;
+            }
+        }
+        return nmin;
+    }
+
+
     private static int intersectionPQ(omni.synopses.omniFactory.CustomPriorityQueue.PriorityQueue[] samples) {
         int numJoins = samples.length;
         if (samples.length == 1) {
             return samples[0].size + 1; // One predicate and either per row or one row.
         }
-        int intersectionCount = -1;
+        int intersectionCount = 0;
 
         Arrays.sort(samples, Comparator.comparingInt(PriorityQueue::size));
 
@@ -129,6 +180,97 @@ public class KminUtils {
                     }
                 }
             }
+        }
+    }
+
+
+    private static int[] intersectionPQCountNewB(PriorityQueue[] samples, int index_min_n) {
+        int numJoins = samples.length;
+        if (samples.length == 1) {
+            return new int[]{samples[0].size + 1, samples[0].size + 1}; // One predicate and either per row or one row.
+        }
+        int intersectionCount = 0;
+        int n_skipped_in_min_n = 0;
+        int old_B = samples[index_min_n].size;
+        int min_n_value = samples[index_min_n].peek();
+
+        // Sort the samples based on their size
+        Arrays.sort(samples, Comparator.comparingInt(PriorityQueue::size));
+
+        // get new index of min_n
+        int index_min_n_new = 0;
+        // Array to track the current value from each iterator
+        int[] currentValues = new int[numJoins];
+        int initial_min_current = Integer.MAX_VALUE;
+        // Initialize each queue's current value
+        for (int i = 0; i < numJoins; i++) {
+            if (samples[i].size == old_B && samples[i].peek() == min_n_value) {
+                index_min_n_new = i;
+            }
+            if (!samples[i].isEmpty()) {
+                currentValues[i] = samples[i].peek();
+                if (currentValues[i] < initial_min_current) {
+                    initial_min_current = currentValues[i];
+                }
+            } else {
+                return new int[]{0, 1}; // If any queue is empty, intersection count is zero
+            }
+        }
+
+        // Update index_min_n to the new index
+        index_min_n = index_min_n_new;
+        old_B++; // size starts with -1
+
+
+        int first_iterator = 0;
+        while (true) {
+            // Find the maximum value among the current values
+            int minCurrent = currentValues[0];
+            for (int i = 1; i < numJoins; i++) { // We can skip the first one, since we just set it to minCurrent.
+                if (currentValues[i] < minCurrent) {
+                    minCurrent = currentValues[i];
+                }
+            }
+
+
+            // Check if all current values match the maxCurrent
+            boolean allMatch = true;
+            for (int i = 0; i < numJoins; i++) {
+                if (currentValues[i] != minCurrent) {
+                    allMatch = false;
+                    break;
+                }
+            }
+
+            // If all queues have the same current value, count it as an intersection
+            if (allMatch) {
+                intersectionCount++;
+                // Advance all iterators to the next element
+                for (int i = 0; i < numJoins; i++) {
+                    samples[i].poll();
+                    if (!samples[i].isEmpty()) {
+                        currentValues[i] = samples[i].peek();
+                    } else {
+                        return new int[]{intersectionCount, old_B - n_skipped_in_min_n}; // End if any queue is exhausted
+                    }
+                }
+            } else {
+                // Advance only iterators of queues with current values < maxCurrent
+                for (int i = 0; i < numJoins; i++) {
+                    while (currentValues[i] > minCurrent) {
+                        samples[i].poll();
+                        if (first_iterator == 0 && i == index_min_n && currentValues[i] > initial_min_current) { // count the number of skipped elements in the min_n
+                            n_skipped_in_min_n++;
+                        }
+                        if (!samples[i].isEmpty()) {
+                            currentValues[i] = samples[i].peek();
+                        } else {
+                            return new int[]{intersectionCount, old_B - n_skipped_in_min_n}; // End if any queue is exhausted
+                        }
+                    }
+                }
+            }
+            first_iterator++;
         }
     }
 

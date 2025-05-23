@@ -122,6 +122,7 @@ public class RunExperiments {
         if (config.expOmniSketchSFQLSampleSizePerRow) enabledExperiments.add("OmniSketchSFQLSampleSizePerRow");
         if (config.expOmniSketchSFQLSampleSizeTestHashSet) enabledExperiments.add("OmniSketchSFQLSampleSizeTestHashSet");
         if (config.expOmniSketchVLDBCustom) enabledExperiments.add("OmniSketchVLDBCustom");
+        if (config.expOmniSketchSFQLOptimized) enabledExperiments.add("OmniSketchSFQLOptimized");
         return enabledExperiments;
     }
 

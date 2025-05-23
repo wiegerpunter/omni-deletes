@@ -55,6 +55,7 @@ public class Config {
     public boolean expOmniSketchVLDBCustom;
     public int w;
     public int B;
+    public boolean expOmniSketchSFQLOptimized;
 
     // Old parameters, might use them in the future
 //    public List<Double> bufferValuesOmni;

@@ -5,16 +5,19 @@ import omni.Experiments.parameterSetting.Formulas;
 
 public class KminPQ implements Kmin {
 
-    private int B;
-    private int b;
+    private final int B;
+    private final int b;
     private int n;
     private int curSampleSize;
     private PriorityQueue pq;
     private int curTreeRoot = Integer.MAX_VALUE;
+    private final String setting;
 
-    public KminPQ(int B, int b) {
+
+    public KminPQ(int B, int b, String setting) {
         this.B = B;
         this.b = b;
+        this.setting = setting;
         this.n = 0;
         this.curSampleSize = 0;
         this.pq = new PriorityQueue(B);
@@ -76,7 +79,7 @@ public class KminPQ implements Kmin {
 
     @Override
     public String getKminType() {
-        return "KminPQ"; // KminPQ type
+        return setting; // KminPQ type
     }
 
     @Override
