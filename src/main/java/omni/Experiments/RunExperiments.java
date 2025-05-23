@@ -88,9 +88,19 @@ public class RunExperiments {
                                 config.d = d;
                                 for (int b : config.bGridSearch) {
                                     config.b = b;
-                                    for (double parFactor : config.parFactorGridSearch) {
-                                        config.parFactor = parFactor;
-                                        experiment.run(ram, rtp, repetition, config);
+                                    if (config.customParameters) {
+                                        for (int B : config.BGridSearch) {
+                                            config.B = B;
+                                            for (int w : config.wGridSearch) {
+                                                config.w = w;
+                                                experiment.run(ram, rtp, repetition, config);
+                                            }
+                                        }
+                                    } else {
+                                        for (double parFactor : config.parFactorGridSearch) {
+                                            config.parFactor = parFactor;
+                                            experiment.run(ram, rtp, repetition, config);
+                                        }
                                     }
                                 }
                             }
@@ -123,6 +133,7 @@ public class RunExperiments {
         if (config.expOmniSketchSFQLSampleSizeTestHashSet) enabledExperiments.add("OmniSketchSFQLSampleSizeTestHashSet");
         if (config.expOmniSketchVLDBCustom) enabledExperiments.add("OmniSketchVLDBCustom");
         if (config.expOmniSketchSFQLOptimized) enabledExperiments.add("OmniSketchSFQLOptimized");
+        if (config.expOmniSketchSFQLOptimizedCustom) enabledExperiments.add("OmniSketchSFQLOptimizedCustom");
         return enabledExperiments;
     }
 

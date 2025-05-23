@@ -17,6 +17,8 @@ public class Config {
     public List<Double> ingestBuffers;
     public List<Integer> dGridSearch;
     public List<Integer> bGridSearch;
+    public List<Integer> BGridSearch;
+    public List<Integer> wGridSearch;
     public List<Double> parFactorGridSearch;
     public int numBins;
     public int numPredicates;
@@ -56,7 +58,8 @@ public class Config {
     public int w;
     public int B;
     public boolean expOmniSketchSFQLOptimized;
-
+    public boolean customParameters;
+    public boolean expOmniSketchSFQLOptimizedCustom;
     // Old parameters, might use them in the future
 //    public List<Double> bufferValuesOmni;
 //    public boolean expOmniSet;

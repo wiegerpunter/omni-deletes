@@ -11,9 +11,11 @@
   "ingestBuffers": [0.1],
   "dGridSearch": [3],
   "bGridSearch": [31],
-  "parFactorGridSearch": [10,100],
+  "BGridSearch": [100000],
+  "wGridSearch": [50,100],
+  "parFactorGridSearch": [100,500],
   "numBins": 3,
-  "numPredicates": 3,
+  "numPredicates": 9,
   "sizeFactorOptions": [23],
   "sizeNoise": [0],
   "experimentName": "sampleFirstQLater",
@@ -39,7 +41,7 @@
   "expCM": false,
   "numFiles": 2,
   "expOmniSketchVLDBCustom": false,
-  "w": 100,
-  "B": 1000000,
-    "expOmniSketchSFQLOptimized": true
+  "expOmniSketchSFQLOptimized": true,
+  "expOmniSketchSFQLOptimizedCustom": false,
+  "customParameters": false
 }
