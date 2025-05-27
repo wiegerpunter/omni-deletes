@@ -22,6 +22,7 @@ public class runQueries {
     int[] estimatedAnswersPointQuery;
     public int[] intersectionOfR;
     public int[] unionOfR;
+    public ExpSetting[] expSettings;
 
     int[] estimatedAnswersRangeQuery;
     int[] SCap;
@@ -66,6 +67,7 @@ public class runQueries {
         queryExecutionTime = new long[cd.pointQueries.length];
         intersectionOfR = new int[cd.pointQueries.length];
         unionOfR = new int[cd.pointQueries.length];
+        expSettings = new ExpSetting[cd.pointQueries.length];
         numberOfKmins = new int[cd.pointQueries.length];
         numberOfKminsExceedingBounds = new int[cd.pointQueries.length];
         bound = new double[cd.pointQueries.length];
@@ -114,6 +116,9 @@ public class runQueries {
         if (config.rangeQueries) {
             throw new RuntimeException("Range queries file not implemented yet");
         } else {
+            if (s.setting.contains("SampleLater")) {
+                writeLoggedSetSizes(expSettings);
+            }
             writeResultsToFilePointQuery(repetition, s, d, ingestionTime, collisions, estimatedAnswersPointQuery,
                     SCap, NMax, usedMaxSizes, jaccardEstimates2LHS, unionEstimates2LHS, witness2LHS, queryExecutionTime, totalQueryExecutionTime,
                     numberOfKmins, numberOfKminsExceedingBounds, case1, bound);
@@ -121,6 +126,32 @@ public class runQueries {
         System.out.println("Total queries: " + d.pointQueries.length);
         System.out.println("Total queries with zero empty or singleton witnesses: " + s.countIsZero);
         System.out.println("Total queries with zero estimate: " + totalEstimatesZero);
+    }
+
+    private void writeLoggedSetSizes(ExpSetting[] expSettings) throws IOException {
+        String CSV_FILE_NAME = config.getOutputFolder() + "/pointQueries/" + config.datasetName + "/" + config.currentDate + "_" + config.experimentName + "_"
+                + config.setting + "_dataset_" + config.datasetName +
+                "_loggedSetSizes.csv";
+        boolean init = false;
+        //String currentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+
+        if (!new File(CSV_FILE_NAME).exists()) {
+            init = true;
+        }
+        CSVWriter writer = new CSVWriter(new FileWriter(CSV_FILE_NAME, true));
+
+        if (init) {
+            String[] header = new String[]{"intersectionSize", "B", "setSizes"};
+            writer.writeNext(header);
+        }
+        for (ExpSetting expSetting : expSettings) {
+            String[] result = new String[3];
+            result[0] = String.valueOf(expSetting.getIntersectionSize());
+            result[1] = Arrays.toString(expSetting.getB());
+            result[2] = Arrays.toString(expSetting.getSetSizes());
+            writer.writeNext(result);
+        }
+
     }
 
     public void testQueryInfoIsolation() {
@@ -141,6 +172,10 @@ public class runQueries {
             totalQueriesZero++;
         }
         QueryInfo queryInfo = new QueryInfo();
+        if (exactAnswer == 210102){
+            System.out.println("Exact answer is 210102 for query: " + Arrays.toString(q));
+        }
+        queryInfo.expSetting.addIntersectionSize(exactAnswer);
 
         long startTime = System.currentTimeMillis();
 //        if (Main.checkConditions ) { //&& s.ram == Main.ramVals[0]
@@ -157,6 +192,7 @@ public class runQueries {
 
         QueryInfo copy = new QueryInfo(queryInfo);
         unionOfR[queryId] = copy.exactUnion;
+        expSettings[queryId] = copy.expSetting;
         intersectionOfR[queryId] = copy.exactIntersection;
         totalTime = totalTime + queryExecutionTime[queryId];
         totalExecQueries++;

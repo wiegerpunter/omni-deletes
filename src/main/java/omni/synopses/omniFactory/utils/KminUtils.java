@@ -42,10 +42,17 @@ public class KminUtils {
         // Implement the logic to intersect and scale PriorityQueue kminArray
         int S_cap = 0;
         int[] n_max;
+        queryInfo.expSetting.setNumSets(kminArray.length);
         PriorityQueue[] flatSamples = new PriorityQueue[kminArray.length];
         for (int i = 0; i < kminArray.length; i++) {
+            if (kminArray[i].getN() < queryInfo.expSetting.getIntersectionSize()) {
+                throw new IllegalArgumentException("N is less than intersection size for kminArray[" + i + "]");
+            }
+            queryInfo.expSetting.setSetInfo(i, kminArray[i].getN(), kminArray[i].getCurSampleSize());
             flatSamples[i] = (PriorityQueue) kminArray[i].query();
         }
+
+
 
         n_max = getNmax(kminArray);
         S_cap = intersectionPQ(flatSamples);

@@ -37,11 +37,11 @@
   "expOmniSketchSFQLSampleSizeTestHashSet": false,
   "expASH": false,
   "expHydra": false,
-  "expResSample": true,
+  "expResSample": false,
   "expCM": false,
   "numFiles": 2,
   "expOmniSketchVLDBCustom": false,
-  "expOmniSketchSFQLOptimized": true,
+  "expOmniSketchSFQLOptimized": false,
   "expOmniSketchSFQLOptimizedCustom": false,
   "customParameters": false
 }

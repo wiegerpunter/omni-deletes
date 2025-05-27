@@ -23,6 +23,8 @@ public class QueryInfo {
     public double bound;
     private int estimate;
 
+    public ExpSetting expSetting;
+
     public QueryInfo() {
         CMRow = 0;
         case1= false;
@@ -39,6 +41,7 @@ public class QueryInfo {
         exactUnion=0;
         exactIntersection= 0;
         bound=0;
+        expSetting = new ExpSetting();
 
     }
 
@@ -60,6 +63,7 @@ public class QueryInfo {
         this.exactUnion = qi.exactUnion;
         this.witness2LHS = qi.witness2LHS;
         this.estimate = qi.estimate;
+        this.expSetting = new ExpSetting(qi.expSetting.getIntersectionSize(), qi.expSetting.getB(), qi.expSetting.getSetSizes());
     }
 
     public void setCMRow(int CMRow) {
@@ -98,4 +102,5 @@ public class QueryInfo {
     public boolean isCase1() {
         return case1;
     }
+
 }

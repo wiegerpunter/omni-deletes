@@ -10,6 +10,7 @@ public class OmniSketch extends SynopsisRefactor {
 
     public OmniSketch(OmniSketchConfig config, String sketchType) {
         this.config = config;
+        this.setting = sketchType;
         this.sketch = OmniSketchTypeFactory.createOmniSketchType(sketchType, config);
         parameters = config.getParams();
         ram = config.getRam();
