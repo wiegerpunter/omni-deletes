@@ -14,6 +14,8 @@ public class ExperimentFactory {
         experiments.put("OmniSketchSampleFirstQLaterPerRow", new OmniSampleFirstQLaterPerRowExperiment());
         experiments.put("OmniSketchVLDB", new OmniVLDBExperiment());
         experiments.put("OmniSketchSFQLOptimized", new OmniSFQLOptimizedExperiment());
+        experiments.put("OmniSketchSFQLOptimizedOnlyNew", new OmniSFQLOptimizedOnlyNewExperiment());
+
 
         // Sample size as input
         experiments.put("OmniSketchSFQLSampleSize", new OmniSFQLSampleSizeExperiment());
@@ -24,6 +26,8 @@ public class ExperimentFactory {
         // OmniSketch based on custom parameters;
         experiments.put("OmniSketchVLDBCustom", new OmniVLDBCustomExperiment());
         experiments.put("OmniSketchSFQLOptimizedCustom", new OmniSFQLOptimizedCustomExperiment());
+        experiments.put("OmniSketchSFQLOptimizedOnlyNewCustom", new OmniSFQLOptimizedOnlyNewCustomExperiment());
+
 
     }
 

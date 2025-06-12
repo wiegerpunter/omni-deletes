@@ -5,6 +5,7 @@ public class KminFactory {
         return switch (kminType) {
             case "KminPQ" -> new KminPQ(B, b, "KminPQ");
             case "KminPQOptimized" -> new KminPQ(B, b, "KminPQOptimized");
+            case "KminPQOptimizedOnlyNew" -> new KminPQ(B, b, "KminPQOptimizedOnlyNew");
             case "KminTreeSet" -> new KminTreeSet(B, b);
             default -> throw new IllegalArgumentException("Unknown Kmin type: " + kminType);
         };

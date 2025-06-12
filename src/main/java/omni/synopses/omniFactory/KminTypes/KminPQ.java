@@ -37,7 +37,7 @@ public class KminPQ implements Kmin {
 
     private void add(int hx) {
         n++;
-        if (curSampleSize < B - 1) {
+        if (curSampleSize < B) {
             pq.add(hx);
             curSampleSize++;
         } else if (curSampleSize == B) {

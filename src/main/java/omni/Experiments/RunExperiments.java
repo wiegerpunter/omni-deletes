@@ -88,18 +88,30 @@ public class RunExperiments {
                                 config.d = d;
                                 for (int b : config.bGridSearch) {
                                     config.b = b;
-                                    if (config.customParameters) {
-                                        for (int B : config.BGridSearch) {
-                                            config.B = B;
-                                            for (int w : config.wGridSearch) {
-                                                config.w = w;
-                                                experiment.run(ram, rtp, repetition, config);
-                                            }
-                                        }
-                                    } else {
+                                    if (config.parameterSettingType.equals("B/W")) {
                                         for (double parFactor : config.parFactorGridSearch) {
                                             config.parFactor = parFactor;
                                             experiment.run(ram, rtp, repetition, config);
+                                        }
+                                    } else {
+                                        for (int w : config.wGridSearch) {
+                                            config.w = w;
+                                            if (config.parameterSettingType.equals("Custom")) {
+                                                for (int B : config.BGridSearch) {
+                                                    config.B = B;
+                                                    experiment.run(ram, rtp, repetition, config);
+                                                }
+                                            } else if (config.parameterSettingType.equals("GridSearch")) {
+                                                config.B = (int) ((ram / (config.d * config.w * config.numStoredAttributes) - 32)/config.b);
+                                                if (config.B < 1) {
+                                                    System.err.println("B is less than 1, skipping experiment");
+                                                    continue;
+                                                }
+                                                System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
+                                                experiment.run(ram, rtp, repetition, config);
+                                            } else {
+                                                throw new RuntimeException("Unknown parameter setting type: " + config.parameterSettingType);
+                                            }
                                         }
                                     }
                                 }
@@ -124,16 +136,28 @@ public class RunExperiments {
         if (config.expCM) enabledExperiments.add("CountMin");
         if (config.expResSample) enabledExperiments.add("ReservoirSampling");
         if (config.expASH) enabledExperiments.add("aSH");
-        if (config.expOmniSketchSampleFirstQLater) enabledExperiments.add("OmniSketchSampleFirstQLater");
-        if (config.expOmniSketchSampleFirstQLaterPerRow) enabledExperiments.add("OmniSketchSampleFirstQLaterPerRow");
-        if (config.expOmniSketchVLDB) enabledExperiments.add("OmniSketchVLDB");
-        if (config.expOmniSketchVLDBSampleSize) enabledExperiments.add("OmniSketchVLDBSampleSize");
-        if (config.expOmniSketchSFQLSampleSize) enabledExperiments.add("OmniSketchSFQLSampleSize");
-        if (config.expOmniSketchSFQLSampleSizePerRow) enabledExperiments.add("OmniSketchSFQLSampleSizePerRow");
-        if (config.expOmniSketchSFQLSampleSizeTestHashSet) enabledExperiments.add("OmniSketchSFQLSampleSizeTestHashSet");
-        if (config.expOmniSketchVLDBCustom) enabledExperiments.add("OmniSketchVLDBCustom");
-        if (config.expOmniSketchSFQLOptimized) enabledExperiments.add("OmniSketchSFQLOptimized");
-        if (config.expOmniSketchSFQLOptimizedCustom) enabledExperiments.add("OmniSketchSFQLOptimizedCustom");
+
+        if (config.parameterSettingType.equals("SampleSize")) {
+            if (config.expOmniSketchVLDBSampleSize) enabledExperiments.add("OmniSketchVLDBSampleSize");
+            if (config.expOmniSketchSFQLSampleSize) enabledExperiments.add("OmniSketchSFQLSampleSize");
+            if (config.expOmniSketchSFQLSampleSizePerRow) enabledExperiments.add("OmniSketchSFQLSampleSizePerRow");
+            if (config.expOmniSketchSFQLSampleSizeTestHashSet)
+                enabledExperiments.add("OmniSketchSFQLSampleSizeTestHashSet");
+        }
+        if (config.parameterSettingType.equals("Custom") || config.parameterSettingType.equals("GridSearch")) {
+            if (config.expOmniSketchVLDB) enabledExperiments.add("OmniSketchVLDBCustom");
+            if (config.expOmniSketchSFQLOptimized) enabledExperiments.add("OmniSketchSFQLOptimizedCustom");
+            if (config.expOmniSketchSFQLOptimizedOnlyNew) enabledExperiments.add("OmniSketchSFQLOptimizedOnlyNewCustom");
+        }
+
+        if (config.parameterSettingType.equals("B/w")) {
+            if (config.expOmniSketchVLDB) enabledExperiments.add("OmniSketchVLDB");
+            if (config.expOmniSketchSFQLOptimized) enabledExperiments.add("OmniSketchSFQLOptimized");
+            if (config.expOmniSketchSFQLOptimizedOnlyNew) enabledExperiments.add("OmniSketchSFQLOptimizedOnlyNew");
+            if (config.expOmniSketchSampleFirstQLater) enabledExperiments.add("OmniSketchSampleFirstQLater");
+            if (config.expOmniSketchSampleFirstQLaterPerRow) enabledExperiments.add("OmniSketchSampleFirstQLaterPerRow");
+
+        }
         return enabledExperiments;
     }
 

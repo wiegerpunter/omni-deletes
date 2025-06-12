@@ -19,6 +19,9 @@ public class KminUtils {
         if (Objects.equals(kminArray[0].getKminType(), "KminPQOptimized")) {
             return estimatePriorityQueueOptimized(kminArray, queryInfo, bound, numPreds);
         }
+        if (Objects.equals(kminArray[0].getKminType(), "KminPQOptimizedOnlyNew")) {
+            return estimatePriorityQueueOptimizedOnlyNew(kminArray, queryInfo, bound, numPreds);
+        }
 
         if (Objects.equals(kminArray[0].getKminType(), "KminHashSet")) {
             return intersectHashSet((HashSet[]) kminArray);
@@ -90,6 +93,31 @@ public class KminUtils {
         int estimate1 = (int) ((long) S_cap * n_max[0] / n_max[1]);
         int estimate2 = (int) ((long) S_cap * n_max[2] / n_max[3]);
         return Math.min(estimate1, estimate2);
+    }
+
+    private static int estimatePriorityQueueOptimizedOnlyNew(Kmin[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
+        // Implement the logic to intersect and scale PriorityQueue kminArray
+        int S_cap = 0;
+        int[] n_max = new int[4];
+        PriorityQueue[] flatSamples = new PriorityQueue[kminArray.length];
+        for (int i = 0; i < kminArray.length; i++) {
+            flatSamples[i] = (PriorityQueue) kminArray[i].query();
+        }
+
+        int[] nres = getNCountUsingB(kminArray);
+        n_max[0] = nres[0];
+        n_max[1] = nres[1];
+        n_max[2] = nres[2];
+        int[] temp = intersectionPQCountNewB(flatSamples, nres[4]);
+        S_cap = temp[0];
+        n_max[3] = temp[1];
+
+        queryInfo.setScap(S_cap, n_max[2], n_max[3], false);
+        bound = Math.ceil(bound + Math.log(Math.sqrt(n_max[3]) * numPreds));
+        if (S_cap < bound) {
+            queryInfo.case1 = true;
+        }
+        return (int) ((long) S_cap * n_max[2] / n_max[3]);
     }
 
     private static int[] getNmax(Kmin[] kminArray) {

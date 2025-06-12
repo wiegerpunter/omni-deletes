@@ -141,4 +141,11 @@ public class OmniSketchBuilder {
                 .setUseNMax(true)
                 .setSketchType("SampleLaterOptimized");
     }
+
+    public static OmniSketchBuilder QFirstSampleLaterOptimizedOnlyNew() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(true)
+                .setUseNMax(true)
+                .setSketchType("SampleLaterOptimizedOnlyNew");
+    }
 }

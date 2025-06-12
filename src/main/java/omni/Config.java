@@ -54,12 +54,12 @@ public class Config {
     public double betaBuffer;
     public boolean readAllFiles;
     public int numFiles;
-    public boolean expOmniSketchVLDBCustom;
     public int w;
     public int B;
     public boolean expOmniSketchSFQLOptimized;
-    public boolean customParameters;
-    public boolean expOmniSketchSFQLOptimizedCustom;
+    public boolean expOmniSketchSFQLOptimizedOnlyNew;
+    public String parameterSettingType;
+
     // Old parameters, might use them in the future
 //    public List<Double> bufferValuesOmni;
 //    public boolean expOmniSet;
