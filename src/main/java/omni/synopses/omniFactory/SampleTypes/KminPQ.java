@@ -1,9 +1,9 @@
-package omni.synopses.omniFactory.KminTypes;
+package omni.synopses.omniFactory.SampleTypes;
 
 import omni.synopses.omniFactory.CustomPriorityQueue.PriorityQueue;
 import omni.Experiments.parameterSetting.Formulas;
 
-public class KminPQ implements Kmin {
+public class KminPQ implements Sample {
 
     private final int B;
     private final int b;

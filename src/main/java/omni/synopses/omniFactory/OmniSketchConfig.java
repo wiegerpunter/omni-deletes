@@ -19,6 +19,7 @@ public class OmniSketchConfig {
     private int[] params;
     private boolean useNMax;
     private String setting;
+    private boolean useFastTWOLHS;
 
     // Getters and setters for all fields
     public int getSeed() {
@@ -141,6 +142,10 @@ public class OmniSketchConfig {
         this.numStoredAttributes = numStoredAttributes;
     }
 
+    public void setUseFastTWOLHS(boolean useFastTWOLHS) {
+       this.useFastTWOLHS = useFastTWOLHS;
+    }
+
     public int[] getParams() {
         return params;
     }
@@ -153,6 +158,9 @@ public class OmniSketchConfig {
         this.useNMax = useNMax;
     }
 
+    public boolean getUseFastTWOLHS() {
+        return useFastTWOLHS;
+    }
 
 
     public String getSetting() {

@@ -116,9 +116,9 @@ public class runQueries {
         if (config.rangeQueries) {
             throw new RuntimeException("Range queries file not implemented yet");
         } else {
-            if (s.setting.contains("SampleLater")) {
-                writeLoggedSetSizes(expSettings);
-            }
+//            if (s.setting.contains("SampleLater")) {
+//                writeLoggedSetSizes(expSettings);
+//            }
             writeResultsToFilePointQuery(repetition, s, d, ingestionTime, collisions, estimatedAnswersPointQuery,
                     SCap, NMax, usedMaxSizes, jaccardEstimates2LHS, unionEstimates2LHS, witness2LHS, queryExecutionTime, totalQueryExecutionTime,
                     numberOfKmins, numberOfKminsExceedingBounds, case1, bound);
@@ -172,10 +172,10 @@ public class runQueries {
             totalQueriesZero++;
         }
         QueryInfo queryInfo = new QueryInfo();
-        if (exactAnswer == 210102){
-            System.out.println("Exact answer is 210102 for query: " + Arrays.toString(q));
-        }
-        queryInfo.expSetting.addIntersectionSize(exactAnswer);
+//        if (exactAnswer == 210102){
+//            System.out.println("Exact answer is 210102 for query: " + Arrays.toString(q));
+//        }
+//        queryInfo.expSetting.addIntersectionSize(exactAnswer);
 
         long startTime = System.currentTimeMillis();
 //        if (Main.checkConditions ) { //&& s.ram == Main.ramVals[0]
@@ -192,7 +192,7 @@ public class runQueries {
 
         QueryInfo copy = new QueryInfo(queryInfo);
         unionOfR[queryId] = copy.exactUnion;
-        expSettings[queryId] = copy.expSetting;
+//        expSettings[queryId] = copy.expSetting;
         intersectionOfR[queryId] = copy.exactIntersection;
         totalTime = totalTime + queryExecutionTime[queryId];
         totalExecQueries++;

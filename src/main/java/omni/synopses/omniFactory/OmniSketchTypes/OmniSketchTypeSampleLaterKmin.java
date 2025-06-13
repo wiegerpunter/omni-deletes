@@ -3,7 +3,7 @@ package omni.synopses.omniFactory.OmniSketchTypes;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import omni.Experiments.QueryInfo;
-import omni.synopses.omniFactory.KminTypes.Kmin;
+import omni.synopses.omniFactory.SampleTypes.Sample;
 import omni.synopses.omniFactory.OmniSketchConfig;
 import omni.synopses.omniFactory.attributeSketchTypes.AttrSketchKmin;
 import omni.synopses.omniFactory.utils.KminUtils;
@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-public class OmniSketchTypeSampleLater extends OmniSketchType {
+public class OmniSketchTypeSampleLaterKmin extends OmniSketchType {
     private String KminType;
     AttrSketchKmin[] attributeSketches;
     HashFunction[] xx;
@@ -29,7 +29,7 @@ public class OmniSketchTypeSampleLater extends OmniSketchType {
 
     private int[] hx;
 
-    public OmniSketchTypeSampleLater(OmniSketchConfig sketchConfig, String KminType) {
+    public OmniSketchTypeSampleLaterKmin(OmniSketchConfig sketchConfig, String KminType) {
         this.sketchConfig = sketchConfig;
         this.KminType = KminType;
         this.depth = sketchConfig.getParams()[0];
@@ -104,7 +104,7 @@ public class OmniSketchTypeSampleLater extends OmniSketchType {
             return KminUtils.intersectAndScale(getCellsToIntersectAcrossRows(query, numPreds), queryInfo, lastTermInBoundAcrossRows, numPreds);
         } else {
             ArrayList<QueryInfo> queryInfos = new ArrayList<>(depth);
-            Kmin[][] cellsToIntersect = getCellsToIntersectPerRow(query, numPreds);
+            Sample[][] cellsToIntersect = getCellsToIntersectPerRow(query, numPreds);
 
             for (int j = 0; j < depth; j++) {
                 queryInfos.add(new QueryInfo());
@@ -122,12 +122,12 @@ public class OmniSketchTypeSampleLater extends OmniSketchType {
         }
     }
 
-    private Kmin[] getCellsToIntersectAcrossRows(long[] query, int numPreds) {
-        Kmin[] cellsToIntersect = new Kmin[depth * numPreds];
+    private Sample[] getCellsToIntersectAcrossRows(long[] query, int numPreds) {
+        Sample[] cellsToIntersect = new Sample[depth * numPreds];
         int attrWithoutPred = 0;
         for (int i = 0; i < query.length; i++) {
             if (query[i] != -1) { // Find way to not take the -1s into account in query.
-                Kmin[] temp = attributeSketches[i].query(query[i]);
+                Sample[] temp = attributeSketches[i].query(query[i]);
                 if (depth >= 0) {
                     System.arraycopy(temp, 0, cellsToIntersect, (i - attrWithoutPred) * depth, depth);
                 }
@@ -138,12 +138,12 @@ public class OmniSketchTypeSampleLater extends OmniSketchType {
         return cellsToIntersect;
     }
 
-    private Kmin[][] getCellsToIntersectPerRow(long[] query, int numPreds) {
-        Kmin[][] cellsToIntersect = new Kmin[depth][numPreds];
+    private Sample[][] getCellsToIntersectPerRow(long[] query, int numPreds) {
+        Sample[][] cellsToIntersect = new Sample[depth][numPreds];
         int numPredsFound = 0;
         for (int i = 0; i < query.length; i++) {
             if (query[i] != -1) {
-                Kmin[] temp = attributeSketches[i].query(query[i]);
+                Sample[] temp = attributeSketches[i].query(query[i]);
                 for (int j = 0; j < depth; j++) {
                     cellsToIntersect[j][numPredsFound] = temp[j];
                 }

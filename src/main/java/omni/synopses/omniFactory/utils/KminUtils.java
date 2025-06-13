@@ -2,12 +2,12 @@ package omni.synopses.omniFactory.utils;
 
 import omni.synopses.omniFactory.CustomPriorityQueue.PriorityQueue;
 import omni.Experiments.QueryInfo;
-import omni.synopses.omniFactory.KminTypes.Kmin;
+import omni.synopses.omniFactory.SampleTypes.Sample;
 
 import java.util.*;
 
 public class KminUtils {
-    public static int intersectAndScale(Kmin[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
+    public static int intersectAndScale(Sample[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
         if (kminArray == null || kminArray.length == 0) {
             throw new IllegalArgumentException("kminArray is null or empty");
         }
@@ -41,17 +41,17 @@ public class KminUtils {
         throw new UnsupportedOperationException("TreeSet intersection not implemented yet");
     }
 
-    private static int estimatePriorityQueue(Kmin[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
+    private static int estimatePriorityQueue(Sample[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
         // Implement the logic to intersect and scale PriorityQueue kminArray
         int S_cap = 0;
         int[] n_max;
-        queryInfo.expSetting.setNumSets(kminArray.length);
+        //queryInfo.expSetting.setNumSets(kminArray.length);
         PriorityQueue[] flatSamples = new PriorityQueue[kminArray.length];
         for (int i = 0; i < kminArray.length; i++) {
-            if (kminArray[i].getN() < queryInfo.expSetting.getIntersectionSize()) {
-                throw new IllegalArgumentException("N is less than intersection size for kminArray[" + i + "]");
-            }
-            queryInfo.expSetting.setSetInfo(i, kminArray[i].getN(), kminArray[i].getCurSampleSize());
+//            if (kminArray[i].getN() < queryInfo.expSetting.getIntersectionSize()) {
+//                throw new IllegalArgumentException("N is less than intersection size for kminArray[" + i + "]");
+//            }
+//            queryInfo.expSetting.setSetInfo(i, kminArray[i].getN(), kminArray[i].getCurSampleSize());
             flatSamples[i] = (PriorityQueue) kminArray[i].query();
         }
 
@@ -68,7 +68,7 @@ public class KminUtils {
         return (int) ((long) S_cap * n_max[0] / n_max[1]);
     }
 
-    private static int estimatePriorityQueueOptimized(Kmin[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
+    private static int estimatePriorityQueueOptimized(Sample[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
         // Implement the logic to intersect and scale PriorityQueue kminArray
         int S_cap = 0;
         int[] n_max = new int[4];
@@ -95,7 +95,7 @@ public class KminUtils {
         return Math.min(estimate1, estimate2);
     }
 
-    private static int estimatePriorityQueueOptimizedOnlyNew(Kmin[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
+    private static int estimatePriorityQueueOptimizedOnlyNew(Sample[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
         // Implement the logic to intersect and scale PriorityQueue kminArray
         int S_cap = 0;
         int[] n_max = new int[4];
@@ -120,9 +120,9 @@ public class KminUtils {
         return (int) ((long) S_cap * n_max[2] / n_max[3]);
     }
 
-    private static int[] getNmax(Kmin[] kminArray) {
+    private static int[] getNmax(Sample[] kminArray) {
         int[] nmax = new int[2];
-        for (Kmin kmin : kminArray) {
+        for (Sample kmin : kminArray) {
             if (kmin.getN() > nmax[0]) {
                 nmax[0] = kmin.getN();
                 nmax[1] = kmin.getCurSampleSize();
@@ -131,12 +131,12 @@ public class KminUtils {
         return nmax;
     }
 
-    private static int[] getNCountUsingB(Kmin[] kminArray) {
+    private static int[] getNCountUsingB(Sample[] kminArray) {
         int[] nmin = new int[5];
         nmin[0] = Integer.MIN_VALUE;
         nmin[2] = Integer.MAX_VALUE;
         for (int i = 0; i < kminArray.length; i++) {
-            Kmin kmin = kminArray[i];
+            Sample kmin = kminArray[i];
             if (kmin.getN() > nmin[0]) {
                 nmin[0] = kmin.getN();
                 nmin[1] = kmin.getCurSampleSize();

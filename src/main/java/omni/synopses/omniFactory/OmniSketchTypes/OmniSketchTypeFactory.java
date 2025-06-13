@@ -8,9 +8,11 @@ public class OmniSketchTypeFactory {
             case "SampleFirst" -> new OmniSketchTypeSampleFirst(sketchConfig);
             case "SampleFirstPerRow" -> new OmniSketchTypeSampleFirstPerRow(sketchConfig);
             case "SampleFirstTest" -> new OmniSketchTypeSampleFirstTest(sketchConfig);
-            case "SampleLater" -> new OmniSketchTypeSampleLater(sketchConfig, "KminPQ");
-            case "SampleLaterOptimized" -> new OmniSketchTypeSampleLater(sketchConfig, "KminPQOptimized");
-            case "SampleLaterOptimizedOnlyNew" -> new OmniSketchTypeSampleLater(sketchConfig, "KminPQOptimizedOnlyNew");
+            case "SampleLater" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminPQ");
+            case "TWOLHS" -> new OmniSketchTypeSampleLaterTWOLHS(sketchConfig, "TWOLHS");
+
+            case "SampleLaterOptimized" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminPQOptimized");
+            case "SampleLaterOptimizedOnlyNew" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminPQOptimizedOnlyNew");
 
             // Add other sketch types as needed
             default -> throw new IllegalArgumentException("Unsupported attribute sketch type: " + type);

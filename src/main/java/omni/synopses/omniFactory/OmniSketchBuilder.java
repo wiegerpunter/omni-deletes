@@ -84,6 +84,11 @@ public class OmniSketchBuilder {
         return this;
     }
 
+    public OmniSketchBuilder setUseFastTWOLHS(boolean useFastTWOLHS) {
+        config.setUseFastTWOLHS(useFastTWOLHS);
+        return this;
+    }
+
     public OmniSketchBuilder setSketchType(String sketchType) {
         this.sketchType = sketchType;
         return this;
@@ -133,6 +138,23 @@ public class OmniSketchBuilder {
                 .setUseAcrossRows(true)
                 .setUseNMax(true)
                 .setSketchType("SampleLater");
+    }
+
+
+    public static OmniSketchBuilder TWOLHS() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(true)
+                .setUseNMax(true)
+                .setUseFastTWOLHS(false)
+                .setSketchType("TWOLHS");
+    }
+
+    public static OmniSketchBuilder FastTWOLHS() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(true)
+                .setUseNMax(true)
+                .setUseFastTWOLHS(true)
+                .setSketchType("TWOLHS");
     }
 
     public static OmniSketchBuilder QFirstSampleLaterOptimized() {

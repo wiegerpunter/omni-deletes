@@ -1,6 +1,6 @@
-package omni.synopses.omniFactory.KminTypes;
+package omni.synopses.omniFactory.SampleTypes;
 
-public class KminTreeSet implements Kmin {
+public class KminTreeSet implements Sample {
 
     public KminTreeSet(int B, int b) {
         // Constructor implementation

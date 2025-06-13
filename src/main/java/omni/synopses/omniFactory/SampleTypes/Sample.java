@@ -1,6 +1,6 @@
-package omni.synopses.omniFactory.KminTypes;
+package omni.synopses.omniFactory.SampleTypes;
 
-public interface Kmin {
+public interface Sample {
     void ingest(int hx, int sign);
     Object query();
     long getMemoryFootprint();
