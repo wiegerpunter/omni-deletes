@@ -60,7 +60,12 @@ public class AttrSketchTWOLHS {
         long memoryFootprint = 0;
         for (int j = 0; j < depth; j++) {
             for (int i = 0; i < width; i++) {
-                memoryFootprint += sketch[j][i].getMemoryFootprint();
+            for (int k = 0; k < numTWOLHSRepetitions; k++) {
+                if (sketch[j][i][k] == null) {
+                    continue;
+                }
+                memoryFootprint += sketch[j][i][k].getMemoryFootprint();
+            }
             }
         }
         return memoryFootprint;
@@ -69,7 +74,12 @@ public class AttrSketchTWOLHS {
     public void reset() {
         for (int j = 0; j < depth; j++) {
             for (int i = 0; i < width; i++) {
-                sketch[j][i].reset();
+                for (int k = 0; k < numTWOLHSRepetitions; k++) {
+                    if (sketch[j][i][k] == null) {
+                        continue;
+                    }
+                    sketch[j][i][k].reset();
+                }
             }
         }
     }

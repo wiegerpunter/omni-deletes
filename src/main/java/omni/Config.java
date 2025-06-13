@@ -33,6 +33,8 @@ public class Config {
     public boolean expHydra;
     public boolean expResSample;
     public boolean expCM;
+    public boolean expTWOLHS;
+    public boolean expFastTWOLHS;
     public String[] sizeFactorOptions;
     public List<Integer> sizeNoise;
     public String experimentName;

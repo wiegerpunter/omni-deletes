@@ -136,6 +136,8 @@ public class RunExperiments {
         if (config.expCM) enabledExperiments.add("CountMin");
         if (config.expResSample) enabledExperiments.add("ReservoirSampling");
         if (config.expASH) enabledExperiments.add("aSH");
+        if (config.expTWOLHS) enabledExperiments.add("OmniSketchTWOLHS");
+        if (config.expFastTWOLHS) enabledExperiments.add("OmniSketchFastTWOLHS");
 
         if (config.parameterSettingType.equals("SampleSize")) {
             if (config.expOmniSketchVLDBSampleSize) enabledExperiments.add("OmniSketchVLDBSampleSize");
@@ -156,7 +158,6 @@ public class RunExperiments {
             if (config.expOmniSketchSFQLOptimizedOnlyNew) enabledExperiments.add("OmniSketchSFQLOptimizedOnlyNew");
             if (config.expOmniSketchSampleFirstQLater) enabledExperiments.add("OmniSketchSampleFirstQLater");
             if (config.expOmniSketchSampleFirstQLaterPerRow) enabledExperiments.add("OmniSketchSampleFirstQLaterPerRow");
-
         }
         return enabledExperiments;
     }
