@@ -9,7 +9,8 @@ public class OmniSketchTypeFactory {
             case "SampleFirstPerRow" -> new OmniSketchTypeSampleFirstPerRow(sketchConfig);
             case "SampleFirstTest" -> new OmniSketchTypeSampleFirstTest(sketchConfig);
             case "SampleLater" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminPQ");
-            case "SampleLaterArray" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "Array");
+            case "SampleLaterArray" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminArray");
+            case "SampleLaterArrayWithBuffer" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminArrayWithBuffer");
 
             case "TWOLHS" -> new OmniSketchTypeSampleLaterTWOLHS(sketchConfig, "TWOLHS");
 

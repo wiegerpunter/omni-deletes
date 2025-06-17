@@ -29,6 +29,8 @@ public class Config {
     public boolean expOmniSketchSFQLSampleSize;
     public boolean expOmniSketchSFQLSampleSizePerRow;
     public boolean expOmniSketchSFQLSampleSizeTestHashSet;
+    public boolean expOmniSketchVLDBArray;
+    public boolean expOmniSketchVLDBArrayWithBuffer;
     public boolean expASH;
     public boolean expHydra;
     public boolean expResSample;

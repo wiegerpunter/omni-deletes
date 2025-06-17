@@ -11,6 +11,9 @@ public class SampleFactory {
             case "KminPQOptimizedOnlyNew" -> new KminPQ(B, b, "KminPQOptimizedOnlyNew");
             case "KminTreeSet" -> new KminTreeSet(B, b);
             case "TWOLHS" -> new TWOLHS(B, config.getSeed());
+            case "KminArray" -> new KminArray(B, b, "KminArray");
+            case "KminArrayWithBuffer" -> new KminCustomArray(B, b, "KminArrayWithBuffer");
+
             default -> throw new IllegalArgumentException("Unknown Kmin type: " + kminType);
         };
     }

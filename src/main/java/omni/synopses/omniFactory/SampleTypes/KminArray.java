@@ -3,6 +3,9 @@ package omni.synopses.omniFactory.SampleTypes;
 import omni.Experiments.parameterSetting.Formulas;
 import omni.synopses.omniFactory.CustomPriorityQueue.PriorityQueue;
 
+import java.util.Arrays;
+import java.util.SortedSet;
+
 public class KminArray implements Sample {
 
     private final int B;
@@ -40,10 +43,11 @@ public class KminArray implements Sample {
         if (curSampleSize < B) {
             sample[curSampleSize] = hx;
             curSampleSize++;
-        } else if (curSampleSize == B) {
-            curTreeRoot = sample[sample.length - 1];
-            tryInsert(hx);
         } else {
+            if (curSampleSize == B) {
+                Arrays.sort(sample, 0, B); // ensure it's sorted once
+                curTreeRoot = sample[B - 1];
+            }
             tryInsert(hx);
         }
     }
@@ -51,18 +55,21 @@ public class KminArray implements Sample {
 
     private void tryInsert(int hx) {
         if (hx < curTreeRoot) { // get tree root
-            int index = 0;
-            while (index < B && sample[index] < hx) {
-                index++;
-            }
-            if (index < B) {
+            int index = Arrays.binarySearch(sample, 0, B, hx);
+            if (index < 0) index = -index - 1;
+//
+//            while (index < B && sample[index] < hx) {
+//                index++;
+//            }
+            if (index < B && sample[index] != hx) {
                 // Shift elements to the right
-                for (int i = B - 1; i > index; i--) {
-                    sample[i] = sample[i - 1];
-                }
+                System.arraycopy(sample, index, sample, index + 1, B - index - 1);
+//                for (int i = B - 1; i > index; i--) {
+//                    sample[i] = sample[i - 1];
+//                }
                 sample[index] = hx;
             }
-            curTreeRoot = sample[sample.length - 1]; // Update the tree root
+            curTreeRoot = sample[B - 1]; // Update the tree root
         }
     }
 

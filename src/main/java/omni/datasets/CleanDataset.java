@@ -1110,12 +1110,7 @@ public class CleanDataset {
             long[] noiseIndices = Arrays.stream(noiseUpdates)
                     .mapToLong(arr -> arr[0])
                     .sorted()
-                    .toArray();//new long[noiseUpdates.length];
-//            for (int i = 0; i < noiseUpdates.length; i++) {
-//                noiseIndices[i] = noiseUpdates[i][0];
-//            }
-//            // sort noiseIndices
-//            Arrays.sort(noiseIndices);
+                    .toArray();
 
             this.datasetInsertsSpreadOut = new long[noiseUpdates.length + datasetResidu.length][];
             System.arraycopy(datasetResidu, 0, datasetInsertsSpreadOut, 0, datasetResidu.length);
@@ -1171,33 +1166,6 @@ public class CleanDataset {
                     }
 
                 }
-//
-//                if (!deleteQueue.isEmpty() && r.nextDouble() < 0.5) {
-//                    int indexToDelete = r.nextInt(0, deleteQueue.size());
-//                    if (!indicesToRemove.containsKey(indexToDelete)) {
-//                        indicesToRemove.put(indexToDelete, c);
-//                        c++;
-//                    }
-//                }
-//
-//                if (indicesToRemove.size() > 1000000) {
-//                    System.out.println("Removing " + indicesToRemove.size() + " records from datasetAllSpreadOut.");
-//                    System.out.println("Delete Queue size: " + deleteQueue.size());
-//                    for (int index_c: indicesToRemove.keySet()) {
-//                        datasetAllSpreadOut[indicesToRemove.get(index_c)] = deleteQueue.get(index_c);
-//                        isDelete[indicesToRemove.get(index_c)] = true;
-//                    }
-//                    deleteQueue.removeAll(indicesToRemove.keySet().stream().map(deleteQueue::get).toList());
-//                    indicesToRemove.clear();
-//                    System.out.println("DeleteQueue size after deletes: " + deleteQueue.size());
-//                }
-//            }
-//            // add remaining deletes
-//            for (long[] record : deleteQueue) {
-//                datasetAllSpreadOut[c] = record;
-//                isDelete[c] = true;
-//                c++;
-//            }
             }
         }
     }

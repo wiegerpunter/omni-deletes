@@ -140,6 +140,21 @@ public class OmniSketchBuilder {
                 .setSketchType("SampleLater");
     }
 
+    public static OmniSketchBuilder QFirstSampleLaterArray() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(true)
+                .setUseNMax(true)
+                .setSketchType("SampleLaterArray");
+    }
+
+
+    public static OmniSketchBuilder QFirstSampleLaterArrayWithBuffer() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(true)
+                .setUseNMax(true)
+                .setSketchType("SampleLaterArrayWithBuffer");
+    }
+
 
     public static OmniSketchBuilder TWOLHS() {
         return new OmniSketchBuilder()

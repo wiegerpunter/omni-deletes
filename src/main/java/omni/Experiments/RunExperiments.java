@@ -148,12 +148,18 @@ public class RunExperiments {
         }
         if (config.parameterSettingType.equals("Custom") || config.parameterSettingType.equals("GridSearch")) {
             if (config.expOmniSketchVLDB) enabledExperiments.add("OmniSketchVLDBCustom");
+            if (config.expOmniSketchVLDBArray) enabledExperiments.add("OmniSketchVLDBArrayCustom");
+            if (config.expOmniSketchVLDBArrayWithBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithBufferCustom");
+
             if (config.expOmniSketchSFQLOptimized) enabledExperiments.add("OmniSketchSFQLOptimizedCustom");
             if (config.expOmniSketchSFQLOptimizedOnlyNew) enabledExperiments.add("OmniSketchSFQLOptimizedOnlyNewCustom");
         }
 
         if (config.parameterSettingType.equals("B/w")) {
             if (config.expOmniSketchVLDB) enabledExperiments.add("OmniSketchVLDB");
+            if (config.expOmniSketchVLDBArray) enabledExperiments.add("OmniSketchVLDBArray");
+            if (config.expOmniSketchVLDBArrayWithBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithBuffer");
+
             if (config.expOmniSketchSFQLOptimized) enabledExperiments.add("OmniSketchSFQLOptimized");
             if (config.expOmniSketchSFQLOptimizedOnlyNew) enabledExperiments.add("OmniSketchSFQLOptimizedOnlyNew");
             if (config.expOmniSketchSampleFirstQLater) enabledExperiments.add("OmniSketchSampleFirstQLater");

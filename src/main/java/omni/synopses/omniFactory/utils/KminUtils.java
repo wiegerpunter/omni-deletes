@@ -15,6 +15,12 @@ public class KminUtils {
         if (Objects.equals(kminArray[0].getKminType(), "KminPQ")) {
             return estimatePriorityQueue(kminArray, queryInfo, bound, numPreds);
         }
+        if (Objects.equals(kminArray[0].getKminType(), "KminArray")) {
+            return estimateArray(kminArray, queryInfo, bound, numPreds);
+        }
+        if (Objects.equals(kminArray[0].getKminType(), "KminArrayWithBuffer")) {
+            return estimateArray(kminArray, queryInfo, bound, numPreds);
+        }
 
         if (Objects.equals(kminArray[0].getKminType(), "KminPQOptimized")) {
             return estimatePriorityQueueOptimized(kminArray, queryInfo, bound, numPreds);
@@ -67,6 +73,67 @@ public class KminUtils {
         }
         return (int) ((long) S_cap * n_max[0] / n_max[1]);
     }
+
+    private static int estimateArray(Sample[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
+        // Implement the logic to intersect and scale kminArray
+        int S_cap = 0;
+        int[] n_max;
+
+        int[][] flatSamples = new int[kminArray.length][];
+        for (int i = 0; i < kminArray.length; i++) {
+            flatSamples[i] = (int[]) kminArray[i].query();
+        }
+
+        n_max = getNmax(kminArray);
+        S_cap = intersectionArray(flatSamples);
+
+        queryInfo.setScap(S_cap, n_max[0], n_max[1], false);
+        bound = Math.ceil(bound + Math.log(Math.sqrt(n_max[1]) * numPreds));
+        if (S_cap < bound) {
+            queryInfo.case1 = true;
+        }
+        return (int) ((long) S_cap * n_max[0] / n_max[1]);
+    }
+
+    private static int intersectionArray(int[][] arrays) {
+        if (arrays == null || arrays.length == 0) return 0;
+
+        // Find the index of the shortest array
+        int minIndex = 0;
+        for (int i = 1; i < arrays.length; i++) {
+            if (arrays[i].length < arrays[minIndex].length) {
+                minIndex = i;
+            }
+        }
+
+        int[] base = arrays[minIndex];
+        int count = 0;
+        int prev = Integer.MIN_VALUE;
+
+        for (int i = 0; i < base.length; i++) {
+            int val = base[i];
+
+            // Skip duplicates in base array
+            if (i > 0 && val == prev) continue;
+            prev = val;
+
+            boolean presentInAll = true;
+            for (int j = 0; j < arrays.length; j++) {
+                if (j == minIndex) continue;
+                if (Arrays.binarySearch(arrays[j], val) < 0) {
+                    presentInAll = false;
+                    break;
+                }
+            }
+
+            if (presentInAll) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
 
     private static int estimatePriorityQueueOptimized(Sample[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
         // Implement the logic to intersect and scale PriorityQueue kminArray
