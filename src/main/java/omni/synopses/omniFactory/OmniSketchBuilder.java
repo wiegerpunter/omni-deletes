@@ -54,11 +54,6 @@ public class OmniSketchBuilder {
         return this;
     }
 
-    public OmniSketchBuilder setUseBetaKmin(boolean useBetaKmin) {
-        config.setUseBetaKmin(useBetaKmin);
-        return this;
-    }
-
     public OmniSketchBuilder setDynamicResizing(boolean dynamicResizing) {
         config.setDynamicResizing(dynamicResizing);
         return this;
@@ -99,6 +94,11 @@ public class OmniSketchBuilder {
         return this;
     }
 
+    public OmniSketchBuilder setBufferBeta(double bufferBeta) {
+        config.setBufferBeta(bufferBeta);
+        return this;
+    }
+
     public OmniSketch build() {
         return new OmniSketch(config, sketchType);
     }
@@ -109,7 +109,6 @@ public class OmniSketchBuilder {
                 .setUseS0(true)
                 .setUseS0WithSampling(true)
                 .setUseOnlyBestRow(true)
-                .setUseBetaKmin(true)
                 .setSketchType("SampleFirst");
     }
 
@@ -119,7 +118,6 @@ public class OmniSketchBuilder {
                 .setUseS0(true)
                 .setUseS0WithSampling(true)
                 .setUseOnlyBestRow(true)
-                .setUseBetaKmin(true)
                 .setSketchType("SampleFirstPerRow");
     }
 
@@ -129,7 +127,6 @@ public class OmniSketchBuilder {
                 .setUseS0(true)
                 .setUseS0WithSampling(true)
                 .setUseOnlyBestRow(true)
-                .setUseBetaKmin(true)
                 .setSketchType("SampleFirstTest");
     }
 
@@ -185,4 +182,5 @@ public class OmniSketchBuilder {
                 .setUseNMax(true)
                 .setSketchType("SampleLaterOptimizedOnlyNew");
     }
+
 }

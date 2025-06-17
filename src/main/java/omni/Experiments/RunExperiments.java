@@ -78,6 +78,9 @@ public class RunExperiments {
             int numNoiseUpdates = (int) (cd.getDatasetSize() * noiseUpdateFraction);
             System.out.println("Running with " + numNoiseUpdates + " deletes out of " + cd.getDatasetSize());
             cd.setNoiseUpdates(numNoiseUpdates);
+            config.bufferDeletesMinwise = 0.1 +1/(1- noiseUpdateFraction);
+            //todo: use the computed beta to use in OmniSketch
+            System.out.println("Buffer deletes minwise: " + config.bufferDeletesMinwise);
             for (long ram : config.ramVals) {
                 for (String experimentName : getEnabledExperiments()) {
                     Experiment experiment = ExperimentFactory.getExperiment(experimentName);
@@ -117,8 +120,8 @@ public class RunExperiments {
                                 }
                             }
                         } else if (experimentName.contains("aSH")) {
-                            for (double betaBuffer: config.ingestBuffers) {
-                                config.betaBuffer = betaBuffer;
+                            for (double bufferASH: config.ingestBuffers) {
+                                config.bufferASH = bufferASH;
                                 experiment.run(ram, rtp, repetition, config);
                             }
                         } else {
@@ -318,6 +321,7 @@ public class RunExperiments {
                 .setNumStoredAttributes(config.numStoredAttributes)
                 .setParams(params)
                 .setSeed(repetition)
+                .setBufferBeta(config.bufferDeletesMinwise)
                 .build();
 
         omniSketch.printParams();

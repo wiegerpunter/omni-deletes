@@ -10,7 +10,6 @@ public class OmniSketchConfig {
     private boolean useOnlyBestRow;
     private boolean useAcrossRows;
     private boolean rangeQueries;
-    private boolean useBetaKmin;
     private boolean dynamicResizing;
     private boolean dynamicSampleSizes;
     private double eps;
@@ -20,6 +19,7 @@ public class OmniSketchConfig {
     private boolean useNMax;
     private String setting;
     private boolean useFastTWOLHS;
+    private double beta;
 
     // Getters and setters for all fields
     public int getSeed() {
@@ -94,14 +94,6 @@ public class OmniSketchConfig {
         this.rangeQueries = rangeQueries;
     }
 
-    public boolean isUseBetaKmin() {
-        return useBetaKmin;
-    }
-
-    public void setUseBetaKmin(boolean useBetaKmin) {
-        this.useBetaKmin = useBetaKmin;
-    }
-
     public boolean isDynamicResizing() {
         return dynamicResizing;
     }
@@ -160,6 +152,14 @@ public class OmniSketchConfig {
 
     public boolean getUseFastTWOLHS() {
         return useFastTWOLHS;
+    }
+
+    public void setBufferBeta(double beta) {
+        this.beta = beta;
+    }
+
+    public double getBufferBeta() {
+        return beta;
     }
 
 

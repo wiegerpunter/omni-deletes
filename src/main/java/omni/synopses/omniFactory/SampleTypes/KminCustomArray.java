@@ -13,14 +13,16 @@ public class KminCustomArray implements Sample {
     private int curSampleSize;
     private ArrayWithBuffer sample;
     private final String setting;
+    private double beta;
 
-    public KminCustomArray(int B, int b, String setting) {
+    public KminCustomArray(int B, int b, double beta, String setting) {
         this.B = B;
         this.b = b;
         this.setting = setting;
         this.n = 0;
         this.curSampleSize = 0;
-        this.sample = new ArrayWithBuffer(B); // Assuming a buffer size of 200
+        this.beta = beta;
+        this.sample = new ArrayWithBuffer(B, beta); // Assuming a buffer size of 200
     }
 
     // Implement the methods for KminPQ here
@@ -41,7 +43,8 @@ public class KminCustomArray implements Sample {
     }
 
     private void remove(int hx) {
-        throw new UnsupportedOperationException("Remove operation is not supported in KminPQ");
+        n--;
+        sample.remove(hx);
     }
 
     public int[] query() {
@@ -49,7 +52,7 @@ public class KminCustomArray implements Sample {
     }
 
     public long getMemoryFootprint() {
-        return Formulas.ramSingleKmin(curSampleSize, b);
+        return Formulas.ramSingleKmin(getCurSampleSize() + getBufferSize(), b);
     }
 
     @Override
@@ -72,5 +75,8 @@ public class KminCustomArray implements Sample {
     @Override
     public int getCurSampleSize() {
         return sample.getSize();
+    }
+    public int getBufferSize() {
+        return sample.getBufferSize();
     }
 }

@@ -15,6 +15,7 @@ public class AttrSketchKmin {
     final int width;
     final int B;
     final int b;
+    final double beta;
     int[] reusableHashes;
 
     public AttrSketchKmin(OmniSketchConfig config, int depth, int width, int B, int b, String SampleType) {
@@ -22,6 +23,7 @@ public class AttrSketchKmin {
         this.width = width;
         this.B = B;
         this.b = b;
+        this.beta = config.getBufferBeta();
 
 
         this.reusableHashes = new int[depth];

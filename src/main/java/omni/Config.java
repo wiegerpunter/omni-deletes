@@ -55,7 +55,7 @@ public class Config {
     public int d;
     public int b;
     public double parFactor;
-    public double betaBuffer;
+    public double bufferASH;
     public boolean readAllFiles;
     public int numFiles;
     public int w;
@@ -63,6 +63,7 @@ public class Config {
     public boolean expOmniSketchSFQLOptimized;
     public boolean expOmniSketchSFQLOptimizedOnlyNew;
     public String parameterSettingType;
+    public double bufferDeletesMinwise;
 
     // Old parameters, might use them in the future
 //    public List<Double> bufferValuesOmni;
@@ -89,5 +90,9 @@ public class Config {
 
     public void setCurrentDate() {
         currentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+    }
+
+    public void setCurrentBufferDeletesMinwise(double noiseUpdateFraction) {
+
     }
 }

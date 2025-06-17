@@ -94,7 +94,50 @@ public class ArrayWithBuffer {
     }
 
     public int getSize() {
+        if (bufferSize > 0) {
+            flushBuffer();
+        }
+        if (useBeta) {
+            return (int) (arr.length / beta);
+        }
         return size;
+    }
+
+    public void remove(int hx) {
+        if (size == 0) {
+            return; // Nothing to remove
+        }
+        // check if present in buffer
+        for (int i = 0; i < bufferSize; i++) {
+            if (buffer[i] == hx) {
+                // delete buffer[i]
+                System.arraycopy(arr, i + 1, arr, i, bufferSize - i - 1);
+                bufferSize--;
+                return;
+            }
+        }
+
+        int index = Arrays.binarySearch(arr, 0, size, hx);
+        if (index >= 0) {
+            // Element found, shift elements to the left
+            System.arraycopy(arr, index + 1, arr, index, size - index - 1);
+            size--;
+        } else {
+            // Element not found, do nothing
+            return;
+        }
+
+        // If buffer is not empty, we can try to fill the gap
+        if (bufferSize > 0) {
+            arr[size] = buffer[bufferSize];
+            bufferSize--;
+            Arrays.sort(arr, 0, size + 1); // Sort after inserting from buffer
+            size++;
+        }
+    }
+
+    public int getBufferSize() {
+        return bufferSize;
     }
 }
 

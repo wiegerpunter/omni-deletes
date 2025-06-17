@@ -90,8 +90,8 @@ public class runQueries {
             for (int i = 0; i< d.pointQueries.length; i++) {
                 computeErrorPointQuery(i, d.pointQueries[i], d.pointQueriesNumAttrs[i], d.pointQueryAnswers[i], d.pointQueryUnion[i]);
                 //h.addQueryResult(q);
-                if (i % 10000 == 0) {
-                    System.out.println(i + " queries done");
+                if (i % 1000 == 0) {
+                    System.out.println("\r" + i + " queries done");
                 }
             }
             System.out.println("Memory usage is " + s.getMemoryUsage());
