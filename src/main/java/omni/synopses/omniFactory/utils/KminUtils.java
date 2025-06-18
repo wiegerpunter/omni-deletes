@@ -1,5 +1,6 @@
 package omni.synopses.omniFactory.utils;
 
+import omni.datasets.Record.Query;
 import omni.synopses.omniFactory.CustomPriorityQueue.PriorityQueue;
 import omni.Experiments.utils.QueryInfo;
 import omni.synopses.omniFactory.SampleTypes.Sample;
@@ -37,7 +38,10 @@ public class KminUtils {
         }
 
         if (Objects.equals(kminArray[0].getKminType(), "KminTreeSet")) {
-            return intersectTreeSet((TreeSet[]) kminArray);
+            return intersectTreeSet(kminArray, queryInfo, bound, numPreds);
+        }
+        if (Objects.equals(kminArray[0].getKminType(), "KminTreeSetWithoutBuffer")) {
+            return intersectTreeSet(kminArray, queryInfo, bound, numPreds);
         }
         throw new IllegalArgumentException("Unsupported kmin type: " + kminArray[0].getKminType());
     }
@@ -46,8 +50,49 @@ public class KminUtils {
         throw new UnsupportedOperationException("HashSet intersection not implemented yet");
     }
 
-    private static int intersectTreeSet(TreeSet[] kminArray) {
-        throw new UnsupportedOperationException("TreeSet intersection not implemented yet");
+    private static int intersectTreeSet(Sample[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
+        int S_cap = 0;
+        int[] n_max = new int[2];
+        TreeSet<Integer>[] flatSamples = new TreeSet[kminArray.length];
+        for (int i = 0; i < kminArray.length; i++) {
+            flatSamples[i] = (TreeSet<Integer>) kminArray[i].query();
+        }
+
+        n_max= getNmax(kminArray);
+        S_cap = intersectionTreeSet(flatSamples);
+        queryInfo.setScap(S_cap, n_max[0], n_max[1], false);
+        bound = Math.ceil(bound + Math.log(Math.sqrt(n_max[1]) * numPreds));
+        if (S_cap < bound) {
+            queryInfo.case1 = true;
+        }
+        return (int) ((long) S_cap * n_max[0] / n_max[1]);
+    }
+
+    private static int intersectionTreeSet(TreeSet<Integer>[] samples) {
+            int numJoins = samples.length;
+            int c = 0;
+            Iterator<Integer> iter = samples[0].iterator();
+            while (iter != null && iter.hasNext()) {
+                boolean found = true;
+                Integer i = iter.next();
+                for (int j = 1; j < numJoins; j++) {
+                    Integer otherElement = samples[j].ceiling(i);
+                    if (otherElement == null) {
+                        found = false;
+                        iter = null;
+                        break;
+                    } // not contained
+                    else if (otherElement.equals(i)) continue; // is contained
+                    else {
+                        iter = samples[0].tailSet(otherElement).iterator(); // fast forward iter0
+                        found = false;
+                        break; // but now you need to start from iter.hasNext() again
+                    }
+                }
+                if (found) c++;
+
+            }
+            return c;
     }
 
     private static int estimatePriorityQueue(Sample[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {

@@ -152,6 +152,20 @@ public class OmniSketchBuilder {
                 .setSketchType("SampleLaterArrayWithBuffer");
     }
 
+    public static OmniSketchBuilder QFirstSampleLaterTreeSet() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(true)
+                .setUseNMax(true)
+                .setSketchType("SampleLaterTreeSet");
+    }
+
+    public static OmniSketchBuilder QFirstSampleLaterTreeSetWithoutBuffer() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(true)
+                .setUseNMax(true)
+                .setSketchType("SampleLaterTreeSetWithoutBuffer");
+    }
+
     public static OmniSketchBuilder QFirstSampleLaterArrayWithoutBuffer() {
         return new OmniSketchBuilder()
                 .setUseAcrossRows(true)

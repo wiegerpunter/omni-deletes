@@ -1,10 +1,7 @@
 package omni.Experiments;
 import omni.Experiments.baselines.ReservoirExperiment;
 import omni.Experiments.baselines.aSHExperiment;
-import omni.Experiments.custom.OmniSFQLOptimizedCustomExperiment;
-import omni.Experiments.custom.OmniVLDBArrayWithBufferCustomExperiment;
-import omni.Experiments.custom.OmniVLDBArrayWithoutBufferCustomExperiment;
-import omni.Experiments.custom.OmniVLDBCustomExperiment;
+import omni.Experiments.custom.*;
 import omni.Experiments.deprecated.*;
 
 import java.util.HashMap;
@@ -24,6 +21,10 @@ public class ExperimentFactory {
         experiments.put("OmniSketchVLDBArray", new OmniVLDBArrayExperiment());
         experiments.put("OmniSketchVLDBArrayWithBuffer", new OmniVLDBArrayWithBufferExperiment());
         experiments.put("OmniSketchVLDBArrayWithoutBuffer", new OmniVLDBArrayWithoutBufferExperiment());
+        experiments.put("OmniSketchVLDBTreeSet", new OmniVLDBTreeSetExperiment());
+        experiments.put("OmniSketchVLDBTreeSetWithoutBuffer", new OmniVLDBTreeSetWithoutBufferExperiment());
+
+
 
         experiments.put("OmniSketchSFQLOptimized", new OmniSFQLOptimizedExperiment());
         experiments.put("OmniSketchSFQLOptimizedOnlyNew", new OmniSFQLOptimizedOnlyNewExperiment());
@@ -41,6 +42,10 @@ public class ExperimentFactory {
         experiments.put("OmniSketchVLDBArrayCustom", new OmniVLDBArrayCustomExperiment());
         experiments.put("OmniSketchVLDBArrayWithBufferCustom", new OmniVLDBArrayWithBufferCustomExperiment());
         experiments.put("OmniSketchVLDBArrayWithoutBufferCustom", new OmniVLDBArrayWithoutBufferCustomExperiment());
+        experiments.put("OmniSketchVLDBTreeSetCustom", new OmniVLDBTreeSetCustomExperiment());
+        experiments.put("OmniSketchVLDBTreeSetWithoutBufferCustom", new OmniVLDBTreeSetWithoutBufferCustomExperiment());
+
+
 
         experiments.put("OmniSketchSFQLOptimizedCustom", new OmniSFQLOptimizedCustomExperiment());
         experiments.put("OmniSketchSFQLOptimizedOnlyNewCustom", new OmniSFQLOptimizedOnlyNewCustomExperiment());

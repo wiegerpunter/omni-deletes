@@ -75,7 +75,7 @@ public class RunExperiments {
         }
         readDataset(perc, sizeFactor, noiseSize, zipfAlpha);
     }
-    double[] betas = new double[]{1,1.35,2.1,4.2,11};
+    //double[] betas = new double[]{1,1.35,2.1,4.2,11};
     private void runAllExperiments(int repetition) throws IOException {
 
         RamToPar rtp = new RamToPar(config.numStoredAttributes, config.ramVals);
@@ -113,12 +113,9 @@ public class RunExperiments {
                                                     continue;
                                                 }
                                                 bp.add(ram, config.B, config.d, config.w, config.numStoredAttributes, config.b);
-                                                for (double beta: betas) {
-                                                    config.bufferDeletesMinwise = beta;
-                                                    //config.bufferDeletesMinwise = 1 + getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTable.csv", noiseUpdateFraction, ram, config.numStoredAttributes, config.d);
-                                                    System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
-                                                    experiment.run(ram, rtp, repetition, config);
-                                                }
+                                                config.bufferDeletesMinwise = 1 + getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTable.csv", noiseUpdateFraction, ram, config.numStoredAttributes, config.d);
+                                                System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
+                                                experiment.run(ram, rtp, repetition, config);
                                             } else {
                                                 throw new RuntimeException("Unknown parameter setting type: " + config.parameterSettingType);
                                             }
@@ -192,6 +189,9 @@ public class RunExperiments {
             if (config.expOmniSketchVLDBArray) enabledExperiments.add("OmniSketchVLDBArrayCustom");
             if (config.expOmniSketchVLDBArrayWithBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithBufferCustom");
             if (config.expOmniSketchVLDBArrayWithoutBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithoutBufferCustom");
+            if (config.expOmniSketchVLDBTreeSet) enabledExperiments.add("OmniSketchVLDBTreeSetCustom");
+            if (config.expOmniSketchVLDBTreeSetWithoutBuffer) enabledExperiments.add("OmniSketchVLDBTreeSetWithoutBufferCustom");
+
 
 
             if (config.expOmniSketchSFQLOptimized) enabledExperiments.add("OmniSketchSFQLOptimizedCustom");
@@ -203,6 +203,10 @@ public class RunExperiments {
             if (config.expOmniSketchVLDBArray) enabledExperiments.add("OmniSketchVLDBArray");
             if (config.expOmniSketchVLDBArrayWithBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithBuffer");
             if (config.expOmniSketchVLDBArrayWithoutBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithoutBuffer");
+            if (config.expOmniSketchVLDBTreeSet) enabledExperiments.add("OmniSketchVLDBTreeSet");
+            if (config.expOmniSketchVLDBTreeSetWithoutBuffer) enabledExperiments.add("OmniSketchVLDBTreeSetWithoutBuffer");
+
+
 
             if (config.expOmniSketchSFQLOptimized) enabledExperiments.add("OmniSketchSFQLOptimized");
             if (config.expOmniSketchSFQLOptimizedOnlyNew) enabledExperiments.add("OmniSketchSFQLOptimizedOnlyNew");

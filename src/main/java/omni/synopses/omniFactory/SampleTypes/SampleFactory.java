@@ -9,7 +9,8 @@ public class SampleFactory {
             case "KminPQ" -> new KminPQ(B, b, "KminPQ");
             case "KminPQOptimized" -> new KminPQ(B, b, "KminPQOptimized");
             case "KminPQOptimizedOnlyNew" -> new KminPQ(B, b, "KminPQOptimizedOnlyNew");
-            case "KminTreeSet" -> new KminTreeSet(B, b);
+            case "KminTreeSet" -> new KminTreeSet(B, b, config.getBufferBeta(), "KminTreeSet");
+            case "KminTreeSetWithoutBuffer" -> new KminTreeSet(B, b, 0, "KminTreeSetWithoutBuffer");
             case "TWOLHS" -> new TWOLHS(B, config.getSeed());
             case "KminArray" -> new KminArray(B, b, "KminArray");
             case "KminArrayWithBuffer" -> new KminCustomArray(B, b, config.getBufferBeta(), "KminArrayWithBuffer");

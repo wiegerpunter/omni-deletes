@@ -31,6 +31,55 @@ public class ArrayWithBuffer {
         this.useBeta = true;
     }
 
+
+    public void remove(int hx) {
+        if (size == 0) {
+            return; // Nothing to remove
+        }
+        // check if present in buffer
+        for (int i = 0; i < bufferSize; i++) {
+            if (buffer[i] == hx) {
+                // delete buffer[i]
+                System.arraycopy(arr, i + 1, arr, i, bufferSize - i - 1);
+                bufferSize--;
+                deletesFromBuffer++;
+                return;
+            }
+        }
+
+        if (hx > arr[K - 1]) {
+            // Element is larger than the largest in the sample, ignore
+            return;
+        }
+
+        int index = Arrays.binarySearch(arr, 0, size, hx);
+        if (index >= 0) {
+            // Element found, shift elements to the left
+            System.arraycopy(arr, index + 1, arr, index, size - index -1);
+            size--;
+            deletesFromSample++;
+        } else {
+            // Element not found, do nothing
+            return;
+        }
+
+        // If buffer is not empty, we can try to fill the gap
+        if (bufferSize > 0) {
+            int insertIndex = Arrays.binarySearch(arr, 0, size, buffer[bufferSize - 1]);
+            if (insertIndex < 0) {
+                insertIndex = -insertIndex - 1; // Find the insertion point
+            }
+            // Shift elements to the right to make space for the buffer element
+            System.arraycopy(arr, insertIndex, arr, insertIndex + 1, size - insertIndex);
+            // Insert the last element from the buffer into the sample
+
+            // Insert the last element from the buffer into the sample
+            arr[size] = buffer[bufferSize - 1];
+            bufferSize--;
+            size++;
+        }
+    }
+
     public void insert(int val) {
         if (size < K - 1) {
             arr[size] = val;
@@ -105,45 +154,6 @@ public class ArrayWithBuffer {
         return size;
     }
 
-    public void remove(int hx) {
-        if (size == 0) {
-            return; // Nothing to remove
-        }
-        // check if present in buffer
-        for (int i = 0; i < bufferSize; i++) {
-            if (buffer[i] == hx) {
-                // delete buffer[i]
-                System.arraycopy(arr, i + 1, arr, i, bufferSize - i - 1);
-                bufferSize--;
-                deletesFromBuffer++;
-                return;
-            }
-        }
-
-        if (hx > arr[K - 1]) {
-            // Element is larger than the largest in the sample, ignore
-            return;
-        }
-
-        int index = Arrays.binarySearch(arr, 0, size, hx);
-        if (index >= 0) {
-            // Element found, shift elements to the left
-            System.arraycopy(arr, index + 1, arr, index, size - index - 1);
-            size--;
-            deletesFromSample++;
-        } else {
-            // Element not found, do nothing
-            return;
-        }
-
-        // If buffer is not empty, we can try to fill the gap
-        if (bufferSize > 0) {
-            arr[size] = buffer[bufferSize];
-            bufferSize--;
-            Arrays.sort(arr, 0, size + 1); // Sort after inserting from buffer
-            size++;
-        }
-    }
 
     public int getBufferSize() {
         return bufferSize;

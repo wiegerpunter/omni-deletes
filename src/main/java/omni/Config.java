@@ -65,6 +65,8 @@ public class Config {
     public boolean expOmniSketchSFQLOptimizedOnlyNew;
     public String parameterSettingType;
     public double bufferDeletesMinwise;
+    public boolean expOmniSketchVLDBTreeSet;
+    public boolean expOmniSketchVLDBTreeSetWithoutBuffer;
 
     // Old parameters, might use them in the future
 //    public List<Double> bufferValuesOmni;
