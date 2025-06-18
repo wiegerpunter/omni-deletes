@@ -3,6 +3,7 @@ import omni.Experiments.baselines.ReservoirExperiment;
 import omni.Experiments.baselines.aSHExperiment;
 import omni.Experiments.custom.OmniSFQLOptimizedCustomExperiment;
 import omni.Experiments.custom.OmniVLDBArrayWithBufferCustomExperiment;
+import omni.Experiments.custom.OmniVLDBArrayWithoutBufferCustomExperiment;
 import omni.Experiments.custom.OmniVLDBCustomExperiment;
 import omni.Experiments.deprecated.*;
 
@@ -22,6 +23,8 @@ public class ExperimentFactory {
         experiments.put("OmniSketchVLDB", new OmniVLDBExperiment());
         experiments.put("OmniSketchVLDBArray", new OmniVLDBArrayExperiment());
         experiments.put("OmniSketchVLDBArrayWithBuffer", new OmniVLDBArrayWithBufferExperiment());
+        experiments.put("OmniSketchVLDBArrayWithoutBuffer", new OmniVLDBArrayWithoutBufferExperiment());
+
         experiments.put("OmniSketchSFQLOptimized", new OmniSFQLOptimizedExperiment());
         experiments.put("OmniSketchSFQLOptimizedOnlyNew", new OmniSFQLOptimizedOnlyNewExperiment());
         experiments.put("OmniSketchTWOLHS", new OmniTWOLHSExperiment());
@@ -37,6 +40,8 @@ public class ExperimentFactory {
         experiments.put("OmniSketchVLDBCustom", new OmniVLDBCustomExperiment());
         experiments.put("OmniSketchVLDBArrayCustom", new OmniVLDBArrayCustomExperiment());
         experiments.put("OmniSketchVLDBArrayWithBufferCustom", new OmniVLDBArrayWithBufferCustomExperiment());
+        experiments.put("OmniSketchVLDBArrayWithoutBufferCustom", new OmniVLDBArrayWithoutBufferCustomExperiment());
+
         experiments.put("OmniSketchSFQLOptimizedCustom", new OmniSFQLOptimizedCustomExperiment());
         experiments.put("OmniSketchSFQLOptimizedOnlyNewCustom", new OmniSFQLOptimizedOnlyNewCustomExperiment());
 

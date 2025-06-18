@@ -22,7 +22,11 @@ public class KminCustomArray implements Sample {
         this.n = 0;
         this.curSampleSize = 0;
         this.beta = beta;
-        this.sample = new ArrayWithBuffer(B, beta); // Assuming a buffer size of 200
+        if (beta == 0) {
+            this.sample = new  ArrayWithBuffer(B);
+        } else {
+            this.sample = new ArrayWithBuffer(B, beta);
+        }
     }
 
     // Implement the methods for KminPQ here
@@ -57,7 +61,7 @@ public class KminCustomArray implements Sample {
 
     @Override
     public void reset() {
-        sample = new ArrayWithBuffer(B); // Resetting the sample with a new buffer
+        sample = new ArrayWithBuffer(B, beta); // Resetting the sample with a new buffer
         curSampleSize = 0;
         n = 0;
     }

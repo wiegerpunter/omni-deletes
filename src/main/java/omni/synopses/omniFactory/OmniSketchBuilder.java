@@ -152,6 +152,13 @@ public class OmniSketchBuilder {
                 .setSketchType("SampleLaterArrayWithBuffer");
     }
 
+    public static OmniSketchBuilder QFirstSampleLaterArrayWithoutBuffer() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(true)
+                .setUseNMax(true)
+                .setSketchType("SampleLaterArrayWithoutBuffer");
+    }
+
 
     public static OmniSketchBuilder TWOLHS() {
         return new OmniSketchBuilder()

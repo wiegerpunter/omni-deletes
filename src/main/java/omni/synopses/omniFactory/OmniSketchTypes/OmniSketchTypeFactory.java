@@ -11,6 +11,7 @@ public class OmniSketchTypeFactory {
             case "SampleLater" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminPQ");
             case "SampleLaterArray" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminArray");
             case "SampleLaterArrayWithBuffer" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminArrayWithBuffer");
+            case "SampleLaterArrayWithoutBuffer" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminArrayWithoutBuffer");
 
             case "TWOLHS" -> new OmniSketchTypeSampleLaterTWOLHS(sketchConfig, "TWOLHS");
 

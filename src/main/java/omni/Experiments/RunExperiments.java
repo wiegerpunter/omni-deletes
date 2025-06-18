@@ -78,8 +78,7 @@ public class RunExperiments {
             int numNoiseUpdates = (int) (cd.getDatasetSize() * noiseUpdateFraction);
             System.out.println("Running with " + numNoiseUpdates + " deletes out of " + cd.getDatasetSize());
             cd.setNoiseUpdates(numNoiseUpdates);
-            config.bufferDeletesMinwise = 0.1 +1/(1- noiseUpdateFraction);
-            //todo: use the computed beta to use in OmniSketch
+            config.bufferDeletesMinwise = 0.1 + (double) 1 /(1- ((double) numNoiseUpdates /(numNoiseUpdates + cd.datasetResidu.length)));
             System.out.println("Buffer deletes minwise: " + config.bufferDeletesMinwise);
             for (long ram : config.ramVals) {
                 for (String experimentName : getEnabledExperiments()) {
@@ -153,6 +152,8 @@ public class RunExperiments {
             if (config.expOmniSketchVLDB) enabledExperiments.add("OmniSketchVLDBCustom");
             if (config.expOmniSketchVLDBArray) enabledExperiments.add("OmniSketchVLDBArrayCustom");
             if (config.expOmniSketchVLDBArrayWithBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithBufferCustom");
+            if (config.expOmniSketchVLDBArrayWithoutBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithoutBufferCustom");
+
 
             if (config.expOmniSketchSFQLOptimized) enabledExperiments.add("OmniSketchSFQLOptimizedCustom");
             if (config.expOmniSketchSFQLOptimizedOnlyNew) enabledExperiments.add("OmniSketchSFQLOptimizedOnlyNewCustom");
@@ -162,6 +163,7 @@ public class RunExperiments {
             if (config.expOmniSketchVLDB) enabledExperiments.add("OmniSketchVLDB");
             if (config.expOmniSketchVLDBArray) enabledExperiments.add("OmniSketchVLDBArray");
             if (config.expOmniSketchVLDBArrayWithBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithBuffer");
+            if (config.expOmniSketchVLDBArrayWithoutBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithoutBuffer");
 
             if (config.expOmniSketchSFQLOptimized) enabledExperiments.add("OmniSketchSFQLOptimized");
             if (config.expOmniSketchSFQLOptimizedOnlyNew) enabledExperiments.add("OmniSketchSFQLOptimizedOnlyNew");

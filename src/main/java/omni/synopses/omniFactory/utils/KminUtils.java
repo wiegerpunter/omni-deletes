@@ -21,6 +21,9 @@ public class KminUtils {
         if (Objects.equals(kminArray[0].getKminType(), "KminArrayWithBuffer")) {
             return estimateArray(kminArray, queryInfo, bound, numPreds);
         }
+        if (Objects.equals(kminArray[0].getKminType(), "KminArrayWithoutBuffer")) {
+            return estimateArray(kminArray, queryInfo, bound, numPreds);
+        }
 
         if (Objects.equals(kminArray[0].getKminType(), "KminPQOptimized")) {
             return estimatePriorityQueueOptimized(kminArray, queryInfo, bound, numPreds);
@@ -120,7 +123,7 @@ public class KminUtils {
             boolean presentInAll = true;
             for (int j = 0; j < arrays.length; j++) {
                 if (j == minIndex) continue;
-                if (Arrays.binarySearch(arrays[j], val) < 0) {
+                if (Arrays.binarySearch(arrays[j], val) < 0) { //TODO: we can search less space by using iterator for the non-base-sets.
                     presentInAll = false;
                     break;
                 }
@@ -193,6 +196,9 @@ public class KminUtils {
             if (kmin.getN() > nmax[0]) {
                 nmax[0] = kmin.getN();
                 nmax[1] = kmin.getCurSampleSize();
+                if (nmax[1] == 0) {
+                    System.out.println(kmin.getCurSampleSize());
+                }
             }
         }
         return nmax;

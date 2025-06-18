@@ -13,6 +13,8 @@ public class SampleFactory {
             case "TWOLHS" -> new TWOLHS(B, config.getSeed());
             case "KminArray" -> new KminArray(B, b, "KminArray");
             case "KminArrayWithBuffer" -> new KminCustomArray(B, b, config.getBufferBeta(), "KminArrayWithBuffer");
+            case "KminArrayWithoutBuffer" -> new KminCustomArray(B, b, 0,"KminArrayWithoutBuffer");
+
 
             default -> throw new IllegalArgumentException("Unknown Kmin type: " + kminType);
         };
