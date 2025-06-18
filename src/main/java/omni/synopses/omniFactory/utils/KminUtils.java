@@ -77,7 +77,7 @@ public class KminUtils {
         return (int) ((long) S_cap * n_max[0] / n_max[1]);
     }
 
-    private static int estimateArray(Sample[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
+    public static int estimateArray(Sample[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
         // Implement the logic to intersect and scale kminArray
         int S_cap = 0;
         int[] n_max;

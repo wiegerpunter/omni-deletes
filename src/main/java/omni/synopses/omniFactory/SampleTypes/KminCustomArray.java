@@ -10,7 +10,6 @@ public class KminCustomArray implements Sample {
     private final int B;
     private final int b;
     private int n;
-    private int curSampleSize;
     private ArrayWithBuffer sample;
     private final String setting;
     private double beta;
@@ -20,7 +19,6 @@ public class KminCustomArray implements Sample {
         this.b = b;
         this.setting = setting;
         this.n = 0;
-        this.curSampleSize = 0;
         this.beta = beta;
         if (beta == 0) {
             this.sample = new  ArrayWithBuffer(B);
@@ -63,7 +61,6 @@ public class KminCustomArray implements Sample {
     @Override
     public void reset() {
         sample = new ArrayWithBuffer(B, beta); // Resetting the sample with a new buffer
-        curSampleSize = 0;
         n = 0;
     }
 

@@ -120,6 +120,11 @@ public class ArrayWithBuffer {
             }
         }
 
+        if (hx > arr[K - 1]) {
+            // Element is larger than the largest in the sample, ignore
+            return;
+        }
+
         int index = Arrays.binarySearch(arr, 0, size, hx);
         if (index >= 0) {
             // Element found, shift elements to the left
