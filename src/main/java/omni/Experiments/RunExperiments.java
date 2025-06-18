@@ -2,6 +2,7 @@ package omni.Experiments;
 
 import com.opencsv.exceptions.CsvValidationException;
 import omni.*;
+import omni.Experiments.parameterSetting.BufferedParamMinwiseSettings;
 import omni.datasets.CleanDataset;
 import omni.datasets.DatasetRefactor;
 import omni.synopses.SynopsisRefactor;
@@ -20,6 +21,7 @@ public class RunExperiments {
     DatasetRefactor d;
     CleanDataset cd;
     String[] conditions;
+    BufferedParamMinwiseSettings bp;
     static Config config;
 
     public RunExperiments(Config config) {
@@ -27,6 +29,7 @@ public class RunExperiments {
     }
 
     public void run() throws IOException, CsvValidationException {
+        bp = new BufferedParamMinwiseSettings(Main.inputFolder);
         cd = new CleanDataset(config);
         readDatasetSettings();
         for (int repetition = 0; repetition < config.numRepetitions; repetition++) {
@@ -72,7 +75,7 @@ public class RunExperiments {
         }
         readDataset(perc, sizeFactor, noiseSize, zipfAlpha);
     }
-
+    double[] betas = new double[]{1,1.35,2.1,4.2,11};
     private void runAllExperiments(int repetition) throws IOException {
 
         RamToPar rtp = new RamToPar(config.numStoredAttributes, config.ramVals);
@@ -109,10 +112,13 @@ public class RunExperiments {
                                                     System.err.println("B is less than 1, skipping experiment");
                                                     continue;
                                                 }
-
-                                                config.bufferDeletesMinwise = getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTable.csv", noiseUpdateFraction, ram, config.numStoredAttributes);
-                                                System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
-                                                experiment.run(ram, rtp, repetition, config);
+                                                bp.add(ram, config.B, config.d, config.w, config.numStoredAttributes, config.b);
+                                                for (double beta: betas) {
+                                                    config.bufferDeletesMinwise = beta;
+                                                    //config.bufferDeletesMinwise = 1 + getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTable.csv", noiseUpdateFraction, ram, config.numStoredAttributes, config.d);
+                                                    System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
+                                                    experiment.run(ram, rtp, repetition, config);
+                                                }
                                             } else {
                                                 throw new RuntimeException("Unknown parameter setting type: " + config.parameterSettingType);
                                             }
@@ -134,7 +140,7 @@ public class RunExperiments {
         }
     }
 
-    private static Double getBeta(String filePath, double factor, double RAM, int attrs) {
+    private static Double getBeta(String filePath, double factor, double RAM, int attrs, int d) {
         String line;
         String csvSplitBy = ",";
 
@@ -149,11 +155,11 @@ public class RunExperiments {
                 // Assuming columns: alpha, insert_stream_size, cells, Y, beta, iterations
                 double factorValue = Double.parseDouble(values[1]);
                 double ramValue = Double.parseDouble(values[7])*8*Math.pow(10,6);
-                int cellsValue = Integer.parseInt(values[3]);
+                int cellsValue = (int) Double.parseDouble(values[3]);
                 double betaValue = Double.parseDouble(values[5]);
 
                 // Check for matching values
-                if (factorValue == factor && ramValue == RAM && cellsValue == attrs) {
+                if (factorValue == factor && ramValue == RAM && cellsValue == d * attrs) {
                     System.out.println("Found beta value: " + betaValue);
                     return betaValue; // Return the beta value
                 }

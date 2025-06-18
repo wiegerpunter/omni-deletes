@@ -31,7 +31,6 @@ public class Main {
     public static String outputFolder;
     public static String inputFolder;
 
-    public static String readFolder;
     public static String currentDate;
     public static boolean countUniqueSamples = false;
     public static HashMap<Long, Integer> uniqueSamples = new HashMap<>();
@@ -42,8 +41,8 @@ public class Main {
         String jsonFilePath = args[0];
         ObjectMapper mapper = new ObjectMapper();
         Config config = mapper.readValue(new File(jsonFilePath), Config.class);
-        outputFolder = readFolder + "output/";
-        inputFolder = readFolder + "input/";
+        outputFolder = config.readFolder + "output/";
+        inputFolder = config.readFolder + "input/";
         config.setCurrentDate();
         config.ramMBToBits();
         currentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());

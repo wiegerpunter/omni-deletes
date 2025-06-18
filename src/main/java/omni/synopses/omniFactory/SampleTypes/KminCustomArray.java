@@ -56,6 +56,7 @@ public class KminCustomArray implements Sample {
     }
 
     public long getMemoryFootprint() {
+        analyzeDeletes();
         return Formulas.ramSingleKmin(getCurSampleSize() + getBufferSize(), b);
     }
 
@@ -82,5 +83,13 @@ public class KminCustomArray implements Sample {
     }
     public int getBufferSize() {
         return sample.getBufferSize();
+    }
+
+    public void analyzeDeletes() {
+        // check if number of deletes exceed buffer: (beta - 1) * B
+        if (beta!=0 & sample.getTotalDeletes() > (beta - 1) / beta * B) {
+            System.out.println("Warning: Number of deletes from buffer exceeds threshold.");
+        }
+
     }
 }

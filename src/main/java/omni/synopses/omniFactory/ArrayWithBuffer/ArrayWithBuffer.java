@@ -12,6 +12,8 @@ public class ArrayWithBuffer {
     int bufferSize = 0;
     double beta;
     boolean useBeta = false;
+    int deletesFromSample = 0;
+    int deletesFromBuffer = 0;
 
     public ArrayWithBuffer(int budget) {
         int buffer = Math.max(1, budget / 80);
@@ -113,6 +115,7 @@ public class ArrayWithBuffer {
                 // delete buffer[i]
                 System.arraycopy(arr, i + 1, arr, i, bufferSize - i - 1);
                 bufferSize--;
+                deletesFromBuffer++;
                 return;
             }
         }
@@ -122,6 +125,7 @@ public class ArrayWithBuffer {
             // Element found, shift elements to the left
             System.arraycopy(arr, index + 1, arr, index, size - index - 1);
             size--;
+            deletesFromSample++;
         } else {
             // Element not found, do nothing
             return;
@@ -138,6 +142,15 @@ public class ArrayWithBuffer {
 
     public int getBufferSize() {
         return bufferSize;
+    }
+    public int getDeletesFromSample() {
+        return deletesFromSample;
+    }
+    public int getDeletesFromBuffer() {
+        return deletesFromBuffer;
+    }
+    public int getTotalDeletes() {
+        return deletesFromSample + deletesFromBuffer;
     }
 }
 
