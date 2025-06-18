@@ -71,7 +71,7 @@ public class RunExperiments {
         }
         double perc = 0;
         if (config.withDeletes) {
-            perc = 0.901;
+            perc = 0.5;
         }
         readDataset(perc, sizeFactor, noiseSize, zipfAlpha);
     }
@@ -82,7 +82,9 @@ public class RunExperiments {
         for (double noiseUpdateFraction : config.noiseUpdateFractions) {
             int numNoiseUpdates = (int) (cd.getDatasetSize() * noiseUpdateFraction);
             System.out.println("Running with " + numNoiseUpdates + " deletes out of " + cd.getDatasetSize());
-            cd.setNoiseUpdates(numNoiseUpdates);
+            if (!cd.setNoiseUpdates(numNoiseUpdates)) {
+                continue;
+            };
             for (long ram : config.ramVals) {
                 for (String experimentName : getEnabledExperiments()) {
                     Experiment experiment = ExperimentFactory.getExperiment(experimentName);
@@ -113,7 +115,7 @@ public class RunExperiments {
                                                     continue;
                                                 }
                                                 bp.add(ram, config.B, config.d, config.w, config.numStoredAttributes, config.b);
-                                                config.bufferDeletesMinwise = 1 + getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTable.csv", noiseUpdateFraction, ram, config.numStoredAttributes, config.d);
+                                                config.bufferDeletesMinwise = getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTable.csv", noiseUpdateFraction, ram, config.numStoredAttributes, config.d);
                                                 System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
                                                 experiment.run(ram, rtp, repetition, config);
                                             } else {

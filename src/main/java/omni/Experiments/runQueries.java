@@ -266,14 +266,14 @@ public class runQueries {
                     "estTime",  "queryText", "SCap", "NMax","usedMaxSize","jacEstimate2LHS", "unionEstimate2LHS","witness2LHS",
                     "intersectionSizeOfR","unionSizeOfR",
                     "meanQueryTime","BetaKmin","numKSamples","KminDeletes","exactInDeletes","exactUnionDeletes","uniqueSamples",
-                    "numKmins","numKminsExceedingBounds","measuredSignatureCollisions","zipfAlpha", "case1", "bound"};
+                    "numKmins","numKminsExceedingBounds","measuredSignatureCollisions","zipfAlpha", "case1", "bound","bufferDeletesMinwise"};
             writer.writeNext(header);
         }
 
 
         String memUsageSyn = String.valueOf(s.getMemoryUsage());
         for (int i = 0; i < d.pointQueries.length; i++) {
-            String[] result = new String[46];
+            String[] result = new String[47];
             // Dataset specific info;
             result[0] = String.valueOf(repetition);
             result[1] = String.valueOf(d.dataset.length);
@@ -338,6 +338,7 @@ public class runQueries {
             result[43] = String.valueOf(d.zipfAlpha);
             result[44] = String.valueOf(case1[i]);
             result[45] = String.valueOf(bound[i]);
+            result[46] = String.valueOf(config.bufferDeletesMinwise);
             writer.writeNext(result);
         }
 

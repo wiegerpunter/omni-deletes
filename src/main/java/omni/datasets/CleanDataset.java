@@ -1093,11 +1093,12 @@ public class CleanDataset {
         return pointQuery;
     }
 
-    public void setNoiseUpdates(int numNoiseUpdates) {
+    public boolean setNoiseUpdates(int numNoiseUpdates) {
         // fill noiseUpdates with all numNoiseUpdates at end of negUpdates
         if (numNoiseUpdates > datasetNegUpdates.length) {
-            throw new RuntimeException("numNoiseUpdates > numToDelete, namely "
-                    + numNoiseUpdates + " > " + datasetNegUpdates.length);
+            System.err.println("numNoiseUpdates > numToDelete, namely " + numNoiseUpdates + " > " + datasetNegUpdates.length);
+            return false;
+
         }
         noiseUpdates = new long[numNoiseUpdates][];
         System.arraycopy(datasetNegUpdates, datasetNegUpdates.length
@@ -1168,6 +1169,7 @@ public class CleanDataset {
                 }
             }
         }
+        return true;
     }
 
     public int setDatasets(boolean[] neverDeleted) {
