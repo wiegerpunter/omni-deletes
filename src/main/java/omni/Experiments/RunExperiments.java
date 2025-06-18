@@ -9,6 +9,8 @@ import omni.synopses.omniFactory.OmniSketch;
 import omni.synopses.omniFactory.OmniSketchBuilder;
 import omni.Experiments.parameterSetting.RamToPar;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,8 +80,6 @@ public class RunExperiments {
             int numNoiseUpdates = (int) (cd.getDatasetSize() * noiseUpdateFraction);
             System.out.println("Running with " + numNoiseUpdates + " deletes out of " + cd.getDatasetSize());
             cd.setNoiseUpdates(numNoiseUpdates);
-            config.bufferDeletesMinwise = 0.1 + (double) 1 /(1- ((double) numNoiseUpdates /(numNoiseUpdates + cd.datasetResidu.length)));
-            System.out.println("Buffer deletes minwise: " + config.bufferDeletesMinwise);
             for (long ram : config.ramVals) {
                 for (String experimentName : getEnabledExperiments()) {
                     Experiment experiment = ExperimentFactory.getExperiment(experimentName);
@@ -109,6 +109,8 @@ public class RunExperiments {
                                                     System.err.println("B is less than 1, skipping experiment");
                                                     continue;
                                                 }
+
+                                                config.bufferDeletesMinwise = getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTable.csv", noiseUpdateFraction, ram, config.numStoredAttributes);
                                                 System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
                                                 experiment.run(ram, rtp, repetition, config);
                                             } else {
@@ -130,6 +132,37 @@ public class RunExperiments {
                 }
             }
         }
+    }
+
+    private static Double getBeta(String filePath, double factor, double RAM, int attrs) {
+        String line;
+        String csvSplitBy = ",";
+
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            // Skip the header line
+            br.readLine();
+
+            while ((line = br.readLine()) != null) {
+                // Use comma as separator
+                String[] values = line.split(csvSplitBy);
+
+                // Assuming columns: alpha, insert_stream_size, cells, Y, beta, iterations
+                double factorValue = Double.parseDouble(values[1]);
+                double ramValue = Double.parseDouble(values[7])*8*Math.pow(10,6);
+                int cellsValue = Integer.parseInt(values[3]);
+                double betaValue = Double.parseDouble(values[5]);
+
+                // Check for matching values
+                if (factorValue == factor && ramValue == RAM && cellsValue == attrs) {
+                    System.out.println("Found beta value: " + betaValue);
+                    return betaValue; // Return the beta value
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return 1.0;
     }
 
     private List<String> getEnabledExperiments() {
