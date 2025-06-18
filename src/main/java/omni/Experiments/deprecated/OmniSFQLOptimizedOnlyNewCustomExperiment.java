@@ -1,22 +1,23 @@
-package omni.Experiments;
+package omni.Experiments.deprecated;
 
 import omni.Config;
+import omni.Experiments.Experiment;
+import omni.Experiments.RunExperiments;
 import omni.Experiments.parameterSetting.RamToPar;
 import omni.synopses.omniFactory.OmniSketchBuilder;
 
 import java.io.IOException;
 
-public class OmniSFQLOptimizedOnlyNewExperiment implements Experiment {
+public class OmniSFQLOptimizedOnlyNewCustomExperiment implements Experiment {
     private RunExperiments runExperiments;
     private final OmniSketchBuilder omniSketchBuilder;
-    public OmniSFQLOptimizedOnlyNewExperiment() {
+    public OmniSFQLOptimizedOnlyNewCustomExperiment() {
         this.omniSketchBuilder = OmniSketchBuilder.QFirstSampleLaterOptimizedOnlyNew();
     }
 
     @Override
     public void run(long ram, RamToPar rtp, int repetition, Config config) throws IOException {
-        rtp.computeOmniSketchParametersFromRAM(config.d, config.b, config.parFactor);
-        int[] params = rtp.getParamsOmniSketchKmin(ram);
+        int[] params = new int[]{config.d, config.w, config.B, config.b};
         RunExperiments.omniExperiment(ram, repetition, config, params, omniSketchBuilder, runExperiments);
     }
 

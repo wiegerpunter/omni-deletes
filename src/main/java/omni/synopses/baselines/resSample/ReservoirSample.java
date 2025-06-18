@@ -1,5 +1,5 @@
 package omni.synopses.baselines.resSample;
-import omni.Experiments.QueryInfo;
+import omni.Experiments.utils.QueryInfo;
 import omni.synopses.SynopsisRefactor;
 import java.util.Random;
 

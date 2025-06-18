@@ -3,7 +3,7 @@ package omni.synopses.baselines.hydraRefactor;
 
 import net.jpountz.xxhash.XXHash64;
 import net.jpountz.xxhash.XXHashFactory;
-import omni.Experiments.QueryInfo;
+import omni.Experiments.utils.QueryInfo;
 import omni.datasets.Record.Query;
 import omni.synopses.SynopsisRefactor;
 

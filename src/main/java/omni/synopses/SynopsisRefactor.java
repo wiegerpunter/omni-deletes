@@ -1,6 +1,6 @@
 package omni.synopses;
 
-import omni.Experiments.QueryInfo;
+import omni.Experiments.utils.QueryInfo;
 
 public abstract class SynopsisRefactor {
     public int[] maxBits;

@@ -1,6 +1,6 @@
 package omni.synopses.baselines.CountMin;
 
-import omni.Experiments.QueryInfo;
+import omni.Experiments.utils.QueryInfo;
 import omni.synopses.SynopsisRefactor;
 
 import java.util.Arrays;

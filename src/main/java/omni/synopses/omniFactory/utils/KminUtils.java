@@ -1,7 +1,7 @@
 package omni.synopses.omniFactory.utils;
 
 import omni.synopses.omniFactory.CustomPriorityQueue.PriorityQueue;
-import omni.Experiments.QueryInfo;
+import omni.Experiments.utils.QueryInfo;
 import omni.synopses.omniFactory.SampleTypes.Sample;
 
 import java.util.*;

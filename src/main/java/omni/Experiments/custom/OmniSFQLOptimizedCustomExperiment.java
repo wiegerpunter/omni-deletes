@@ -1,16 +1,18 @@
-package omni.Experiments;
+package omni.Experiments.custom;
 
 import omni.Config;
+import omni.Experiments.Experiment;
+import omni.Experiments.RunExperiments;
 import omni.Experiments.parameterSetting.RamToPar;
 import omni.synopses.omniFactory.OmniSketchBuilder;
 
 import java.io.IOException;
 
-public class OmniVLDBArrayWithBufferCustomExperiment implements Experiment {
+public class OmniSFQLOptimizedCustomExperiment implements Experiment {
     private RunExperiments runExperiments;
     private final OmniSketchBuilder omniSketchBuilder;
-    public OmniVLDBArrayWithBufferCustomExperiment() {
-        this.omniSketchBuilder = OmniSketchBuilder.QFirstSampleLaterArrayWithBuffer();
+    public OmniSFQLOptimizedCustomExperiment() {
+        this.omniSketchBuilder = OmniSketchBuilder.QFirstSampleLaterOptimized();
     }
 
     @Override

@@ -1,9 +1,8 @@
 package omni.synopses.baselines.exponentialCM;
 
 import omni.Main;
-import omni.Experiments.QueryInfo;
+import omni.Experiments.utils.QueryInfo;
 import omni.datasets.Record.Query;
-import omni.datasets.Record.Record;
 import omni.synopses.SynopsisRefactor;
 
 import java.util.ArrayList;

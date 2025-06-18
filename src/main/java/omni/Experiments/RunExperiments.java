@@ -313,7 +313,7 @@ public class RunExperiments {
         d = new DatasetRefactor(config);
     }
 
-    static void omniExperiment(long ram, int repetition, Config config, int[] params, OmniSketchBuilder omniSketchBuilder, RunExperiments runExperiments) throws IOException {
+    public static void omniExperiment(long ram, int repetition, Config config, int[] params, OmniSketchBuilder omniSketchBuilder, RunExperiments runExperiments) throws IOException {
         System.out.println("Running OmniSketch with parameters: " + Arrays.toString(params));
 
         OmniSketch omniSketch = omniSketchBuilder

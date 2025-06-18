@@ -1,6 +1,6 @@
 package omni.synopses.omniFactory.OmniSketchTypes;
 
-import omni.Experiments.QueryInfo;
+import omni.Experiments.utils.QueryInfo;
 import omni.synopses.omniFactory.OmniSketchConfig;
 
 public abstract class OmniSketchType {

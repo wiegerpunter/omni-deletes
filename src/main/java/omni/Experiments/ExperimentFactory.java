@@ -1,4 +1,11 @@
 package omni.Experiments;
+import omni.Experiments.baselines.ReservoirExperiment;
+import omni.Experiments.baselines.aSHExperiment;
+import omni.Experiments.custom.OmniSFQLOptimizedCustomExperiment;
+import omni.Experiments.custom.OmniVLDBArrayWithBufferCustomExperiment;
+import omni.Experiments.custom.OmniVLDBCustomExperiment;
+import omni.Experiments.deprecated.*;
+
 import java.util.HashMap;
 import java.util.Map;
 

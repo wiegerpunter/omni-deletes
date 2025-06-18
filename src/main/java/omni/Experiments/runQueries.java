@@ -3,6 +3,7 @@ package omni.Experiments;
 
 import com.opencsv.CSVWriter;
 import omni.Config;
+import omni.Experiments.utils.QueryInfo;
 import omni.Main;
 import omni.datasets.CleanDataset;
 import omni.synopses.SynopsisRefactor;

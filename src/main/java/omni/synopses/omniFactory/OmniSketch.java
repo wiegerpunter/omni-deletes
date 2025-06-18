@@ -1,5 +1,5 @@
 package omni.synopses.omniFactory;
-import omni.Experiments.QueryInfo;
+import omni.Experiments.utils.QueryInfo;
 import omni.synopses.SynopsisRefactor;
 import omni.synopses.omniFactory.OmniSketchTypes.OmniSketchType;
 import omni.synopses.omniFactory.OmniSketchTypes.OmniSketchTypeFactory;

@@ -1,8 +1,7 @@
 package omni.synopses.omniFactory.OmniSketchTypes;
 
 import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
-import omni.Experiments.QueryInfo;
+import omni.Experiments.utils.QueryInfo;
 import omni.synopses.omniFactory.OmniSketchConfig;
 import omni.synopses.omniFactory.SampleTypes.Sample;
 import omni.synopses.omniFactory.SampleTypes.TWOLHS;

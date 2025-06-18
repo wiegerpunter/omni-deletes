@@ -1,8 +1,7 @@
 package omni.synopses.baselines.SketchZero;
 
-import omni.Experiments.QueryInfo;
+import omni.Experiments.utils.QueryInfo;
 import omni.datasets.Record.Query;
-import omni.datasets.Record.Record;
 import omni.*;
 import omni.synopses.SynopsisRefactor;
 import org.apache.commons.lang3.ArrayUtils;

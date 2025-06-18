@@ -1,6 +1,6 @@
 package omni.synopses.omniFactory.utils;
 
-import omni.Experiments.QueryInfo;
+import omni.Experiments.utils.QueryInfo;
 import omni.synopses.omniFactory.OmniSketchConfig;
 import omni.synopses.omniFactory.SampleTypes.TWOLHS;
 
