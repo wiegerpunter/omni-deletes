@@ -60,7 +60,11 @@ public class KminCustomArray implements Sample {
 
     @Override
     public void reset() {
-        sample = new ArrayWithBuffer(B, beta); // Resetting the sample with a new buffer
+        if (beta == 0) {
+            sample = new ArrayWithBuffer(B); // Resetting the sample without a buffer
+        } else {
+            sample = new ArrayWithBuffer(B, beta); // Resetting the sample with a new buffer
+        }
         n = 0;
     }
 

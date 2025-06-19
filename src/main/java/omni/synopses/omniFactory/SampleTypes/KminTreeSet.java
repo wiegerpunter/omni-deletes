@@ -17,6 +17,7 @@ public class KminTreeSet implements Sample {
     private int KInQuery;
     private long curTreeRoot = Integer.MAX_VALUE;
     private int curSampleSize = 0;
+    private int bufferSize = 0;
 
 
     public KminTreeSet(int B, int b, double beta, String setting) {
@@ -30,7 +31,8 @@ public class KminTreeSet implements Sample {
             KInQuery = B;
         } else {
             this.sample = new TreeSet<>(Collections.reverseOrder());
-            KInQuery = (int) (B / beta);
+            KInQuery = B;
+            bufferSize = (int) (beta - 1) * B;
         }
     }
 
@@ -46,10 +48,10 @@ public class KminTreeSet implements Sample {
 
     private void add(int hx) {
         n++;
-        if (curSampleSize <= B - 1) {
+        if (curSampleSize <= B - 1 + bufferSize) {
             sample.add(hx);
             curSampleSize++;
-        } else if (curSampleSize == B) {
+        } else if (curSampleSize == B + bufferSize) {
             curTreeRoot = sample.first();
             tryInsert(hx);
         } else {

@@ -23,10 +23,11 @@ public class ArrayWithBuffer {
     }
 
     public ArrayWithBuffer(int budget, double beta) {
-        int buffer = Math.max(1, budget / 80);
-        this.K = budget - buffer;
+        budget = (int) (budget * beta);
+        int bufferBudget = Math.max(1, budget / 80);
+        this.K = budget - bufferBudget;
         this.arr = new int[this.K];
-        this.buffer = new int[buffer];
+        this.buffer = new int[bufferBudget];
         this.beta = beta;
         this.useBeta = true;
     }
@@ -36,21 +37,23 @@ public class ArrayWithBuffer {
         if (size == 0) {
             return; // Nothing to remove
         }
+
+        if (hx > arr[K - 1]) {
+            // Element is larger than the largest in the sample, ignore
+            return;
+        }
+
         // check if present in buffer
         for (int i = 0; i < bufferSize; i++) {
             if (buffer[i] == hx) {
                 // delete buffer[i]
-                System.arraycopy(arr, i + 1, arr, i, bufferSize - i - 1);
+                System.arraycopy(buffer, i + 1, buffer, i, bufferSize - i - 1);
                 bufferSize--;
                 deletesFromBuffer++;
                 return;
             }
         }
 
-        if (hx > arr[K - 1]) {
-            // Element is larger than the largest in the sample, ignore
-            return;
-        }
 
         int index = Arrays.binarySearch(arr, 0, size, hx);
         if (index >= 0) {
@@ -72,8 +75,6 @@ public class ArrayWithBuffer {
             // Shift elements to the right to make space for the buffer element
             System.arraycopy(arr, insertIndex, arr, insertIndex + 1, size - insertIndex);
             // Insert the last element from the buffer into the sample
-
-            // Insert the last element from the buffer into the sample
             arr[size] = buffer[bufferSize - 1];
             bufferSize--;
             size++;
@@ -89,15 +90,17 @@ public class ArrayWithBuffer {
             arr[size] = val;
             Arrays.sort(arr);
             size++;
-        } else { // size == K
-            if (val < arr[K-1]) {
-                buffer[bufferSize] = val;
-                bufferSize++;
-                if (bufferSize == buffer.length) {
+        } else if (val < arr[K-1]) {
+                if (bufferSize >= buffer.length) {
                     flushBuffer();
                 }
+                buffer[bufferSize++] = val;
+//                buffer[bufferSize] = val;
+//                bufferSize++;
+//                if (bufferSize == buffer.length) {
+//                    flushBuffer();
+//                }
             }
-        }
     }
 
     void flushBuffer() {
@@ -139,7 +142,7 @@ public class ArrayWithBuffer {
         }
 
         if (useBeta) {
-            return Arrays.copyOfRange(arr, 0, (int) (arr.length / beta));
+            return Arrays.copyOfRange(arr, 0, (int) (size / beta));
         }
         return arr;
     }
@@ -149,7 +152,7 @@ public class ArrayWithBuffer {
             flushBuffer();
         }
         if (useBeta) {
-            return (int) (arr.length / beta);
+            return (int) (size / beta);
         }
         return size;
     }

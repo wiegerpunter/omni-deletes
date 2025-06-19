@@ -17,9 +17,9 @@ public class OmniSketchTypeSampleLaterKmin extends OmniSketchType {
     private String KminType;
     AttrSketchKmin[] attributeSketches;
     HashFunction[] xx;
-    private int b;
+    private final int b;
     private int maxHash;
-    private int B;
+    private final int B;
 
     private double delta;
     private double eps;
@@ -81,11 +81,7 @@ public class OmniSketchTypeSampleLaterKmin extends OmniSketchType {
     }
 
     private int signatureHash(long id, int row) {
-        int hash = (xx[row].hashLong(id).asInt() % maxHash);
-        if (hash < 0) {
-            hash = hash + maxHash;
-        }
-        return hash;
+        return xx[row].hashLong(id).asInt() >>> 1;
     }
 
     @Override
