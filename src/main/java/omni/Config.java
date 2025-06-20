@@ -30,6 +30,7 @@ public class Config {
     public boolean expOmniSketchSFQLSampleSizePerRow;
     public boolean expOmniSketchSFQLSampleSizeTestHashSet;
     public boolean expOmniSketchVLDBArray;
+    public boolean expOmniSketchVLDBArrayRegBuffer;
     public boolean expOmniSketchVLDBArrayWithBuffer;
     public boolean expOmniSketchVLDBArrayWithoutBuffer;
     public boolean expASH;

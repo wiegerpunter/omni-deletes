@@ -1,4 +1,4 @@
-package omni.Experiments.deprecated;
+package omni.Experiments.custom;
 
 import omni.Config;
 import omni.Experiments.Experiment;

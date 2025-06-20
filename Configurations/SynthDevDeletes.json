@@ -32,6 +32,7 @@
   "expOmniSketchSampleFirstQLaterPerRow": false,
   "expOmniSketchVLDB": false,
   "expOmniSketchVLDBArray": false,
+  "expOmniSketchVLDBArrayRegBuffer": false,
   "expOmniSketchVLDBArrayWithBuffer": true,
   "expOmniSketchVLDBArrayWithoutBuffer": true,
   "expOmniSketchVLDBTreeSetWithoutBuffer": true,

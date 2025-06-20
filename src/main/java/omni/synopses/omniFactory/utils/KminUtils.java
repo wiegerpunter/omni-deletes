@@ -1,6 +1,5 @@
 package omni.synopses.omniFactory.utils;
 
-import omni.datasets.Record.Query;
 import omni.synopses.omniFactory.CustomPriorityQueue.PriorityQueue;
 import omni.Experiments.utils.QueryInfo;
 import omni.synopses.omniFactory.SampleTypes.Sample;
@@ -16,7 +15,7 @@ public class KminUtils {
         if (Objects.equals(kminArray[0].getKminType(), "KminPQ")) {
             return estimatePriorityQueue(kminArray, queryInfo, bound, numPreds);
         }
-        if (Objects.equals(kminArray[0].getKminType(), "KminArray")) {
+        if (Objects.equals(kminArray[0].getKminType(), "KminArray") || Objects.equals(kminArray[0].getKminType(), "KminArrayRegBuffer")) {
             return estimateArray(kminArray, queryInfo, bound, numPreds);
         }
         if (Objects.equals(kminArray[0].getKminType(), "KminArrayWithBuffer")) {
@@ -38,10 +37,10 @@ public class KminUtils {
         }
 
         if (Objects.equals(kminArray[0].getKminType(), "KminTreeSet")) {
-            return intersectTreeSet(kminArray, queryInfo, bound, numPreds);
+            return estimateTreeSet(kminArray, queryInfo, bound, numPreds);
         }
         if (Objects.equals(kminArray[0].getKminType(), "KminTreeSetWithoutBuffer")) {
-            return intersectTreeSet(kminArray, queryInfo, bound, numPreds);
+            return estimateTreeSet(kminArray, queryInfo, bound, numPreds);
         }
         throw new IllegalArgumentException("Unsupported kmin type: " + kminArray[0].getKminType());
     }
@@ -50,7 +49,7 @@ public class KminUtils {
         throw new UnsupportedOperationException("HashSet intersection not implemented yet");
     }
 
-    private static int intersectTreeSet(Sample[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
+    public static int estimateTreeSet(Sample[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
         int S_cap = 0;
         int[] n_max = new int[2];
         TreeSet<Integer>[] flatSamples = new TreeSet[kminArray.length];

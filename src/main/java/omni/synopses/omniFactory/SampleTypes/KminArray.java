@@ -15,15 +15,23 @@ public class KminArray implements Sample {
     private int[] sample;
     private int curTreeRoot = Integer.MAX_VALUE;
     private final String setting;
+    private double beta;
 
 
-    public KminArray(int B, int b, String setting) {
-        this.B = B;
+    public KminArray(int B, int b, double beta, String setting) {
+
         this.b = b;
+        this.beta = beta;
         this.setting = setting;
         this.n = 0;
         this.curSampleSize = 0;
-        this.sample = new int[B];
+        if (beta != 0) {
+            this.B = (int) (B * beta);
+        } else {
+            this.B = B;
+        }
+        this.sample = new int[this.B];
+
     }
 
     // Implement the methods for KminPQ here
@@ -74,11 +82,30 @@ public class KminArray implements Sample {
     }
 
     private void remove(int hx) {
-        throw new UnsupportedOperationException("Remove operation is not supported in KminPQ");
+        n--;
+        if (hx > curTreeRoot) {
+            return; // No need to remove if hx is greater than the current root
+        }
+        int index = Arrays.binarySearch(sample, 0, B, hx);
+        if (index >= 0) {
+            // Element found, remove it
+            System.arraycopy(sample, index + 1, sample, index, B - index - 1);
+            sample[B - 1] = Integer.MAX_VALUE; // Set the last element to a large value
+            curSampleSize--;
+            if (curSampleSize > 0) {
+                curTreeRoot = sample[B - 1]; // Update the tree root
+            } else {
+                curTreeRoot = Integer.MAX_VALUE; // Reset tree root if no elements left
+            }
+        }
+        // If the element is not found, do nothing
     }
 
     public int[] query() {
-        return sample;
+        if (beta != 0) {
+            return Arrays.copyOf(sample, (int) (curSampleSize / beta));
+        }
+        return Arrays.copyOf(sample, curSampleSize);
     }
 
     public long getMemoryFootprint() {
@@ -105,6 +132,9 @@ public class KminArray implements Sample {
 
     @Override
     public int getCurSampleSize() {
+        if (beta != 0) {
+            return (int) (curSampleSize / beta);
+        }
         return curSampleSize;
     }
 }

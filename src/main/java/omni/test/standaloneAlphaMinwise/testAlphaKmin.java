@@ -4,6 +4,7 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import omni.Experiments.utils.QueryInfo;
 import omni.synopses.omniFactory.SampleTypes.KminCustomArray;
+import omni.synopses.omniFactory.SampleTypes.KminTreeSet;
 import omni.synopses.omniFactory.SampleTypes.Sample;
 import omni.synopses.omniFactory.utils.KminUtils;
 import omni.test.standaloneAlphaMinwise.Data;
@@ -18,16 +19,15 @@ import java.util.Date;
 
 public class testAlphaKmin {
     public static void main(String[] args) throws SQLException, IOException {
-
-        Connection con = DriverManager.getConnection("jdbc:duckdb:");
-        create_table(con);
+        create_table();
 
 
 
         int[] intersectionSizes = {1000, 10000};
         int[] numSets = {9};
-        int[] noiseSizes = {100,1000,10000};
-        int[] Bs = {100,500,1000};
+        int[] noiseSizes = {1000};
+        int[] Bs = {100};
+        int[] domains = {10,100,100000};
         double[][] betaPairs = new double[][]{
                 {1, 1},
                 {1.33, 1.35},
@@ -41,108 +41,70 @@ public class testAlphaKmin {
         for (int intersectionSize : intersectionSizes) {
             for (int numSet : numSets) {
                 for (int noiseSize : noiseSizes) {
-                    for (int seed = 0; seed < numSeeds; seed++) {
-                        for (int B: Bs) {
-                            for (double[] betaPair : betaPairs) {
-                                double beta = betaPair[1];
-                                double alpha = betaPair[0];
-                                System.out.printf("\r Running test with intersectionSize: " + intersectionSize +
-                                        ", numSet: " + numSet + ", noiseSize: " + noiseSize +
-                                        ", seed: " + seed + ", B: " + B + ", beta: " + beta + ", alpha: " + alpha);
+                    for (int domain : domains) {
+                        for (int seed = 0; seed < numSeeds; seed++) {
+                            for (int B : Bs) {
+                                for (double[] betaPair : betaPairs) {
+                                    double beta = betaPair[1];
+                                    double alpha = betaPair[0];
+                                    System.out.printf("\r Running test with intersectionSize: " + intersectionSize +
+                                            ", numSet: " + numSet + ", noiseSize: " + noiseSize +
+                                            ", seed: " + seed + ", B: " + B + ", beta: " + beta + ", alpha: " + alpha);
 
-                                // Run tests with different beta and alpha values
-                                runTest(con, intersectionSize, numSet, noiseSize, seed, B, beta, alpha);
-                                runTest(con, intersectionSize, numSet, noiseSize, seed, B, 0, alpha);
+                                    // Run tests with different beta and alpha values
+                                    runTest("KminCustomArray", intersectionSize, numSet, noiseSize, seed, B, beta, alpha, domain);
+                                    runTest("KminCustomArray", intersectionSize, numSet, noiseSize, seed, B, 0, alpha, domain);
+                                    runTest("KminTreeSet", intersectionSize, numSet, noiseSize, seed, B, beta, alpha, domain);
+                                    runTest("KminTreeSet", intersectionSize, numSet, noiseSize, seed, B, 0, alpha, domain);
 
+                                }
                             }
                         }
                     }
                 }
             }
         }
-//
-//        write_to_csv(con, "/home/wieger/omni-deletes/output/tests/testAlphaKmin");
-
-
-
     }
 
-    private static void write_to_csv(Connection con, String CSV_name) throws SQLException, IOException {
-        Statement stmt = con.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT * FROM results");
-        ArrayList<String> columns = new ArrayList<>();
-        int columnCount = rs.getMetaData().getColumnCount();
-        for (int i = 1; i <= columnCount; i++) {
-            columns.add(rs.getMetaData().getColumnName(i));
-        }
-        System.out.println(columns);
-        // CSV file
-        String csvFile = CSV_name + ".csv";
-        FileWriter csvWriter = new FileWriter(csvFile);
 
-        // Write CSV header
-        for (String column : columns) {
-            csvWriter.append(column).append(",");
-        }
-        csvWriter.append("\n");
-
-        while (rs.next()) {
-            for (int i = 1; i <= columnCount; i++) {
-                csvWriter.append(rs.getString(i)).append(",");
-            }
-            csvWriter.append("\n");
-        }
-
-        // Clean up
-        csvWriter.flush();
-        csvWriter.close();
-        rs.close();
-        stmt.close();
-    }
-
-    private static void create_table(Connection con) throws SQLException, IOException {
-//
-//
+    private static void create_table() {
         String datestamp = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
         String filePath = "output/tests/testAlphaKmin_" + datestamp + ".csv";
 
         try (FileWriter csvWriter = new FileWriter(filePath)) {
             // Write CSV header
-            csvWriter.append("intersectionSize,numSets,noiseSize,seed,B,beta,alpha,estimate,error,absoluteError\n");
+            csvWriter.append("setting,intersectionSize,numSets,noiseSize,domain,seed,B,beta,alpha,estimate,error,absoluteError\n");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static void add_result(Connection con, int intersectionSize, int numSets, int noiseSize, int seed,
+    private static void add_result(String setting, int intersectionSize, int numSets, int noiseSize, int domain,
+                                   int seed,
                                    int B, double beta, double alpha, int estimate, int error, int absoluteError) throws SQLException, IOException {
-//        String query = "INSERT INTO results VALUES (?,?,?,?,?,?,?,?,?,?)";
-//        PreparedStatement stmt = con.prepareStatement(query);
-//        stmt.setInt(1, intersectionSize);
-//        stmt.setInt(2, numSets);
-//        stmt.setInt(3, noiseSize);
-//        stmt.setInt(4, seed);
-//        stmt.setInt(5, B);
-//        stmt.setDouble(6, beta);
-//        stmt.setDouble(7, alpha);
-//        stmt.setInt(8, estimate);
-//        stmt.setInt(9, error);
-//        stmt.setInt(10, absoluteError);
-//        stmt.execute();
-//        stmt.close();
-//
         String datestamp = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
         String filePath = "output/tests/testAlphaKmin_" + datestamp + ".csv";
 
         try (FileWriter csvWriter = new FileWriter(filePath, true)) { // true = append mode
-            csvWriter.append(intersectionSize + "," + numSets + "," + noiseSize + "," + seed + "," +
-                    B + "," + beta + "," + alpha + "," + estimate + "," + error + "," + absoluteError + "\n");
+            csvWriter.append(setting)
+                    .append(",").append(String.valueOf(intersectionSize))
+                    .append(",").append(String.valueOf(numSets))
+                    .append(",").append(String.valueOf(noiseSize))
+                    .append(",").append(String.valueOf(domain))
+                    .append(",").append(String.valueOf(seed))
+                    .append(",").append(String.valueOf(B))
+                    .append(",").append(String.valueOf(beta))
+                    .append(",").append(String.valueOf(alpha))
+                    .append(",").append(String.valueOf(estimate))
+                    .append(",").append(String.valueOf(error))
+                    .append(",").append(String.valueOf(absoluteError)).append("\n");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static void runTest(Connection con, int intersectionSize, int numSets, int noiseSize, int seed, int B, double beta, double alpha) throws SQLException, IOException {
+    private static void runTest(String setting, int intersectionSize, int numSets, int noiseSize,
+                                int seed, int B, double beta, double alpha, int domain) throws SQLException, IOException {
         // Goal of test: use alpha kminwise standalone to see if accuracy of using beta is better than not using it.
 
         // Needed:
@@ -152,24 +114,35 @@ public class testAlphaKmin {
         // stream of residu out of intersection.
 
         // three streams of data for the three sets. Intersecting three sets to find result which is intersection
-        Data data = data_generation(intersectionSize, numSets, noiseSize);
+        Data data = data_generation(intersectionSize, numSets, noiseSize, domain);
 
-        int estimate = experiment(data, B, beta, alpha, seed);
+        int estimate = experiment(setting, data, B, beta, alpha, seed);
         int exact = (int) (data.intersection.length / alpha);
         int error = estimate - exact;
         int absoluteError = Math.abs(error);
 
-        add_result(con, intersectionSize, numSets, noiseSize, seed, B, beta, alpha,
+        add_result(setting, intersectionSize, numSets, noiseSize, domain, seed, B, beta, alpha,
                 estimate, error, absoluteError);
 
     }
 
-    private static int experiment(Data data, int B, double beta, double alpha, int seed) {
-        KminCustomArray[] samples = new KminCustomArray[data.numberOfSets];
+    private static int experiment(String setting, Data data, int B, double beta, double alpha, int seed) {
+        Sample[] samples;
+        if (setting.equals("KminCustomArray")) {
+           samples = new KminCustomArray[data.numberOfSets];
 
-        for (int i = 0; i < data.numberOfSets; i++) {
-            samples[i] = new KminCustomArray(B, 31, beta, "alpha");
+            for (int i = 0; i < data.numberOfSets; i++) {
+                samples[i] = new KminCustomArray(B, 31, beta, "alpha");
+            }
+        } else if (setting.equals("KminTreeSet")) {
+            samples = new KminTreeSet[data.numberOfSets];
+            for (int i = 0; i < data.numberOfSets; i++) {
+                samples[i] = new KminTreeSet(B, 31, beta, "alpha");
+            }
+        } else {
+            throw new IllegalArgumentException("Unknown setting: " + setting);
         }
+
 
         HashFunction x = Hashing.murmur3_32_fixed(seed);
 
@@ -179,32 +152,42 @@ public class testAlphaKmin {
         System.arraycopy(samples, 0, results, 0, data.numberOfSets);
         QueryInfo queryInfo = new QueryInfo();
         // compute intersection of results
-        int estimate = KminUtils.estimateArray(results, queryInfo, 0, data.numberOfSets);
-//        for (KminCustomArray sample : samples) {
-//            sample.analyzeDeletes();
-//        }
-        return estimate;
-
+        if (setting.equals("KminCustomArray")) {
+            return KminUtils.estimateArray(results, queryInfo, 0, data.numberOfSets);
+        } else if (setting.equals("KminTreeSet")) {
+            return KminUtils.estimateTreeSet(results, queryInfo, 0, data.numberOfSets);
+        } else {
+            throw new IllegalArgumentException("Unknown setting: " + setting);
+        }
     }
 
-    private static Data data_generation(int intersectionSize, int numberOfSets, int noiseSize) {
+    private static Data data_generation(int intersectionSize, int numberOfSets, int noiseSize, int domainSize) {
+        int[] domainValues = new int[numberOfSets + 2];
+        domainValues[0] = 1;
+        for (int i = 1; i < domainValues.length; i++) {
+            domainValues[i] = domainValues[i - 1] + domainSize; // Fill with values from 1 to numberOfSets
+        }
+
         int[] intersection = new int[intersectionSize];
+        Random random = new Random(0);
         for (int i = 0; i < intersectionSize; i++) {
-            intersection[i] = i + 1;
+            // Fill intersection with values from the domain, not necessarily unique
+            intersection[i] = random.nextInt(domainValues[0], domainValues[1]);
         }
 
         int[][] noiseSets = new int[numberOfSets][noiseSize];
         for (int setIndex = 0; setIndex < numberOfSets; setIndex++) {
+            Random setRandom = new Random(setIndex + 1); // Different seed for each set
             for (int i = 0; i < noiseSize; i++) {
                 // Ensures values are outside the intersection and non-overlapping
-                noiseSets[setIndex][i] = intersectionSize + (setIndex * noiseSize) + i + 10;
+                noiseSets[setIndex][i] = setRandom.nextInt(domainValues[setIndex + 1], domainValues[setIndex + 2]);
             }
         }
         return new Data(intersection, noiseSets);
         // Here you can return or store the generated data as needed
     }
 
-    private static void ingest_data(KminCustomArray[] samples, Data data, HashFunction x, double alpha) {
+    private static void ingest_data(Sample[] samples, Data data, HashFunction x, double alpha) {
         List<Event> events = new ArrayList<>();
 
         int[] intersection = data.intersection;

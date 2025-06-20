@@ -8,12 +8,11 @@ public class ArrayWithBuffer {
     private final int K;
     public int[] arr;
     public int[] buffer;
-    int size = 0;
+    int curSampleSize = 0;
     int bufferSize = 0;
-    double beta;
-    boolean useBeta = false;
     int deletesFromSample = 0;
     int deletesFromBuffer = 0;
+    private int curTreeRoot = Integer.MAX_VALUE;
 
     public ArrayWithBuffer(int budget) {
         int buffer = Math.max(1, budget / 80);
@@ -22,44 +21,42 @@ public class ArrayWithBuffer {
         this.buffer = new int[buffer];
     }
 
-    public ArrayWithBuffer(int budget, double beta) {
-        budget = (int) (budget * beta);
-        int bufferBudget = Math.max(1, budget / 80);
-        this.K = budget - bufferBudget;
-        this.arr = new int[this.K];
-        this.buffer = new int[bufferBudget];
-        this.beta = beta;
-        this.useBeta = true;
-    }
-
-
     public void remove(int hx) {
-        if (size == 0) {
+        if (curSampleSize == 0) {
             return; // Nothing to remove
         }
 
-        if (hx > arr[K - 1]) {
+        if (hx > curTreeRoot) {
             // Element is larger than the largest in the sample, ignore
             return;
         }
 
         // check if present in buffer
-        for (int i = 0; i < bufferSize; i++) {
-            if (buffer[i] == hx) {
-                // delete buffer[i]
-                System.arraycopy(buffer, i + 1, buffer, i, bufferSize - i - 1);
-                bufferSize--;
-                deletesFromBuffer++;
-                return;
-            }
+        int bufferIndex = Arrays.binarySearch(buffer, 0, bufferSize, hx);
+        if (bufferIndex >= 0) {
+            // Element found in buffer, remove it
+            System.arraycopy(buffer, bufferIndex + 1, buffer, bufferIndex, bufferSize - bufferIndex - 1);
+            bufferSize--;
+            deletesFromBuffer++;
+            return;
         }
+//
+//        for (int i = 0; i < bufferSize; i++) {
+//            if (buffer[i] == hx) {
+//                // delete buffer[i]
+//                System.arraycopy(buffer, i + 1, buffer, i, bufferSize - i - 1);
+//                bufferSize--;
+//                deletesFromBuffer++;
+//                return;
+//            }
+//        }
 
-
-        int index = Arrays.binarySearch(arr, 0, size, hx);
+        int index = Arrays.binarySearch(arr, 0, Math.min(curSampleSize, K), hx);
         if (index >= 0) {
             // Element found, shift elements to the left
-            System.arraycopy(arr, index + 1, arr, index, size - index -1);
-            size--;
+            System.arraycopy(arr, index + 1, arr, index, Math.min(curSampleSize, K) - index -1);
+            arr[Math.min(curSampleSize, K - 1)] = Integer.MAX_VALUE; // Set the last element to a large value
+            curSampleSize--;
             deletesFromSample++;
         } else {
             // Element not found, do nothing
@@ -68,43 +65,60 @@ public class ArrayWithBuffer {
 
         // If buffer is not empty, we can try to fill the gap
         if (bufferSize > 0) {
-            int insertIndex = Arrays.binarySearch(arr, 0, size, buffer[bufferSize - 1]);
+            int insertIndex = Arrays.binarySearch(arr, 0, Math.min(curSampleSize, K), buffer[0]);
             if (insertIndex < 0) {
                 insertIndex = -insertIndex - 1; // Find the insertion point
             }
             // Shift elements to the right to make space for the buffer element
-            System.arraycopy(arr, insertIndex, arr, insertIndex + 1, size - insertIndex);
+            System.arraycopy(arr, insertIndex, arr, insertIndex + 1, Math.min(curSampleSize, K) - insertIndex - 1);
             // Insert the last element from the buffer into the sample
-            arr[size] = buffer[bufferSize - 1];
+            arr[insertIndex] = buffer[0];
             bufferSize--;
-            size++;
+            curSampleSize++;
+            // Shift the remaining buffer elements to the left
+            System.arraycopy(buffer, 1, buffer, 0, bufferSize);
+        }
+
+        // Update the current tree root if necessary
+        if (curSampleSize > 0) {
+            curTreeRoot = arr[Math.min(curSampleSize, K-1)];
+        } else {
+            curTreeRoot = Integer.MAX_VALUE; // Reset if the sample is empty
         }
     }
 
     public void insert(int val) {
-        if (size < K - 1) {
-            arr[size] = val;
-            size++;
-        } else if (size == K - 1) {
-            // sort the array
-            arr[size] = val;
-            Arrays.sort(arr);
-            size++;
-        } else if (val < arr[K-1]) {
-                if (bufferSize >= buffer.length) {
-                    flushBuffer();
-                }
-                buffer[bufferSize++] = val;
+        if (curSampleSize < K) {
+            arr[curSampleSize] = val;
+            curSampleSize++;
+            Arrays.sort(arr, 0, curSampleSize); // Sort the array after insertion
+        } else {
+            if (curSampleSize == K) {
+                curSampleSize++;
+                Arrays.sort(arr, 0, K); // Ensure the array is sorted before insertion
+                curTreeRoot = arr[K - 1]; // Update the tree root
+            }
+            tryInsert(val);
+        }
+    }
+
+    private void tryInsert(int val) {
+        if (val < curTreeRoot) { // get tree root
+            if (bufferSize >= buffer.length) {
+                flushBuffer();
+            }
+            buffer[bufferSize] = val;
+            Arrays.sort(buffer, 0, bufferSize + 1); // Sort the buffer after insertion
+            bufferSize++;
 //                buffer[bufferSize] = val;
 //                bufferSize++;
 //                if (bufferSize == buffer.length) {
 //                    flushBuffer();
 //                }
-            }
+        }
     }
 
     void flushBuffer() {
-        Arrays.sort(buffer, 0, bufferSize);
         int pointerArr = K - 1;
         int pointerBuffer = bufferSize - 1;
 
@@ -133,28 +147,30 @@ public class ArrayWithBuffer {
             pointerArr = insertIndex - 1; // Update pointerArr to reflect the shift
             shiftRight -= 1;
         }
+        curTreeRoot = arr[K - 1];
         bufferSize = 0;
     }
 
     public int[] getK() {
+
+        if (isSorted(arr, curSampleSize - 1)) {
+            throw new RuntimeException("Array should be sorted");
+        }
         if (bufferSize > 0) {
             flushBuffer();
         }
-
-        if (useBeta) {
-            return Arrays.copyOfRange(arr, 0, (int) (size / beta));
+        if (isSorted(arr, curSampleSize - 1)) {
+            throw new RuntimeException("Array should be sorted");
         }
+
         return arr;
     }
 
-    public int getSize() {
+    public int getCurSampleSize() {
         if (bufferSize > 0) {
             flushBuffer();
         }
-        if (useBeta) {
-            return (int) (size / beta);
-        }
-        return size;
+        return Math.min(curSampleSize, K);
     }
 
 
@@ -170,5 +186,13 @@ public class ArrayWithBuffer {
     public int getTotalDeletes() {
         return deletesFromSample + deletesFromBuffer;
     }
+
+    public boolean isSorted(int[] array, int length) {
+        for (int i = 1; i < length - 1; i++) {
+            if (array[i] < array[i - 1]) return true;
+        }
+        return false;
+    }
+
 }
 

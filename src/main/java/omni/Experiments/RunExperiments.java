@@ -189,6 +189,8 @@ public class RunExperiments {
         if (config.parameterSettingType.equals("Custom") || config.parameterSettingType.equals("GridSearch")) {
             if (config.expOmniSketchVLDB) enabledExperiments.add("OmniSketchVLDBCustom");
             if (config.expOmniSketchVLDBArray) enabledExperiments.add("OmniSketchVLDBArrayCustom");
+            if (config.expOmniSketchVLDBArrayRegBuffer) enabledExperiments.add("OmniSketchVLDBArrayRegBufferCustom");
+
             if (config.expOmniSketchVLDBArrayWithBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithBufferCustom");
             if (config.expOmniSketchVLDBArrayWithoutBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithoutBufferCustom");
             if (config.expOmniSketchVLDBTreeSet) enabledExperiments.add("OmniSketchVLDBTreeSetCustom");

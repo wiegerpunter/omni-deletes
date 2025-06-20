@@ -12,19 +12,19 @@ public class KminCustomArray implements Sample {
     private int n;
     private ArrayWithBuffer sample;
     private final String setting;
-    private double beta;
+    private final double beta;
 
     public KminCustomArray(int B, int b, double beta, String setting) {
-        this.B = B;
         this.b = b;
         this.setting = setting;
         this.n = 0;
         this.beta = beta;
-        if (beta == 0) {
-            this.sample = new  ArrayWithBuffer(B);
+        if (beta != 0) {
+            this.B = (int) (B * beta);
         } else {
-            this.sample = new ArrayWithBuffer(B, beta);
+            this.B = B;
         }
+        this.sample = new  ArrayWithBuffer(this.B);
     }
 
     // Implement the methods for KminPQ here
@@ -50,7 +50,11 @@ public class KminCustomArray implements Sample {
     }
 
     public int[] query() {
-        return sample.getK();
+        if (beta != 0) {
+            return sample.getK();
+        } else {
+            return Arrays.copyOf(sample.getK(), getCurSampleSize());
+        }
     }
 
     public long getMemoryFootprint() {
@@ -60,11 +64,7 @@ public class KminCustomArray implements Sample {
 
     @Override
     public void reset() {
-        if (beta == 0) {
-            sample = new ArrayWithBuffer(B); // Resetting the sample without a buffer
-        } else {
-            sample = new ArrayWithBuffer(B, beta); // Resetting the sample with a new buffer
-        }
+        sample = new ArrayWithBuffer(B); // Resetting the sample without a buffer
         n = 0;
     }
 
@@ -80,8 +80,12 @@ public class KminCustomArray implements Sample {
 
     @Override
     public int getCurSampleSize() {
-        return sample.getSize();
+        if (beta != 0) {
+            return (int) (sample.getCurSampleSize() / beta);
+        }
+        return sample.getCurSampleSize();
     }
+
     public int getBufferSize() {
         return sample.getBufferSize();
     }
