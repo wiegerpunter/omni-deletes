@@ -24,6 +24,10 @@ public class KminUtils {
         if (Objects.equals(kminArray[0].getKminType(), "KminArrayWithoutBuffer")) {
             return estimateArray(kminArray, queryInfo, bound, numPreds);
         }
+        if ((Objects.equals(kminArray[0].getKminType(), "KminSimpleBuffer")
+                || Objects.equals(kminArray[0].getKminType(), "KminSimpleBufferNoDeleteBuffer"))) {
+            return estimateArray(kminArray, queryInfo, bound, numPreds);
+        }
 
         if (Objects.equals(kminArray[0].getKminType(), "KminPQOptimized")) {
             return estimatePriorityQueueOptimized(kminArray, queryInfo, bound, numPreds);

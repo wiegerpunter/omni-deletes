@@ -35,6 +35,9 @@
   "expOmniSketchVLDBArrayRegBuffer": false,
   "expOmniSketchVLDBArrayWithBuffer": true,
   "expOmniSketchVLDBArrayWithoutBuffer": true,
+  "expOmniSketchVLDBSimpleBuffer": true,
+  "expOmniSketchVLDBSimpleBufferNoDeleteBuffer": true,
+
   "expOmniSketchVLDBTreeSetWithoutBuffer": true,
   "expOmniSketchVLDBTreeSet": true,
   "expOmniSketchVLDBSampleSize": false,

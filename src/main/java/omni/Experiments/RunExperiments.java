@@ -195,6 +195,8 @@ public class RunExperiments {
             if (config.expOmniSketchVLDBArrayWithoutBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithoutBufferCustom");
             if (config.expOmniSketchVLDBTreeSet) enabledExperiments.add("OmniSketchVLDBTreeSetCustom");
             if (config.expOmniSketchVLDBTreeSetWithoutBuffer) enabledExperiments.add("OmniSketchVLDBTreeSetWithoutBufferCustom");
+            if (config.expOmniSketchVLDBSimpleBuffer) enabledExperiments.add("OmniSketchVLDBSimpleBufferCustom");
+            if (config.expOmniSketchVLDBSimpleBufferNoDeleteBuffer) enabledExperiments.add("OmniSketchVLDBSimpleBufferNoDeleteBufferCustom");
 
 
 

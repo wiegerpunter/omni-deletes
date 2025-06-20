@@ -159,6 +159,21 @@ public class OmniSketchBuilder {
                 .setSketchType("SampleLaterArrayWithBuffer");
     }
 
+    public static OmniSketchBuilder QFirstSampleLaterSimpleBuffer() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(true)
+                .setUseNMax(true)
+                .setSketchType("SampleLaterSimpleBuffer");
+    }
+
+    public static OmniSketchBuilder QFirstSampleLaterSimpleBufferNoDeleteBuffer() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(true)
+                .setUseNMax(true)
+                .setSketchType("SampleLaterSimpleBufferNoDeleteBuffer");
+    }
+
+
     public static OmniSketchBuilder QFirstSampleLaterTreeSet() {
         return new OmniSketchBuilder()
                 .setUseAcrossRows(true)

@@ -17,6 +17,9 @@ public class SampleFactory {
 
             case "KminArrayWithBuffer" -> new KminCustomArray(B, b, config.getBufferBeta(), "KminArrayWithBuffer");
             case "KminArrayWithoutBuffer" -> new KminCustomArray(B, b, 0,"KminArrayWithoutBuffer");
+            case "KminSimpleBuffer" -> new KminSimpleBuffer(B, b, config.getBufferBeta(), "KminSimpleBuffer");
+            case "KminSimpleBufferNoDeleteBuffer" -> new KminSimpleBuffer(B, b, 0, "KminSimpleBufferNoDeleteBuffer");
+
 
 
             default -> throw new IllegalArgumentException("Unknown Kmin type: " + kminType);
