@@ -43,7 +43,7 @@ public class CleanDataset {
     public ArrayList<Integer>[] toDelete;
     public long[][] datasetInsertsSpreadOut;
     public boolean[] isDelete;
-    public long[][] datasetAllSpreadOut;
+    public long[][] datasetAllUpdates;
 
     long[][] pointQueriesEmpty;
     int[] pointQueryBinNumberEmpty;
@@ -1105,22 +1105,22 @@ public class CleanDataset {
                 - numNoiseUpdates, noiseUpdates, 0, numNoiseUpdates);
         System.out.println("Noise updates size: " + noiseUpdates.length);
         //computeGroundTruth(noiseUpdates, pointQueryAnswersDeletes, pointQueryUnionDeletes);
-        if (config.spreadOutDeletes) {
-            // Add all recs to datasetInsertsSpreadOut, shuffle, and decide when we can delete all noiseUpdates.
-            // make array with indices of noiseUpdates
-            long[] noiseIndices = Arrays.stream(noiseUpdates)
-                    .mapToLong(arr -> arr[0])
-                    .sorted()
-                    .toArray();
+        // Add all recs to datasetInsertsSpreadOut, shuffle, and decide when we can delete all noiseUpdates.
+        // make array with indices of noiseUpdates
+        long[] noiseIndices = Arrays.stream(noiseUpdates)
+                .mapToLong(arr -> arr[0])
+                .sorted()
+                .toArray();
 
-            this.datasetInsertsSpreadOut = new long[noiseUpdates.length + datasetResidu.length][];
-            System.arraycopy(datasetResidu, 0, datasetInsertsSpreadOut, 0, datasetResidu.length);
-            System.arraycopy(noiseUpdates, 0, datasetInsertsSpreadOut, datasetResidu.length, noiseUpdates.length);
-            // shuffle datasetInsertsSpreadOut
-            shuffleArray(datasetInsertsSpreadOut);
-            datasetAllSpreadOut = new long[datasetResidu.length + 2 * noiseUpdates.length][];
-            isDelete = new boolean[datasetResidu.length + 2 * noiseUpdates.length];
-            Arrays.fill(isDelete, false);
+        this.datasetInsertsSpreadOut = new long[noiseUpdates.length + datasetResidu.length][];
+        System.arraycopy(datasetResidu, 0, datasetInsertsSpreadOut, 0, datasetResidu.length);
+        System.arraycopy(noiseUpdates, 0, datasetInsertsSpreadOut, datasetResidu.length, noiseUpdates.length);
+        // shuffle datasetInsertsSpreadOut
+        shuffleArray(datasetInsertsSpreadOut);
+        datasetAllUpdates = new long[datasetResidu.length + 2 * noiseUpdates.length][];
+        isDelete = new boolean[datasetResidu.length + 2 * noiseUpdates.length];
+        Arrays.fill(isDelete, false);
+        if (config.spreadOutDeletes) {
             //ArrayList<long[]> deleteQueue = new ArrayList<>();
             //ArrayList<long[]> deleteQueue = new ArrayList<>();
             //HashMap<Integer, Integer> indicesToRemove = new HashMap<>();
@@ -1128,9 +1128,9 @@ public class CleanDataset {
             Random r = new Random(0);
             for (long[] record : datasetInsertsSpreadOut) {
                 boolean inserted = false;
-                while (!inserted && c < datasetAllSpreadOut.length) {
-                    if (datasetAllSpreadOut[c] == null) {
-                        datasetAllSpreadOut[c] = record;
+                while (!inserted && c < datasetAllUpdates.length) {
+                    if (datasetAllUpdates[c] == null) {
+                        datasetAllUpdates[c] = record;
                         inserted = true;
                     }
                     c++;
@@ -1144,9 +1144,9 @@ public class CleanDataset {
                     boolean insertedDelete = false;
                     int maxTries = 100;
                     while (!insertedDelete && maxTries > 0) {
-                        int index = r.nextInt(c, datasetAllSpreadOut.length);
-                        if (datasetAllSpreadOut[index] == null) {
-                            datasetAllSpreadOut[index] = record;
+                        int index = r.nextInt(c, datasetAllUpdates.length);
+                        if (datasetAllUpdates[index] == null) {
+                            datasetAllUpdates[index] = record;
                             isDelete[index] = true;
                             insertedDelete = true;
                         }
@@ -1154,9 +1154,9 @@ public class CleanDataset {
                     }
                     if (!insertedDelete) {
                         // reverse over datasetAllSpreadOut and insert delete at first empty spot.
-                        for (int j = datasetAllSpreadOut.length - 1; j >= c; j--) {
-                            if (datasetAllSpreadOut[j] == null) {
-                                datasetAllSpreadOut[j] = record;
+                        for (int j = datasetAllUpdates.length - 1; j >= c; j--) {
+                            if (datasetAllUpdates[j] == null) {
+                                datasetAllUpdates[j] = record;
                                 isDelete[j] = true;
                                 break;
                             }
@@ -1167,6 +1167,13 @@ public class CleanDataset {
                     }
 
                 }
+            }
+        } else {
+            // all deletes at end.
+            System.arraycopy(datasetInsertsSpreadOut, 0, datasetAllUpdates, 0, datasetInsertsSpreadOut.length);
+            for (int i = 0; i < noiseUpdates.length; i++) {
+                datasetAllUpdates[datasetInsertsSpreadOut.length + i] = noiseUpdates[i];
+                isDelete[datasetInsertsSpreadOut.length + i] = true;
             }
         }
         return true;

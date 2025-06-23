@@ -13,6 +13,7 @@ public class ArrayWithBuffer {
     int deletesFromSample = 0;
     int deletesFromBuffer = 0;
     private int curTreeRoot = Integer.MAX_VALUE;
+    private boolean isSorted = false;
 
     public ArrayWithBuffer(int budget) {
         int buffer = Math.max(1, budget / 80);
@@ -90,12 +91,14 @@ public class ArrayWithBuffer {
     public void insert(int val) {
         if (curSampleSize < K) {
             arr[curSampleSize] = val;
+            isSorted = false;
             curSampleSize++;
-            Arrays.sort(arr, 0, curSampleSize); // Sort the array after insertion
+//            Arrays.sort(arr, 0, curSampleSize); // Sort the array after insertion
         } else {
             if (curSampleSize == K) {
                 curSampleSize++;
                 Arrays.sort(arr, 0, K); // Ensure the array is sorted before insertion
+                isSorted = true;
                 curTreeRoot = arr[K - 1]; // Update the tree root
             }
             tryInsert(val);
@@ -152,17 +155,9 @@ public class ArrayWithBuffer {
     }
 
     public int[] getK() {
-
-        if (isSorted(arr, curSampleSize - 1)) {
-            throw new RuntimeException("Array should be sorted");
-        }
         if (bufferSize > 0) {
             flushBuffer();
         }
-        if (isSorted(arr, curSampleSize - 1)) {
-            throw new RuntimeException("Array should be sorted");
-        }
-
         return arr;
     }
 

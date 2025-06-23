@@ -13,10 +13,9 @@ public class KminTreeSet implements Sample {
     private int n;
     private TreeSet<Integer> sample;
     private final String setting;
-    private double beta;
-    private int KInQuery;
+    private final double beta;
+    private final int KInQuery;
     private long curTreeRoot = Integer.MAX_VALUE;
-    private int curSampleSize = 0;
     private int bufferSize = 0;
 
 
@@ -29,10 +28,12 @@ public class KminTreeSet implements Sample {
         if (beta == 0) {
             this.sample = new TreeSet<>(Collections.reverseOrder());
             KInQuery = B;
-        } else {
+        } else if (beta >= 1) {
             this.sample = new TreeSet<>(Collections.reverseOrder());
             KInQuery = B;
             bufferSize = (int) (beta - 1) * B;
+        } else {
+            throw new IllegalArgumentException("Beta should be >= 1");
         }
     }
 
@@ -48,10 +49,9 @@ public class KminTreeSet implements Sample {
 
     private void add(int hx) {
         n++;
-        if (curSampleSize <= B - 1 + bufferSize) {
+        if (sample.size() <= B - 1 + bufferSize) {
             sample.add(hx);
-            curSampleSize++;
-        } else if (curSampleSize == B + bufferSize) {
+        } else if (sample.size() == B + bufferSize) {
             curTreeRoot = sample.first();
             tryInsert(hx);
         } else {
@@ -75,7 +75,6 @@ public class KminTreeSet implements Sample {
         }
         if (sample.contains(hx)) {
             sample.remove(hx);
-            curSampleSize--;
             if (!sample.isEmpty()) {
                 curTreeRoot = sample.first();
             } else {
@@ -86,34 +85,14 @@ public class KminTreeSet implements Sample {
 
     @Override
     public Object query() {
-        if (beta == 1) {
-            int cnt = 0;
-            TreeSet<Integer> result = new TreeSet<>(Collections.reverseOrder());
-            Iterator<Integer> x = sample.descendingIterator();
-            while (cnt <= KInQuery && x.hasNext()) {
-                int k = x.next();
-                result.add(k);
-                cnt++;
-            }
-
-            // check if result is sample
-            if (result.size() != sample.size()) {
-                throw new RuntimeException("Error in KminTreeSet query: result size does not match sample size.");
-            }
-            if (!result.equals(sample)) {
-                throw new RuntimeException("Error in KminTreeSet query: result does not match sample.");
-            }
-        }
-
         if (beta == 0) {
             return sample;
         } else {
             int cnt = 0;
             TreeSet<Integer> result = new TreeSet<>(Collections.reverseOrder());
-            Iterator<Integer> x = sample.descendingIterator();
+            Iterator<Integer> x = sample.iterator();
             while (cnt <= KInQuery && x.hasNext()) {
-                int k = x.next();
-                result.add(k);
+                result.add(x.next());
                 cnt++;
             }
             return result;
@@ -130,7 +109,6 @@ public class KminTreeSet implements Sample {
         this.sample = new TreeSet<>(Collections.reverseOrder());
         this.n = 0;
         this.curTreeRoot = Integer.MAX_VALUE;
-        this.curSampleSize = 0;
     }
 
     @Override
@@ -145,6 +123,6 @@ public class KminTreeSet implements Sample {
 
     @Override
     public int getCurSampleSize() {
-        return Math.min(curSampleSize, KInQuery);
+        return Math.min(sample.size(), KInQuery);
     }
 }

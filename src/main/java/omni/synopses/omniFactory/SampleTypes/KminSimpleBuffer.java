@@ -51,9 +51,9 @@ public class KminSimpleBuffer implements Sample {
 
     public int[] query() {
         if (beta != 0) {
-            return sample.getK();
-        } else {
             return Arrays.copyOf(sample.getK(), getCurSampleSize());
+        } else {
+            return sample.getK();
         }
     }
 

@@ -92,7 +92,7 @@ public class KminCustomArray implements Sample {
 
     public void analyzeDeletes() {
         // check if number of deletes exceed buffer: (beta - 1) * B
-        if (beta!=0 & sample.getTotalDeletes() > (beta - 1) / beta * B) {
+        if (beta!=0 & sample.getTotalDeletes() > (beta - 1) *B) {
             System.out.println("Warning: Number of deletes from buffer exceeds threshold.");
         }
 

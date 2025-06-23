@@ -71,7 +71,7 @@ public class RunExperiments {
         }
         double perc = 0;
         if (config.withDeletes) {
-            perc = 0.5;
+            perc = 0.901;
         }
         readDataset(perc, sizeFactor, noiseSize, zipfAlpha);
     }
@@ -255,8 +255,8 @@ public class RunExperiments {
 
     public long runSynopsisRamBased(SynopsisRefactor syn, int repetition) throws IOException {
         long time_passed;
-        if (config.withDeletes && config.spreadOutDeletes) {
-            time_passed= runSynWithSpreadDeletes(syn);
+        if (config.withDeletes) {
+            time_passed= runSynWithDeletes(syn);
         } else {
             time_passed = runSynWithoutWarmup(syn);
         }
@@ -275,7 +275,7 @@ public class RunExperiments {
         //ConditionChecks.run(d, s);
         return synMem;
     }
-    private long processDataset(SynopsisRefactor syn, long[][] dataset, boolean[] isDelete, boolean withDeletes, boolean spreadOutDeletes) {
+    private long processDataset(SynopsisRefactor syn, long[][] dataset, boolean[] isDelete, boolean withDeletes) {
         System.out.println("Running synopsis");
         int numUpdates = 0;
         int numDeletes = 0;
@@ -283,7 +283,7 @@ public class RunExperiments {
         long startTime = System.currentTimeMillis();
 
         for (int i = 0; i < dataset.length; i++) {
-            if (spreadOutDeletes && isDelete != null && isDelete[i]) {
+            if (isDelete != null && isDelete[i]) {
                 syn.delete(dataset[i]);
                 numDeletes++;
             } else {
@@ -292,10 +292,10 @@ public class RunExperiments {
             }
 
             if (numDeletes > 0 && numDeletes % 1000000 == 0) {
-                System.out.println("Number of deletes: " + numDeletes);
+                System.out.printf("\rNumber of deletes: " + numDeletes);
             }
             if (numUpdates % 1000000 == 0) {
-                System.out.println("Number of updates: " + numUpdates);
+                System.out.printf("\rNumber of updates: " + numUpdates + " / " + dataset.length);
             }
         }
 
@@ -309,11 +309,11 @@ public class RunExperiments {
     }
 
     private long runSynWithoutWarmup(SynopsisRefactor syn) {
-        return processDataset(syn, cd.getDataset(), null, config.withDeletes, false);
+        return processDataset(syn, cd.getDataset(), null, config.withDeletes);
     }
 
-    private long runSynWithSpreadDeletes(SynopsisRefactor syn) {
-        return processDataset(syn, cd.datasetAllSpreadOut, cd.isDelete, config.withDeletes, true);
+    private long runSynWithDeletes(SynopsisRefactor syn) {
+        return processDataset(syn, cd.datasetAllUpdates, cd.isDelete, config.withDeletes);
     }
 
     private void readDatasetSettings() {
