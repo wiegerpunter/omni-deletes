@@ -52,6 +52,11 @@ public class ArrayWithBuffer {
 //            }
 //        }
 
+        if (!isSorted) {
+            Arrays.sort(arr, 0, Math.min(curSampleSize, K)); // Sort the array if not sorted
+            isSorted = true;
+        }
+
         int index = Arrays.binarySearch(arr, 0, Math.min(curSampleSize, K), hx);
         if (index >= 0) {
             // Element found, shift elements to the left
