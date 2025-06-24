@@ -19,12 +19,14 @@ public class KminCustomArray implements Sample {
         this.setting = setting;
         this.n = 0;
         this.beta = beta;
-        if (beta != 0) {
+        if (beta == 0) {
+            this.B = B;
+        } else if (beta >= 0) {
             this.B = (int) (B * beta);
         } else {
-            this.B = B;
+            throw new IllegalArgumentException("Beta should be >= 0");
         }
-        this.sample = new  ArrayWithBuffer(this.B);
+        this.sample = new ArrayWithBuffer(this.B);
     }
 
     // Implement the methods for KminPQ here
@@ -81,7 +83,7 @@ public class KminCustomArray implements Sample {
     @Override
     public int getCurSampleSize() {
         if (beta != 0) {
-            return (int) (sample.getCurSampleSize() / beta);
+            return (int) Math.min(sample.getCurSampleSize(), B / beta);
         }
         return sample.getCurSampleSize();
     }

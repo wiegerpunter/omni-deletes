@@ -14,24 +14,22 @@ public class KminTreeSet implements Sample {
     private TreeSet<Integer> sample;
     private final String setting;
     private final double beta;
-    private final int KInQuery;
     private long curTreeRoot = Integer.MAX_VALUE;
-    private int bufferSize = 0;
 
 
     public KminTreeSet(int B, int b, double beta, String setting) {
-        this.B=B;
+//        this.B=B;
         this.b=b;
         this.setting = setting;
         this.n = 0;
         this.beta = beta;
         if (beta == 0) {
             this.sample = new TreeSet<>(Collections.reverseOrder());
-            KInQuery = B;
+            this.B = B;
         } else if (beta >= 1) {
             this.sample = new TreeSet<>(Collections.reverseOrder());
-            KInQuery = B;
-            bufferSize = (int) (beta - 1) * B;
+            this.B = (int) (B * beta);
+//            bufferSize = (int) (beta - 1) * B;
         } else {
             throw new IllegalArgumentException("Beta should be >= 1");
         }
@@ -49,9 +47,9 @@ public class KminTreeSet implements Sample {
 
     private void add(int hx) {
         n++;
-        if (sample.size() <= B - 1 + bufferSize) {
+        if (sample.size() <= B - 1) {
             sample.add(hx);
-        } else if (sample.size() == B + bufferSize) {
+        } else if (sample.size() == B) {
             curTreeRoot = sample.first();
             tryInsert(hx);
         } else {
@@ -91,7 +89,7 @@ public class KminTreeSet implements Sample {
             int cnt = 0;
             TreeSet<Integer> result = new TreeSet<>(Collections.reverseOrder());
             Iterator<Integer> x = sample.iterator();
-            while (cnt <= KInQuery && x.hasNext()) {
+            while (cnt <= (B /beta) && x.hasNext()) {
                 result.add(x.next());
                 cnt++;
             }
@@ -123,6 +121,9 @@ public class KminTreeSet implements Sample {
 
     @Override
     public int getCurSampleSize() {
-        return Math.min(sample.size(), KInQuery);
+        if (beta != 0) {
+            return (int) Math.min(sample.size(), B/ beta);
+        }
+        return sample.size();
     }
 }

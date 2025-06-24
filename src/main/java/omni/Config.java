@@ -71,6 +71,9 @@ public class Config {
     public double bufferDeletesMinwise;
     public boolean expOmniSketchVLDBTreeSet;
     public boolean expOmniSketchVLDBTreeSetWithoutBuffer;
+    public boolean getUniqueRecords;
+    public int domain;
+    public int[] domain_sizes;
 
     // Old parameters, might use them in the future
 //    public List<Double> bufferValuesOmni;

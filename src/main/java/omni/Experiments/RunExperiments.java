@@ -39,18 +39,21 @@ public class RunExperiments {
             for (double zipfAlpha : config.zipfAlphas) {
                 for (int i = 0; i < conditions.length; i++) {
                     for (int n : config.sizeNoise) {
-                        if (config.useMultNumAttributes) {
-                            for (int j = 2; j < cd.cleanIds.length; j++) {
-                                config.numStoredAttributes = j + 1;
+                        for (int domain: config.domain_sizes) {
+                            config.domain = domain;
+                            if (config.useMultNumAttributes) {
+                                for (int j = 2; j < cd.cleanIds.length; j++) {
+                                    config.numStoredAttributes = j + 1;
+                                    System.out.println("Running with " + config.numStoredAttributes + " attributes");
+                                    prepareDataset(i, zipfAlpha, n); // prepare dataset
+                                    runAllExperiments(repetition); // run all experiments in factory
+                                }
+                            } else {
+                                config.numStoredAttributes = cd.cleanIds.length;
                                 System.out.println("Running with " + config.numStoredAttributes + " attributes");
                                 prepareDataset(i, zipfAlpha, n); // prepare dataset
                                 runAllExperiments(repetition); // run all experiments in factory
                             }
-                        } else {
-                            config.numStoredAttributes = cd.cleanIds.length;
-                            System.out.println("Running with " + config.numStoredAttributes + " attributes");
-                            prepareDataset(i, zipfAlpha, n); // prepare dataset
-                            runAllExperiments(repetition); // run all experiments in factory
                         }
                     }
                 }
@@ -242,7 +245,9 @@ public class RunExperiments {
         }
 
         // get number of unique full records, ignoring the id
-        cd.getUniqueRecords();
+        if (config.getUniqueRecords) {
+            cd.getUniqueRecords();
+        }
 
         // print distributions
         //cd.getDistributions();

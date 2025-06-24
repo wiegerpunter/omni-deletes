@@ -41,7 +41,7 @@ public class ArrayWithBuffer {
             deletesFromBuffer++;
             return;
         }
-//
+////
 //        for (int i = 0; i < bufferSize; i++) {
 //            if (buffer[i] == hx) {
 //                // delete buffer[i]
@@ -64,17 +64,19 @@ public class ArrayWithBuffer {
             arr[Math.min(curSampleSize, K - 1)] = Integer.MAX_VALUE; // Set the last element to a large value
             curSampleSize--;
             deletesFromSample++;
-        } else {
-            // Element not found, do nothing
-            return;
         }
 
         // If buffer is not empty, we can try to fill the gap
         if (bufferSize > 0) {
             int insertIndex = Arrays.binarySearch(arr, 0, Math.min(curSampleSize, K), buffer[0]);
-            if (insertIndex < 0) {
-                insertIndex = -insertIndex - 1; // Find the insertion point
+            if (insertIndex >= 0) {
+                while (insertIndex > 0 && arr[insertIndex] == arr[insertIndex -1]) {
+                    insertIndex--; // Find the first occurrence of the value
+                }
+            } else {
+                insertIndex = -insertIndex - 1;
             }
+
             // Shift elements to the right to make space for the buffer element
             System.arraycopy(arr, insertIndex, arr, insertIndex + 1, Math.min(curSampleSize, K) - insertIndex - 1);
             // Insert the last element from the buffer into the sample
@@ -129,7 +131,7 @@ public class ArrayWithBuffer {
     void flushBuffer() {
         int pointerArr = K - 1;
         int pointerBuffer = bufferSize - 1;
-
+//        Arrays.sort(buffer, 0, bufferSize + 1); // Sort the buffer before processing
         for (int i = 0; i < bufferSize; i++) {
             if (arr[pointerArr] <= buffer[pointerBuffer]) {
                 pointerBuffer--;

@@ -214,6 +214,18 @@ public class CleanDataset {
         }
     }
 
+    public static void shuffleArray(int[] array) {
+        Random rand = new Random(0);
+        for (int i = array.length - 1; i > 0; i--) {
+            int j = rand.nextInt(i + 1); // random index from 0 to i (inclusive)
+
+            // Swap array[i] with array[j]
+            int temp = array[i];
+            array[i] = array[j];
+            array[j] = temp;
+        }
+    }
+
     private boolean queryFileExists() throws CsvValidationException, IOException {
         String filenameToMatch = getQueryFileName(false);
         // check if there exists a file where first part of name matches filenameToMatch
@@ -1205,6 +1217,7 @@ public class CleanDataset {
                          double zipfAlpha, int numUniformAttrs) {
         this.sizeFactor = sizeFactor;
         int numAttrs = config.numAttributes;
+        int domain = config.domain;
         this.zipfAlpha = zipfAlpha;
         // Process: for each attribute, decide from which distribution to sample.
         // Generate records for dataset according to distributions.
@@ -1217,7 +1230,7 @@ public class CleanDataset {
         // Generate dataset
         int numModes = 15;
         double stdDev = 5;
-        generateSynthDataset(numAttrs, sizeFactor, numZipfianAttrs, zipfAlpha,
+        generateSynthDataset(numAttrs, domain, sizeFactor, numZipfianAttrs, zipfAlpha,
                 numUniformAttrs, numModes, stdDev);
         // Generate queries
         generateSynthQueries(numAttrs, perc, numZipfianAttrs);
@@ -1490,11 +1503,10 @@ public class CleanDataset {
 
     }
 
-    private void generateSynthDataset(int numAttrs, double sizeFactor,
+    private void generateSynthDataset(int numAttrs, int domain, double sizeFactor,
                                       int numZipfianAttrs,
                                       double zipfAlpha, int numUniformAttrs, int numModes, double stdDev) {
         int totalRecords = (int) Math.pow(2, sizeFactor);
-        int domain = 1000;
         // for each attribute, decide from which distribution to sample.
         boolean[] zipfianData = new boolean[numAttrs];
         for (int i = 0; i < numZipfianAttrs; i++) {
@@ -1506,8 +1518,8 @@ public class CleanDataset {
         long[][] mixtureData = new long[0][];
 
         if (numZipfianAttrs>0){
-//            zipfData=ZipfGenerator.zipfData(totalRecords,  numZipfianAttrs, domain, zipfAlpha);
-            zipfData= ZipfGenerator.zipfDataSparse(totalRecords, numZipfianAttrs, domain, zipfAlpha);
+            zipfData=ZipfGenerator.zipfData(totalRecords,  numZipfianAttrs, domain, zipfAlpha);
+//            zipfData= ZipfGenerator.zipfDataSparse(totalRecords, numZipfianAttrs, domain, zipfAlpha);
         }
 
         if (numUniformAttrs > 0) {
@@ -1544,27 +1556,33 @@ public class CleanDataset {
 //        Arrays.fill(repeatedRecord, 555);
 
 
-        long[][] tempDataset = new long[totalRecords][];
+        this.dataset = new long[totalRecords][numAttrs + 1];
+//        long[][] tempDataset = new long[totalRecords][];
         for (int i=0; i <totalRecords; i++ ) {
-            tempDataset[i] = new long[numAttrs];
-            if (numZipfianAttrs > 0) System.arraycopy(zipfData[i], 0, tempDataset[i], 0, numZipfianAttrs);
-            if (numUniformAttrs > 0) System.arraycopy(unifData[i], 0, tempDataset[i], numZipfianAttrs, numUniformAttrs);
-            if (numMixtureAttrs > 0) System.arraycopy(mixtureData[i], 0, tempDataset[i], numZipfianAttrs + numUniformAttrs, numMixtureAttrs);
+            this.dataset[i][0] = i; // id
+            if (numZipfianAttrs > 0) System.arraycopy(zipfData[i], 0, dataset[i],
+                    1, numZipfianAttrs);
+            if (numUniformAttrs > 0) System.arraycopy(unifData[i], 0, dataset[i],
+                    1 + numZipfianAttrs, numUniformAttrs);
+            if (numMixtureAttrs > 0) System.arraycopy(mixtureData[i], 0, dataset[i],
+                    1 + numZipfianAttrs + numUniformAttrs, numMixtureAttrs);
 //            if (Main.numAttributes - numZipfianAttrs > 0) {
 //                System.arraycopy(unifData[i], 0, tempDataset[i], numZipfianAttrs, numAttrs - numZipfianAttrs);
 //            }
         }
 
-        // shuffle tempDataset
-        shuffleArray(tempDataset);
-
-        this.dataset = new long[totalRecords][numAttrs + 1];
-        // merge zipfData and unifData with id
-        for (int i=0; i < totalRecords;i++) {
-            this.dataset[i][0] = i;
-            System.arraycopy(tempDataset[i], 0, this.dataset[i], 1, numAttrs);
+        int[] indices = new int[totalRecords];
+        for (int i = 0; i < totalRecords; i++) {
+            indices[i] = i;
         }
 
+        // shuffle tempDataset
+        shuffleArray(indices);
+        long[][] shuffledDataset = new long[totalRecords][];
+        for (int i = 0; i < totalRecords; i++) {
+            shuffledDataset[i] = dataset[indices[i]];
+        }
+        this.dataset = shuffledDataset;
         System.out.println("Dataset size Synthetic set: " + dataset.length);
     }
 

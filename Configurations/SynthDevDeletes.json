@@ -44,12 +44,14 @@
   "expOmniSketchSFQLSampleSize": false,
   "expOmniSketchSFQLSampleSizePerRow": false,
   "expOmniSketchSFQLSampleSizeTestHashSet": false,
-  "expASH": true,
+  "expASH": false,
   "expHydra": false,
   "expResSample": false,
   "expCM": false,
   "numFiles": 2,
   "expOmniSketchSFQLOptimized": false,
   "expOmniSketchSFQLOptimizedOnlyNew": false,
-  "parameterSettingType": "GridSearch"
+  "parameterSettingType": "GridSearch",
+  "getUniqueRecords": false,
+  "domain_sizes": [1000,10000,100000]
 }

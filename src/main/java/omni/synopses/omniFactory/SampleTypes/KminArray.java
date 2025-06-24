@@ -25,10 +25,12 @@ public class KminArray implements Sample {
         this.setting = setting;
         this.n = 0;
         this.curSampleSize = 0;
-        if (beta != 0) {
+        if (beta == 0) {
+            this.B = B;
+        } else if (beta >= 1) {
             this.B = (int) (B * beta);
         } else {
-            this.B = B;
+            throw new IllegalArgumentException("Beta should be >= 1");
         }
         this.sample = new int[this.B];
 
@@ -133,7 +135,7 @@ public class KminArray implements Sample {
     @Override
     public int getCurSampleSize() {
         if (beta != 0) {
-            return (int) (curSampleSize / beta);
+            return (int) Math.min(curSampleSize, B / beta);
         }
         return curSampleSize;
     }
