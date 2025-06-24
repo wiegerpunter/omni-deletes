@@ -112,12 +112,12 @@ public class aSH extends SynopsisRefactor{
         double[] Tis = new double[sketch.size()];
         //double[] us = new double[keys.size()];
         //double[] zs = new double[keys.size()];
-        int i = 0;
         Iterator<Double[]> iterator = sketch.values().iterator();//Set().iterator();
         int numToEject = size - sketchSize;
 
-        TreeSet<Double> bs_minvalues = new TreeSet<>();//Ascending: we want the min values to eject. Comparator.reverseOrder());
+        PriorityQueue<Double> bs_minvalues = new PriorityQueue<>(Comparator.reverseOrder());//Ascending: we want the min values to eject. Comparator.reverseOrder());
 
+        int i = 0;
         while (iterator.hasNext()) {
             Double[] sample = iterator.next();//sketch.get(key);
             sample[2] = rn.nextDouble(0, 1);
@@ -125,12 +125,12 @@ public class aSH extends SynopsisRefactor{
             Tis[i] = Math.max(sample[1] / sample[2], sample[0] / (-sample[3]));
             bs_minvalues.add(Tis[i]);
             if (bs_minvalues.size() > numToEject) { // We only want to eject numToEject records with the smallest values. If we have more, we eject the largest ones.
-                bs_minvalues.pollLast(); // Eject the largest value.
+                bs_minvalues.poll(); // Eject the largest value.
             }
             i++;
         }
-        if (bs_minvalues.size() == numToEject) {
-            tstar = bs_minvalues.last(); // The largest value in the set of smallest values.
+        if (bs_minvalues.size() == numToEject && !bs_minvalues.isEmpty()) {
+            tstar = bs_minvalues.peek(); // The largest value in the set of smallest values.
         } else {
             throw new RuntimeException("Error in ejecting records from aSH");
         }

@@ -32,25 +32,25 @@ public class ArrayWithBuffer {
             return;
         }
 
-        // check if present in buffer
-        int bufferIndex = Arrays.binarySearch(buffer, 0, bufferSize, hx);
-        if (bufferIndex >= 0) {
-            // Element found in buffer, remove it
-            System.arraycopy(buffer, bufferIndex + 1, buffer, bufferIndex, bufferSize - bufferIndex - 1);
-            bufferSize--;
-            deletesFromBuffer++;
-            return;
-        }
-////
-//        for (int i = 0; i < bufferSize; i++) {
-//            if (buffer[i] == hx) {
-//                // delete buffer[i]
-//                System.arraycopy(buffer, i + 1, buffer, i, bufferSize - i - 1);
-//                bufferSize--;
-//                deletesFromBuffer++;
-//                return;
-//            }
+//        // check if present in buffer
+//        int bufferIndex = Arrays.binarySearch(buffer, 0, bufferSize, hx);
+//        if (bufferIndex >= 0) {
+//            // Element found in buffer, remove it
+//            System.arraycopy(buffer, bufferIndex + 1, buffer, bufferIndex, bufferSize - bufferIndex - 1);
+//            bufferSize--;
+//            deletesFromBuffer++;
+//            return;
 //        }
+////
+        for (int i = 0; i < bufferSize; i++) {
+            if (buffer[i] == hx) {
+                // delete buffer[i]
+                System.arraycopy(buffer, i + 1, buffer, i, bufferSize - i - 1);
+                bufferSize--;
+                deletesFromBuffer++;
+                return;
+            }
+        }
 
         if (!isSorted) {
             Arrays.sort(arr, 0, Math.min(curSampleSize, K)); // Sort the array if not sorted
@@ -64,6 +64,9 @@ public class ArrayWithBuffer {
             arr[Math.min(curSampleSize, K - 1)] = Integer.MAX_VALUE; // Set the last element to a large value
             curSampleSize--;
             deletesFromSample++;
+        } else {
+            // Element not found in neither buffer or sample, do nothing
+            return;
         }
 
         // If buffer is not empty, we can try to fill the gap
@@ -100,7 +103,7 @@ public class ArrayWithBuffer {
             arr[curSampleSize] = val;
             isSorted = false;
             curSampleSize++;
-//            Arrays.sort(arr, 0, curSampleSize); // Sort the array after insertion
+            Arrays.sort(arr, 0, curSampleSize); // Sort the array after insertion
         } else {
             if (curSampleSize == K) {
                 curSampleSize++;
@@ -118,7 +121,7 @@ public class ArrayWithBuffer {
                 flushBuffer();
             }
             buffer[bufferSize] = val;
-            Arrays.sort(buffer, 0, bufferSize + 1); // Sort the buffer after insertion
+//            Arrays.sort(buffer, 0, bufferSize + 1); // Sort the buffer after insertion
             bufferSize++;
 //                buffer[bufferSize] = val;
 //                bufferSize++;
@@ -131,7 +134,7 @@ public class ArrayWithBuffer {
     void flushBuffer() {
         int pointerArr = K - 1;
         int pointerBuffer = bufferSize - 1;
-//        Arrays.sort(buffer, 0, bufferSize + 1); // Sort the buffer before processing
+        Arrays.sort(buffer, 0, bufferSize); // Sort the buffer before processing
         for (int i = 0; i < bufferSize; i++) {
             if (arr[pointerArr] <= buffer[pointerBuffer]) {
                 pointerBuffer--;

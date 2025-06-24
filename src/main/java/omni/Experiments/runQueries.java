@@ -266,14 +266,14 @@ public class runQueries {
                     "estTime",  "queryText", "SCap", "NMax","usedMaxSize","jacEstimate2LHS", "unionEstimate2LHS","witness2LHS",
                     "intersectionSizeOfR","unionSizeOfR",
                     "meanQueryTime","BetaKmin","numKSamples","KminDeletes","exactInDeletes","exactUnionDeletes","uniqueSamples",
-                    "numKmins","numKminsExceedingBounds","measuredSignatureCollisions","zipfAlpha", "case1", "bound","bufferDeletesMinwise"};
+                    "numKmins","numKminsExceedingBounds","measuredSignatureCollisions","zipfAlpha", "case1", "bound","bufferDeletesMinwise","domain"};
             writer.writeNext(header);
         }
 
 
         String memUsageSyn = String.valueOf(s.getMemoryUsage());
         for (int i = 0; i < d.pointQueries.length; i++) {
-            String[] result = new String[47];
+            String[] result = new String[48];
             // Dataset specific info;
             result[0] = String.valueOf(repetition);
             result[1] = String.valueOf(d.dataset.length);
@@ -339,6 +339,7 @@ public class runQueries {
             result[44] = String.valueOf(case1[i]);
             result[45] = String.valueOf(bound[i]);
             result[46] = String.valueOf(config.bufferDeletesMinwise);
+            result[47] = String.valueOf(config.domain); // Assuming domain_sizes is an array of integers, and we want the first element.
             writer.writeNext(result);
         }
 
