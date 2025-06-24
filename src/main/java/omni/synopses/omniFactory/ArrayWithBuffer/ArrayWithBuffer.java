@@ -53,14 +53,14 @@ public class ArrayWithBuffer {
         }
 
         if (!isSorted) {
-            Arrays.sort(arr, 0, Math.min(curSampleSize, K)); // Sort the array if not sorted
+            Arrays.sort(arr, 0, Math.min(curSampleSize + 1, K)); // Sort the array if not sorted
             isSorted = true;
         }
 
-        int index = Arrays.binarySearch(arr, 0, Math.min(curSampleSize, K), hx);
+        int index = Arrays.binarySearch(arr, 0, Math.min(curSampleSize + 1, K), hx);
         if (index >= 0) {
             // Element found, shift elements to the left
-            System.arraycopy(arr, index + 1, arr, index, Math.min(curSampleSize, K) - index -1);
+            System.arraycopy(arr, index + 1, arr, index, Math.min(curSampleSize + 1, K) - index -1);
             arr[Math.min(curSampleSize, K - 1)] = Integer.MAX_VALUE; // Set the last element to a large value
             curSampleSize--;
             deletesFromSample++;
@@ -71,7 +71,7 @@ public class ArrayWithBuffer {
 
         // If buffer is not empty, we can try to fill the gap
         if (bufferSize > 0) {
-            int insertIndex = Arrays.binarySearch(arr, 0, Math.min(curSampleSize, K), buffer[0]);
+            int insertIndex = Arrays.binarySearch(arr, 0, Math.min(curSampleSize + 1, K), buffer[0]);
             if (insertIndex >= 0) {
                 while (insertIndex > 0 && arr[insertIndex] == arr[insertIndex -1]) {
                     insertIndex--; // Find the first occurrence of the value
@@ -81,7 +81,7 @@ public class ArrayWithBuffer {
             }
 
             // Shift elements to the right to make space for the buffer element
-            System.arraycopy(arr, insertIndex, arr, insertIndex + 1, Math.min(curSampleSize, K) - insertIndex - 1);
+            System.arraycopy(arr, insertIndex, arr, insertIndex + 1, Math.min(curSampleSize + 1, K) - insertIndex - 1);
             // Insert the last element from the buffer into the sample
             arr[insertIndex] = buffer[0];
             bufferSize--;
@@ -100,19 +100,30 @@ public class ArrayWithBuffer {
 
     public void insert(int val) {
         if (curSampleSize < K) {
-            arr[curSampleSize] = val;
-            isSorted = false;
-            curSampleSize++;
-            Arrays.sort(arr, 0, curSampleSize); // Sort the array after insertion
-        } else {
-            if (curSampleSize == K) {
-                curSampleSize++;
-                Arrays.sort(arr, 0, K); // Ensure the array is sorted before insertion
-                isSorted = true;
-                curTreeRoot = arr[K - 1]; // Update the tree root
+            if (bufferSize >= buffer.length) {
+                flushBuffer(); // Flush the buffer if it exceeds its size
             }
+            insertSorted(val, bufferSize);
+            curSampleSize++;
+            if (curSampleSize == K) {
+                flushBuffer();
+                curTreeRoot = arr[K - 1]; // Array is now fully populated and sorted
+            }
+        } else {
             tryInsert(val);
         }
+    }
+
+    private void insertSorted(int val, int length) {
+        int pos = Arrays.binarySearch(buffer, 0, length, val);
+        if (pos < 0) {
+            pos = -pos - 1; // Find correct insertion point
+        }
+
+        // Shift elements to make room for new value
+        System.arraycopy(buffer, pos, buffer, pos + 1, length - pos);
+        buffer[pos] = val;
+        bufferSize++;
     }
 
     private void tryInsert(int val) {

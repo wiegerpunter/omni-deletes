@@ -139,7 +139,7 @@ public class RamToPar {
     private double[] getParamsASH(long ram) {
         // memory usage of aSH sampling is sample size * 32 * numAttrs * 5
         //double sampleSize = (double) ram / (32 * numAttrs * 5);
-        double sampleSize = (double) ram / (32 * (numAttrs + 5));
+        double sampleSize = (double) ram / (32 * numAttrs + 64*5); // 64 for the size of the Double array and Tis array
                 // sampleSize * (32 * numAttrs + 32*4);
         return new double[]{sampleSize};
     }

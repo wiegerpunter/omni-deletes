@@ -60,7 +60,7 @@ public class KminCustomArray implements Sample {
     }
 
     public long getMemoryFootprint() {
-        analyzeDeletes();
+        //analyzeDeletes();
         return Formulas.ramSingleKmin(getCurSampleSize() + getBufferSize(), b);
     }
 
