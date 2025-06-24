@@ -19,6 +19,7 @@ public class ArrayWithBuffer {
         int buffer = Math.max(1, budget / 80);
         this.K = budget - buffer;
         this.arr = new int[this.K];
+        Arrays.fill(this.arr, Integer.MAX_VALUE);
         this.buffer = new int[buffer];
     }
 
@@ -101,10 +102,10 @@ public class ArrayWithBuffer {
     public void insert(int val) {
         if (curSampleSize < K) {
             if (bufferSize >= buffer.length) {
-                flushBuffer(); // Flush the buffer if it exceeds its size
+                flushBufferSampleNotFull(); // Flush the buffer if it exceeds its size
             }
             insertSorted(val, bufferSize);
-            curSampleSize++;
+//            curSampleSize++;
             if (curSampleSize == K) {
                 flushBuffer();
                 curTreeRoot = arr[K - 1]; // Array is now fully populated and sorted
@@ -131,15 +132,44 @@ public class ArrayWithBuffer {
             if (bufferSize >= buffer.length) {
                 flushBuffer();
             }
-            buffer[bufferSize] = val;
+            insertSorted(val, bufferSize);
 //            Arrays.sort(buffer, 0, bufferSize + 1); // Sort the buffer after insertion
-            bufferSize++;
 //                buffer[bufferSize] = val;
 //                bufferSize++;
 //                if (bufferSize == buffer.length) {
 //                    flushBuffer();
 //                }
         }
+    }
+
+    void flushBufferSampleNotFull() {
+        int i = 0;
+        while (i < bufferSize) {
+            if (curSampleSize < K) {
+                int insertIndex = Arrays.binarySearch(arr, 0, curSampleSize, buffer[i]);
+                if (insertIndex >= 0) {
+                    while (insertIndex > 0 & arr[insertIndex] == arr[insertIndex - 1]) {
+                        insertIndex--;
+                    }
+                } else {
+                    insertIndex = -insertIndex - 1;
+                }
+                System.arraycopy(arr, insertIndex, arr, insertIndex + 1, curSampleSize - insertIndex);
+                arr[insertIndex] = buffer[i];
+                curSampleSize++;
+                i++;
+            } else {
+                break; // array is full. Start sampling.
+            }
+        }
+
+        // remove i items from buffer;
+        System.arraycopy(buffer, i , buffer, 0, bufferSize - i);
+        bufferSize -= i;
+
+        // if we have buffer left, sample
+        flushBuffer();
+
     }
 
     void flushBuffer() {
@@ -171,7 +201,7 @@ public class ArrayWithBuffer {
             pointerArr = insertIndex - 1; // Update pointerArr to reflect the shift
             shiftRight -= 1;
         }
-        curTreeRoot = arr[K - 1];
+        curTreeRoot = arr[K- 1];
         bufferSize = 0;
     }
 
