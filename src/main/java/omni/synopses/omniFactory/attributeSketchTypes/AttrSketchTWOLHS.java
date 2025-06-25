@@ -29,6 +29,11 @@ public class AttrSketchTWOLHS {
                 }
             }
         }
+        reusableHashes = new int[depth];
+        this.attrHashFunctions = new HashFunction[depth];
+        for (int i = 0; i < depth; i++) {
+            attrHashFunctions[i] = Hashing.murmur3_32_fixed(i + config.getSeed());
+        }
     }
 
     private void attrHash(long attrValue) {

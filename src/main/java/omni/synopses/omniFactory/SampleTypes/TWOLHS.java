@@ -5,13 +5,8 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 
 public class TWOLHS implements Sample {
-    private int M;
-    private int K;
     private int bitSize;
     public int[][] countSignatures;
-    int a;
-    int b;
-    int c;
     int repetition;
     int seed;
 
@@ -36,12 +31,12 @@ public class TWOLHS implements Sample {
     }
 
     @Override
-    public void ingest(int hx, int sign) {
-        long h = hashFunction.hashInt(hx).asLong();
+    public void ingest(int id, int sign) {
+        int h = hashFunction.hashInt(id).asInt();
         int sketchIndex = -1;
         for (int i = 0; i < bitSize; i++) {
             int mask = 1 << i;
-            long val = (h & mask);
+            int val = (h & mask);
             if (val == 0) {
                 continue;
             }

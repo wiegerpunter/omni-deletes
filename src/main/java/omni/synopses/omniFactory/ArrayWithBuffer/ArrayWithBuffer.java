@@ -33,63 +33,110 @@ public class ArrayWithBuffer {
             return;
         }
 
-//        // check if present in buffer
-//        int bufferIndex = Arrays.binarySearch(buffer, 0, bufferSize, hx);
-//        if (bufferIndex >= 0) {
-//            // Element found in buffer, remove it
-//            System.arraycopy(buffer, bufferIndex + 1, buffer, bufferIndex, bufferSize - bufferIndex - 1);
-//            bufferSize--;
-//            deletesFromBuffer++;
-//            return;
-//        }
+        // check if present in buffer
+        int bufferIndex = Arrays.binarySearch(buffer, 0, bufferSize, hx);
+        if (bufferIndex >= 0) {
+            // Element found in buffer, remove it
+            System.arraycopy(buffer, bufferIndex + 1, buffer, bufferIndex, bufferSize - bufferIndex - 1);
+            bufferSize--;
+            deletesFromBuffer++;
+            return;
+        }
 ////
-        for (int i = 0; i < bufferSize; i++) {
-            if (buffer[i] == hx) {
-                // delete buffer[i]
-                System.arraycopy(buffer, i + 1, buffer, i, bufferSize - i - 1);
-                bufferSize--;
-                deletesFromBuffer++;
-                return;
-            }
-        }
+//        for (int i = 0; i < bufferSize; i++) {
+//            if (buffer[i] == hx) {
+//                // delete buffer[i]
+//                System.arraycopy(buffer, i + 1, buffer, i, bufferSize - i - 1);
+//                bufferSize--;
+//                deletesFromBuffer++;
+//                return;
+//            }
+//        }
 
-        if (!isSorted) {
-            Arrays.sort(arr, 0, Math.min(curSampleSize + 1, K)); // Sort the array if not sorted
-            isSorted = true;
-        }
+//        if (!isSorted) {
+//            Arrays.sort(arr, 0, Math.min(curSampleSize + 1, K)); // Sort the array if not sorted
+//            isSorted = true;
+//        }
 
         int index = Arrays.binarySearch(arr, 0, Math.min(curSampleSize + 1, K), hx);
         if (index >= 0) {
+            // check if buffer has element close to this rec:
+            if (bufferSize > 0) {
+                bufferIndex = Arrays.binarySearch(buffer, 0, bufferSize, hx);
+                if (bufferIndex >= 0) {
+                    System.arraycopy(buffer, bufferIndex + 1, buffer, bufferSize, bufferSize - bufferIndex - 1);
+                    bufferSize--;
+                    deletesFromBuffer++;
+                    return;
+                } else {
+                    bufferIndex = -bufferIndex - 1;
+                    if (bufferIndex >= bufferSize & bufferSize == 1) {
+                        bufferIndex = 0;
+                    } else if (bufferIndex >= bufferSize) {
+                        bufferIndex = bufferSize - 1;
+                    }
+
+                    int tries = 4;
+                    boolean deleted = false;
+                    int arrIndexCloseToDelete = index;
+                    while (tries > 0) {
+                        if (arrIndexCloseToDelete == 0 || arr[arrIndexCloseToDelete - 1] <= buffer[bufferIndex]) {
+                            if (arrIndexCloseToDelete == arr.length - 1 || arr[arrIndexCloseToDelete + 1] >= buffer[bufferIndex]) {
+                                insertFromBufferToDeleteSlot(bufferIndex, index, arrIndexCloseToDelete);
+                                deleted = true;
+                                break;
+                            } else {
+                                arrIndexCloseToDelete++;
+                                tries--;
+                            }
+                        } else {
+                            arrIndexCloseToDelete--;
+                            tries--;
+                        }
+                    }
+                    if (!deleted) {
+                        arrIndexCloseToDelete = Arrays.binarySearch(arr, 0, bufferSize, buffer[bufferIndex]);
+                        if (arrIndexCloseToDelete >= 0) {
+                            insertFromBufferToDeleteSlot(bufferIndex, index, arrIndexCloseToDelete);
+                        }
+
+                    }
+                }
+            } else {
+                System.arraycopy(arr, index + 1, arr, index, Math.min(curSampleSize + 1, K) - index -1);
+                arr[Math.min(curSampleSize, K - 1)] = Integer.MAX_VALUE; // Set the last element to a large value
+                curSampleSize--;
+                deletesFromSample++;
+            }
+
+
             // Element found, shift elements to the left
-            System.arraycopy(arr, index + 1, arr, index, Math.min(curSampleSize + 1, K) - index -1);
-            arr[Math.min(curSampleSize, K - 1)] = Integer.MAX_VALUE; // Set the last element to a large value
-            curSampleSize--;
-            deletesFromSample++;
+//
         } else {
             // Element not found in neither buffer or sample, do nothing
             return;
         }
 
-        // If buffer is not empty, we can try to fill the gap
-        if (bufferSize > 0) {
-            int insertIndex = Arrays.binarySearch(arr, 0, Math.min(curSampleSize + 1, K), buffer[0]);
-            if (insertIndex >= 0) {
-                while (insertIndex > 0 && arr[insertIndex] == arr[insertIndex -1]) {
-                    insertIndex--; // Find the first occurrence of the value
-                }
-            } else {
-                insertIndex = -insertIndex - 1;
-            }
-
-            // Shift elements to the right to make space for the buffer element
-            System.arraycopy(arr, insertIndex, arr, insertIndex + 1, Math.min(curSampleSize + 1, K) - insertIndex - 1);
-            // Insert the last element from the buffer into the sample
-            arr[insertIndex] = buffer[0];
-            bufferSize--;
-            curSampleSize++;
-            // Shift the remaining buffer elements to the left
-            System.arraycopy(buffer, 1, buffer, 0, bufferSize);
-        }
+//        // If buffer is not empty, we can try to fill the gap
+//        if (bufferSize > 0) {
+//            int insertIndex = Arrays.binarySearch(arr, 0, Math.min(curSampleSize + 1, K), buffer[0]);
+//            if (insertIndex >= 0) {
+//                while (insertIndex > 0 && arr[insertIndex] == arr[insertIndex -1]) {
+//                    insertIndex--; // Find the first occurrence of the value
+//                }
+//            } else {
+//                insertIndex = -insertIndex - 1;
+//            }
+//
+//            // Shift elements to the right to make space for the buffer element
+//            System.arraycopy(arr, insertIndex, arr, insertIndex + 1, Math.min(curSampleSize + 1, K) - insertIndex - 1);
+//            // Insert the last element from the buffer into the sample
+//            arr[insertIndex] = buffer[0];
+//            bufferSize--;
+//            curSampleSize++;
+//            // Shift the remaining buffer elements to the left
+//            System.arraycopy(buffer, 1, buffer, 0, bufferSize);
+//        }
 
         // Update the current tree root if necessary
         if (curSampleSize > 0) {
@@ -97,6 +144,20 @@ public class ArrayWithBuffer {
         } else {
             curTreeRoot = Integer.MAX_VALUE; // Reset if the sample is empty
         }
+    }
+
+    private void insertFromBufferToDeleteSlot(int bufferIndex, int index, int arrIndexCloseToDelete) {
+        if (arrIndexCloseToDelete < index) {
+            // need to shift elements between arrIndexCloseToDelete and index, and then insert at arrIndexCloseToDelete
+            System.arraycopy(arr, arrIndexCloseToDelete, arr, arrIndexCloseToDelete + 1, index - arrIndexCloseToDelete);
+        } else {
+            System.arraycopy(arr, index + 1, arr, index, arrIndexCloseToDelete - index);
+        }
+        arr[arrIndexCloseToDelete] = buffer[bufferIndex];
+        if (bufferSize != bufferIndex) {
+            System.arraycopy(buffer, bufferIndex + 1, buffer, bufferIndex, bufferSize - bufferIndex - 1);
+        }
+        bufferSize--;
     }
 
     public void insert(int val) {

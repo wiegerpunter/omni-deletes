@@ -201,6 +201,7 @@ public class OmniSketchBuilder {
                 .setUseAcrossRows(true)
                 .setUseNMax(true)
                 .setUseFastTWOLHS(false)
+                .setEps(0.1)
                 .setSketchType("TWOLHS");
     }
 
@@ -209,6 +210,7 @@ public class OmniSketchBuilder {
                 .setUseAcrossRows(true)
                 .setUseNMax(true)
                 .setUseFastTWOLHS(true)
+                .setEps(0.1)
                 .setSketchType("TWOLHS");
     }
 

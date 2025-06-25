@@ -2,6 +2,7 @@ package omni.synopses.omniFactory.utils;
 
 import omni.Experiments.utils.QueryInfo;
 import omni.synopses.omniFactory.OmniSketchConfig;
+import omni.synopses.omniFactory.SampleTypes.Sample;
 import omni.synopses.omniFactory.SampleTypes.TWOLHS;
 
 import java.util.ArrayList;
@@ -10,7 +11,7 @@ import static java.lang.Math.*;
 
 public class TWOLHSUtils {
 
-    public static double setUnionEstimator(TWOLHS[][] samples, double eps, int numTWOLHSRepetitions, boolean useFastTWOLHS) {
+    public static double setUnionEstimator(Sample[][] samples, double eps, int numTWOLHSRepetitions, boolean useFastTWOLHS) {
         // estimate union used in 2lhs estimator.
 
         double f = (1 + eps) * numTWOLHSRepetitions / 8; // from paper.
@@ -22,8 +23,8 @@ public class TWOLHSUtils {
             boolean incrCount = false;
             for (int i = 0; i < numTWOLHSRepetitions; i++) {
                 incrCount = false;
-                for (TWOLHS[] sample : samples) {
-                    if (!sample[i].emptyBucket(index)) {
+                for (Sample[] sample : samples) {
+                    if (!((TWOLHS) sample[i]).emptyBucket(index)) {
                         incrCount = true;
                         break;
                     }
@@ -48,7 +49,7 @@ public class TWOLHSUtils {
         }
     }
 
-    public static double setIntersectEstimator(TWOLHS[][] samples, double unionEstimate, double eps, boolean useFastTWOLHS,
+    public static double setIntersectEstimator(Sample[][] samples, double unionEstimate, double eps, boolean useFastTWOLHS,
                                                QueryInfo queryInfo, OmniSketchConfig sketchConfig) {
         if (useFastTWOLHS) {
             return setIntersectEstimatorFastTWOLHS(samples, unionEstimate, queryInfo);
@@ -57,7 +58,7 @@ public class TWOLHSUtils {
         }
     }
 
-    private static double setIntersectEstimatorFastTWOLHS(TWOLHS[][] samples, double unionEstimate, QueryInfo queryInfo) {
+    private static double setIntersectEstimatorFastTWOLHS(Sample[][] samples, double unionEstimate, QueryInfo queryInfo) {
         int sum = 0;
         int count = 0;
         for (int i = 0; i <samples[0].length; i++) {
@@ -78,20 +79,20 @@ public class TWOLHSUtils {
         return resultInt;
     }
 
-    private static int[] bucketDiffEstimatorFastTWOLHS(TWOLHS[][] samples, int repetition) {
+    private static int[] bucketDiffEstimatorFastTWOLHS(Sample[][] samples, int repetition) {
         //int index;
         int sum=0;// witness count
         int count =0; // total count
         // Instead of doing it for one index, we want to check every index.
-        int countSignaturesLength = samples[0][repetition].countSignatures.length;
+        int countSignaturesLength = ((TWOLHS) samples[0][repetition]).countSignatures.length;
 //        if (repetition == 0) {
 //            System.out.println("CountSignaturesLength: " + countSignaturesLength);
 //        }
         for (int index=0; index < countSignaturesLength; index++) {
             if (singletonUnionBucket(samples, repetition, index)) {
                 boolean witnessFound = true;
-                for (TWOLHS[] sample : samples) {
-                    if (!sample[repetition].singletonBucket(index)) {
+                for (Sample[] sample : samples) {
+                    if (!((TWOLHS) sample[repetition]).singletonBucket(index)) {
                         witnessFound = false;
                     }
                 }
@@ -104,7 +105,7 @@ public class TWOLHSUtils {
         return new int[]{sum, count};
     }
 
-    private static double setIntersectEstimatorTWOLHS(TWOLHS[][] samples, double unionEstimate, double eps,
+    private static double setIntersectEstimatorTWOLHS(Sample[][] samples, double unionEstimate, double eps,
                                                       QueryInfo queryInfo, OmniSketchConfig sketchConfig) {
         int sum = 0;
         int count = 0;
@@ -122,7 +123,7 @@ public class TWOLHSUtils {
         
     }
 
-    private static int bucketDiffEstimator(TWOLHS[][] samples, double unionEstimate,
+    private static int bucketDiffEstimator(Sample[][] samples, double unionEstimate,
                                            double eps, int repetition, int numTWOLHSRepetitions,
                                            OmniSketchConfig config) {
         int index;
@@ -138,15 +139,15 @@ public class TWOLHSUtils {
         if (!singletonUnionBucket(samples, repetition, index)) {
             return - 1;
         }
-        for (TWOLHS[] sample: samples) {
-            if (!sample[repetition].singletonBucket(index)) {
+        for (Sample[] sample: samples) {
+            if (!((TWOLHS) sample[repetition]).singletonBucket(index)) {
                 return 0;
             }
         }
         return 1; // witness found
     }
 
-    private static boolean singletonUnionBucket(TWOLHS[][] samples, int repetition, int lsb) {
+    private static boolean singletonUnionBucket(Sample[][] samples, int repetition, int lsb) {
         // check if union of buckets is singleton.
         // either one is empty and the other is singleton, or they are identical singleton buckets.
         // sample must be either empty or must be singleton.
@@ -154,10 +155,10 @@ public class TWOLHSUtils {
         // repetiotn is the repetition of the 2lhs.
         // lsb is the least significant bit.
         ArrayList<TWOLHS> singletonElements = new ArrayList<>();
-        for (TWOLHS[] sample : samples) {
-            if (sample[repetition].singletonBucket(lsb)) {
-                singletonElements.add(sample[repetition]);
-            } else if (!sample[repetition].emptyBucket(lsb)) {
+        for (Sample[] sample : samples) {
+            if (((TWOLHS) sample[repetition]).singletonBucket(lsb)) {
+                singletonElements.add(((TWOLHS) sample[repetition]));
+            } else if (!((TWOLHS) sample[repetition]).emptyBucket(lsb)) {
                 return false;
             }
         }

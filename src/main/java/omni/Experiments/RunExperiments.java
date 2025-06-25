@@ -112,14 +112,21 @@ public class RunExperiments {
                                                     experiment.run(ram, rtp, repetition, config);
                                                 }
                                             } else if (config.parameterSettingType.equals("GridSearch")) {
-                                                config.B = (int) ((ram / (config.d * config.w * config.numStoredAttributes) - 32)/config.b);
-                                                if (config.B < 1) {
-                                                    System.err.println("B is less than 1, skipping experiment");
-                                                    continue;
+
+                                                if (experimentName.contains("VLDB")) {
+                                                    config.B = (int) ((ram / (config.d * config.w * config.numStoredAttributes) - 32)/config.b);
+                                                    if (config.B < 1) {
+                                                        System.err.println("B is less than 1, skipping experiment");
+                                                        continue;
+                                                    }
+                                                    bp.add(ram, config.B, config.d, config.w, config.numStoredAttributes, config.b);
+                                                    config.bufferDeletesMinwise = getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTable.csv", noiseUpdateFraction, ram, config.numStoredAttributes, config.d);
+                                                    System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
+                                                } else if (experimentName.contains("TWOLHS")) {
+                                                    config.B = (int) ((ram / (config.d * config.w * config.numStoredAttributes) - 32) / (31 * 32 *32));
+                                                } else {
+                                                    throw new RuntimeException("OmniSketch experiment name not recognized " + experimentName);
                                                 }
-                                                bp.add(ram, config.B, config.d, config.w, config.numStoredAttributes, config.b);
-                                                config.bufferDeletesMinwise = getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTable.csv", noiseUpdateFraction, ram, config.numStoredAttributes, config.d);
-                                                System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
                                                 experiment.run(ram, rtp, repetition, config);
                                             } else {
                                                 throw new RuntimeException("Unknown parameter setting type: " + config.parameterSettingType);
@@ -179,8 +186,6 @@ public class RunExperiments {
         if (config.expCM) enabledExperiments.add("CountMin");
         if (config.expResSample) enabledExperiments.add("ReservoirSampling");
         if (config.expASH) enabledExperiments.add("aSH");
-        if (config.expTWOLHS) enabledExperiments.add("OmniSketchTWOLHS");
-        if (config.expFastTWOLHS) enabledExperiments.add("OmniSketchFastTWOLHS");
 
         if (config.parameterSettingType.equals("SampleSize")) {
             if (config.expOmniSketchVLDBSampleSize) enabledExperiments.add("OmniSketchVLDBSampleSize");
@@ -201,6 +206,8 @@ public class RunExperiments {
             if (config.expOmniSketchVLDBSimpleBuffer) enabledExperiments.add("OmniSketchVLDBSimpleBufferCustom");
             if (config.expOmniSketchVLDBSimpleBufferNoDeleteBuffer) enabledExperiments.add("OmniSketchVLDBSimpleBufferNoDeleteBufferCustom");
 
+            if (config.expTWOLHS) enabledExperiments.add("OmniSketchTWOLHSCustom");
+            if (config.expFastTWOLHS) enabledExperiments.add("OmniSketchFastTWOLHSCustom");
 
 
             if (config.expOmniSketchSFQLOptimized) enabledExperiments.add("OmniSketchSFQLOptimizedCustom");
@@ -214,13 +221,13 @@ public class RunExperiments {
             if (config.expOmniSketchVLDBArrayWithoutBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithoutBuffer");
             if (config.expOmniSketchVLDBTreeSet) enabledExperiments.add("OmniSketchVLDBTreeSet");
             if (config.expOmniSketchVLDBTreeSetWithoutBuffer) enabledExperiments.add("OmniSketchVLDBTreeSetWithoutBuffer");
-
-
-
             if (config.expOmniSketchSFQLOptimized) enabledExperiments.add("OmniSketchSFQLOptimized");
             if (config.expOmniSketchSFQLOptimizedOnlyNew) enabledExperiments.add("OmniSketchSFQLOptimizedOnlyNew");
             if (config.expOmniSketchSampleFirstQLater) enabledExperiments.add("OmniSketchSampleFirstQLater");
             if (config.expOmniSketchSampleFirstQLaterPerRow) enabledExperiments.add("OmniSketchSampleFirstQLaterPerRow");
+
+            if (config.expTWOLHS) enabledExperiments.add("OmniSketchTWOLHS");
+            if (config.expFastTWOLHS) enabledExperiments.add("OmniSketchFastTWOLHS");
         }
         return enabledExperiments;
     }

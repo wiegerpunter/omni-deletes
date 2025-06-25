@@ -55,7 +55,7 @@ public class OmniSketchTypeSampleLaterTWOLHS extends OmniSketchType {
         for (AttrSketchTWOLHS attributeSketch : attributeSketches) {
             attributeSketch.reset();
         }
-        Arrays.fill(xx, null);
+        xx = new HashFunction[depth];
     }
 
 
@@ -63,9 +63,9 @@ public class OmniSketchTypeSampleLaterTWOLHS extends OmniSketchType {
     public int query(long[] query, int numPreds, QueryInfo queryInfo) {
         if (sketchConfig.isUseAcrossRows()) {
             Sample[][] samples = getCellsToIntersectAcrossRows(query, numPreds);
-            double u = TWOLHSUtils.setUnionEstimator((TWOLHS[][]) samples, epsilon,
+            double u = TWOLHSUtils.setUnionEstimator(samples, epsilon,
                     numTWOLHSRepetitions, sketchConfig.getUseFastTWOLHS());
-            double estimate = TWOLHSUtils.setIntersectEstimator((TWOLHS[][]) samples,
+            double estimate = TWOLHSUtils.setIntersectEstimator(samples,
                     u, epsilon, sketchConfig.getUseFastTWOLHS(), queryInfo, sketchConfig);
 
             if (queryInfo.jaccardEstimates.isEmpty()) {
