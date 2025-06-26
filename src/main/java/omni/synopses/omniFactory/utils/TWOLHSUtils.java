@@ -1,6 +1,7 @@
 package omni.synopses.omniFactory.utils;
 
 import omni.Experiments.utils.QueryInfo;
+import omni.Main;
 import omni.synopses.omniFactory.OmniSketchConfig;
 import omni.synopses.omniFactory.SampleTypes.Sample;
 import omni.synopses.omniFactory.SampleTypes.TWOLHS;
@@ -49,12 +50,12 @@ public class TWOLHSUtils {
         }
     }
 
-    public static double setIntersectEstimator(Sample[][] samples, double unionEstimate, double eps, boolean useFastTWOLHS,
-                                               QueryInfo queryInfo, OmniSketchConfig sketchConfig) {
+    public static double setIntersectEstimator(Sample[][] samples, double unionEstimate, boolean useFastTWOLHS,
+                                               QueryInfo queryInfo) {
         if (useFastTWOLHS) {
             return setIntersectEstimatorFastTWOLHS(samples, unionEstimate, queryInfo);
         } else {
-            return setIntersectEstimatorTWOLHS(samples, unionEstimate, eps, queryInfo, sketchConfig);
+            return setIntersectEstimatorInverseDist(samples, unionEstimate, queryInfo);
         }
     }
 
@@ -106,11 +107,12 @@ public class TWOLHSUtils {
     }
 
     private static double setIntersectEstimatorTWOLHS(Sample[][] samples, double unionEstimate, double eps,
-                                                      QueryInfo queryInfo, OmniSketchConfig sketchConfig) {
+                                                      QueryInfo queryInfo) {
         int sum = 0;
         int count = 0;
         for (int i = 0; i < samples[0].length; i++) {
-            int diff = bucketDiffEstimator(samples, unionEstimate, eps, i, samples[0].length, sketchConfig); // atomicDiffEstimator if section 3 of paper.
+            int diff = bucketDiffEstimator(samples, unionEstimate,
+                    eps, i, samples[0].length); // atomicDiffEstimator if section 3 of paper.
             if (diff != -1) {
                 sum += diff;
                 count++;
@@ -123,16 +125,58 @@ public class TWOLHSUtils {
         
     }
 
-    private static int bucketDiffEstimator(Sample[][] samples, double unionEstimate,
-                                           double eps, int repetition, int numTWOLHSRepetitions,
-                                           OmniSketchConfig config) {
-        int index;
-        if (config.getUseFastTWOLHS()) {
-            index = (int) ceil(log((2*unionEstimate)/(numTWOLHSRepetitions * pow((1 - eps), 2))) / log(2));
-        } else {
-            double Beta = 1.5;
-            index = (int) ceil(log(log((Beta * unionEstimate)/(1 - eps)) / log(2)));
+    private static int setIntersectEstimatorInverseDist(Sample[][] samples, double unionEstimate, QueryInfo queryInfo) {
+        int sum = 0;
+        int count = 0;
+        for (int i = 0; i < samples[0].length; i++) {
+            int[] bde = bucketDiffEstimatorInverseDist(samples, i); // atomicDiffEstimator if section 3 of paper.
+            sum += bde[0];
+            count+=bde[1];
         }
+        double result;
+        result = ceil(((double) sum / count) * unionEstimate);
+        queryInfo.addJaccardEstimate((double) sum /count, sum);
+        int resultInt = (int) result;
+        if (resultInt < 0) {
+            System.out.println("Error: result > unionSize");
+            System.exit(1);
+        }
+
+        return resultInt;
+    }
+
+
+    private static int[] bucketDiffEstimatorInverseDist(Sample[][] samples, int repetition) {
+        //int index;
+        int sum=0;// witness count
+        int count =0; // total count
+        // Instead of doing it for one index, we want to check every index.
+        int countSignaturesLength = ((TWOLHS) samples[0][repetition]).countSignatures.length;
+//        if (repetition == 0) {
+//            System.out.println("CountSignaturesLength: " + countSignaturesLength);
+//        }
+        for (int index=0; index < countSignaturesLength; index++) {
+            if (singletonUnionBucket(samples, repetition, index)) {
+                boolean witnessFound = true;
+                for (Sample[] sample : samples) {
+                    if (!((TWOLHS) sample[repetition]).singletonBucket(index)) {
+                        witnessFound = false;
+                    }
+                }
+                if (witnessFound) {
+                    sum++;
+                }
+                count++;
+            }
+        }
+        return new int[]{sum, count};
+    }
+
+    private static int bucketDiffEstimator(Sample[][] samples, double unionEstimate,
+                                           double eps, int repetition, int numTWOLHSRepetitions) {
+        int index;
+        double Beta = 1.5;
+        index = (int) ceil(log(log((Beta * unionEstimate)/(1 - eps)) / log(2)));
         if (index < 0){
             throw new IllegalArgumentException("Index cannot be negative. Check your parameters.");
         }

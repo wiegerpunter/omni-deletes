@@ -66,7 +66,7 @@ public class OmniSketchTypeSampleLaterTWOLHS extends OmniSketchType {
             double u = TWOLHSUtils.setUnionEstimator(samples, epsilon,
                     numTWOLHSRepetitions, sketchConfig.getUseFastTWOLHS());
             double estimate = TWOLHSUtils.setIntersectEstimator(samples,
-                    u, epsilon, sketchConfig.getUseFastTWOLHS(), queryInfo, sketchConfig);
+                    u, sketchConfig.getUseFastTWOLHS(), queryInfo);
 
             if (queryInfo.jaccardEstimates.isEmpty()) {
                 throw new IllegalArgumentException("Jaccard estimates not set");
@@ -83,10 +83,10 @@ public class OmniSketchTypeSampleLaterTWOLHS extends OmniSketchType {
             double[] estimates = new double[depth];
             for (int j = 0; j < depth; j++) {
                 queryInfos.add(new QueryInfo());
-                unionEstimates[j] = TWOLHSUtils.setUnionEstimator((TWOLHS[][]) cellsToIntersect[j], epsilon,
+                unionEstimates[j] = TWOLHSUtils.setUnionEstimator(cellsToIntersect[j], epsilon,
                         numTWOLHSRepetitions, sketchConfig.getUseFastTWOLHS());
-                estimates[j] = TWOLHSUtils.setIntersectEstimator((TWOLHS[][]) cellsToIntersect[j],
-                        unionEstimates[j], epsilon, sketchConfig.getUseFastTWOLHS(), queryInfos.get(j), sketchConfig);
+                estimates[j] = TWOLHSUtils.setIntersectEstimator(cellsToIntersect[j],
+                        unionEstimates[j], sketchConfig.getUseFastTWOLHS(), queryInfos.get(j));
                 if (queryInfos.get(j).jaccardEstimates.isEmpty()) {
                     throw new IllegalArgumentException("Jaccard estimates not set");
                 }

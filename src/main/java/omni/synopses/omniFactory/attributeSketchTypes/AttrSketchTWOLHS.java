@@ -2,6 +2,7 @@ package omni.synopses.omniFactory.attributeSketchTypes;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import omni.synopses.omniFactory.OmniSketchBuilder;
 import omni.synopses.omniFactory.OmniSketchConfig;
 import omni.synopses.omniFactory.SampleTypes.Sample;
 import omni.synopses.omniFactory.SampleTypes.SampleFactory;
@@ -15,11 +16,21 @@ public class AttrSketchTWOLHS {
     final int width;
     final int numTWOLHSRepetitions;
     int[] reusableHashes;
+    OmniSketchConfig omniSketchConfig;
+    HashFunction hashFunction;
+
+
+    private int hashG(long id) {
+        // id hash modulo numTWOLHSRepetitions
+        return (int) (id % numTWOLHSRepetitions);
+    }
 
     public AttrSketchTWOLHS(OmniSketchConfig config, int depth, int width, int numTWOLHSRepetitions, String sampleType) {
         this.depth = depth;
         this.width = width;
         this.numTWOLHSRepetitions = numTWOLHSRepetitions;
+        this.omniSketchConfig = config;
+        hashFunction = Hashing.murmur3_32_fixed(omniSketchConfig.getSeed());
 
         this.sketch = new Sample[depth][width][numTWOLHSRepetitions];
         for (int j = 0; j < depth; j++) {
@@ -44,8 +55,13 @@ public class AttrSketchTWOLHS {
         attrHash(attrValue);
         for (int j = 0; j < depth; j++) {
             int i = reusableHashes[j];
-            for (int k = 0; k < numTWOLHSRepetitions; k++) {
-                sketch[j][i][k].ingest(id, sign);
+            if (omniSketchConfig.getUseFastTWOLHS()) {
+                int g = hashG(id);
+                sketch[j][i][g].ingest(id, sign);
+            } else {
+                for (int k = 0; k < numTWOLHSRepetitions; k++) {
+                    sketch[j][i][k].ingest(id, sign);
+                }
             }
         }
     }

@@ -80,7 +80,8 @@ public class RunExperiments {
     }
     //double[] betas = new double[]{1,1.35,2.1,4.2,11};
     private void runAllExperiments(int repetition) throws IOException {
-
+        double[] ramMultiplyers = new double[config.noiseUpdateFractions.size()];
+        int ramMultiplyers_count = 0;
         RamToPar rtp = new RamToPar(config.numStoredAttributes, config.ramVals);
         for (double noiseUpdateFraction : config.noiseUpdateFractions) {
             int numNoiseUpdates = (int) (cd.getDatasetSize() * noiseUpdateFraction);
@@ -120,14 +121,23 @@ public class RunExperiments {
                                                         continue;
                                                     }
                                                     bp.add(ram, config.B, config.d, config.w, config.numStoredAttributes, config.b);
-                                                    config.bufferDeletesMinwise = getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTable.csv", noiseUpdateFraction, ram, config.numStoredAttributes, config.d);
-                                                    System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
+                                                    for (double noiseUpdateFraction1 : config.noiseUpdateFractions) {
+                                                        config.bufferDeletesMinwise = getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTable.csv", noiseUpdateFraction1, ram, config.numStoredAttributes, config.d);
+                                                        System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
+                                                        experiment.run(ram, rtp, repetition, config);
+                                                        if (ramMultiplyers_count < config.noiseUpdateFractions.size()) {
+                                                            ramMultiplyers[ramMultiplyers_count] = config.bufferDeletesMinwise;
+                                                            ramMultiplyers_count++;
+                                                        }
+                                                    }
                                                 } else if (experimentName.contains("TWOLHS")) {
                                                     config.B = (int) ((ram / (config.d * config.w * config.numStoredAttributes) - 32) / (31 * 32 *32));
+                                                    System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
+                                                    experiment.run(ram, rtp, repetition, config);
                                                 } else {
                                                     throw new RuntimeException("OmniSketch experiment name not recognized " + experimentName);
                                                 }
-                                                experiment.run(ram, rtp, repetition, config);
+
                                             } else {
                                                 throw new RuntimeException("Unknown parameter setting type: " + config.parameterSettingType);
                                             }
@@ -136,9 +146,16 @@ public class RunExperiments {
                                 }
                             }
                         } else if (experimentName.contains("aSH")) {
-                            for (double bufferASH: config.ingestBuffers) {
-                                config.bufferASH = bufferASH;
-                                experiment.run(ram, rtp, repetition, config);
+                            ArrayList<Long> sizes = new ArrayList<Long>((ArrayList<Long>) config.ramVals);
+                            for (double ramMultiplyer: ramMultiplyers) {
+                                sizes.add((long) (ram * ramMultiplyer));
+                            }
+                            rtp = new RamToPar(config.numStoredAttributes, sizes);
+                            for (double ramMultiplyer: ramMultiplyers) {
+                                for (double bufferASH : config.ingestBuffers) {
+                                    config.bufferASH = bufferASH;
+                                    experiment.run((long) (ram * ramMultiplyer), rtp, repetition, config);
+                                }
                             }
                         } else {
                             experiment.run(ram, rtp, repetition, config);
@@ -184,8 +201,6 @@ public class RunExperiments {
         List<String> enabledExperiments = new ArrayList<>();
         if (config.expHydra) enabledExperiments.add("Hydra");
         if (config.expCM) enabledExperiments.add("CountMin");
-        if (config.expResSample) enabledExperiments.add("ReservoirSampling");
-        if (config.expASH) enabledExperiments.add("aSH");
 
         if (config.parameterSettingType.equals("SampleSize")) {
             if (config.expOmniSketchVLDBSampleSize) enabledExperiments.add("OmniSketchVLDBSampleSize");
@@ -229,6 +244,10 @@ public class RunExperiments {
             if (config.expTWOLHS) enabledExperiments.add("OmniSketchTWOLHS");
             if (config.expFastTWOLHS) enabledExperiments.add("OmniSketchFastTWOLHS");
         }
+
+
+        if (config.expResSample) enabledExperiments.add("ReservoirSampling");
+        if (config.expASH) enabledExperiments.add("aSH");
         return enabledExperiments;
     }
 

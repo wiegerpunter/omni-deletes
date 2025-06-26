@@ -5,7 +5,7 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 
 public class TWOLHS implements Sample {
-    private int bitSize;
+    private final int bitSize;
     public int[][] countSignatures;
     int repetition;
     int seed;

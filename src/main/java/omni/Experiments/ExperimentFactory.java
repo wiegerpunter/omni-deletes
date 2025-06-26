@@ -11,8 +11,6 @@ public class ExperimentFactory {
     private static final Map<String, Experiment> experiments = new HashMap<>();
 
     static {
-        experiments.put("ReservoirSampling", new ReservoirExperiment());
-        experiments.put("aSH", new aSHExperiment());
 
         // OmniSketch based on RAM values
         experiments.put("OmniSketchSampleFirstQLater", new OmniSampleFirstQLaterExperiment());
@@ -55,6 +53,10 @@ public class ExperimentFactory {
 
         experiments.put("OmniSketchSFQLOptimizedCustom", new OmniSFQLOptimizedCustomExperiment());
         experiments.put("OmniSketchSFQLOptimizedOnlyNewCustom", new OmniSFQLOptimizedOnlyNewCustomExperiment());
+
+
+        experiments.put("ReservoirSampling", new ReservoirExperiment());
+        experiments.put("aSH", new aSHExperiment());
 
 
     }
