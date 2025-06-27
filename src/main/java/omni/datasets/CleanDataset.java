@@ -1556,9 +1556,10 @@ public class CleanDataset {
 //        Arrays.fill(repeatedRecord, 555);
 
 
-        this.dataset = new long[totalRecords][numAttrs + 1];
+        this.dataset = new long[totalRecords][];
 //        long[][] tempDataset = new long[totalRecords][];
         for (int i=0; i <totalRecords; i++ ) {
+            dataset[i] = new long[numAttrs + 1]; // +1 for id
             this.dataset[i][0] = i; // id
             if (numZipfianAttrs > 0) System.arraycopy(zipfData[i], 0, dataset[i],
                     1, numZipfianAttrs);
