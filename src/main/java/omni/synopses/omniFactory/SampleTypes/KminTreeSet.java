@@ -1,7 +1,6 @@
 package omni.synopses.omniFactory.SampleTypes;
 
 import omni.Experiments.parameterSetting.Formulas;
-import omni.synopses.omniFactory.ArrayWithBuffer.ArrayWithBuffer;
 
 import java.util.Collections;
 import java.util.Iterator;

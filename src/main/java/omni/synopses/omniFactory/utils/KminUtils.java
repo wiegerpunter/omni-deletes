@@ -101,7 +101,6 @@ public class KminUtils {
     private static int estimatePriorityQueue(Sample[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
         // Implement the logic to intersect and scale PriorityQueue kminArray
         int S_cap = 0;
-        int[] n_max;
         //queryInfo.expSetting.setNumSets(kminArray.length);
         PriorityQueue[] flatSamples = new PriorityQueue[kminArray.length];
         for (int i = 0; i < kminArray.length; i++) {
@@ -112,9 +111,7 @@ public class KminUtils {
             flatSamples[i] = (PriorityQueue) kminArray[i].query();
         }
 
-
-
-        n_max = getNmax(kminArray);
+        int[] n_max = getNmax(kminArray);
         S_cap = intersectionPQ(flatSamples);
 
         queryInfo.setScap(S_cap, n_max[0], n_max[1], false);

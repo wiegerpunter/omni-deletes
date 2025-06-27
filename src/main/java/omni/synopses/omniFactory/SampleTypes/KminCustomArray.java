@@ -1,32 +1,36 @@
 package omni.synopses.omniFactory.SampleTypes;
 
 import omni.Experiments.parameterSetting.Formulas;
-import omni.synopses.omniFactory.ArrayWithBuffer.ArrayWithBuffer;
+import omni.synopses.omniFactory.ArrayWithBuffer.ArrayWithIngestionBuffer;
 
 import java.util.Arrays;
 
 public class KminCustomArray implements Sample {
 
     private final int B;
+    private final int ingestionBufferSize;
     private final int b;
     private int n;
-    private ArrayWithBuffer sample;
+    private ArrayWithIngestionBuffer sample;
     private final String setting;
     private final double beta;
+    private final boolean onlyUseValidSamples;
 
-    public KminCustomArray(int B, int b, double beta, String setting) {
+    public KminCustomArray(int B, int b, double beta, String setting, boolean onlyUseValidSamples) {
         this.b = b;
         this.setting = setting;
         this.n = 0;
         this.beta = beta;
+        this.onlyUseValidSamples = onlyUseValidSamples;
+        ingestionBufferSize = Math.max(1, B / 80);
         if (beta == 0) {
-            this.B = B;
+            this.B = B - ingestionBufferSize;
         } else if (beta >= 0) {
-            this.B = (int) (B * beta);
+            this.B = (int) ((B - ingestionBufferSize) * beta);
         } else {
             throw new IllegalArgumentException("Beta should be >= 0");
         }
-        this.sample = new ArrayWithBuffer(this.B);
+        this.sample = new ArrayWithIngestionBuffer(this.B, ingestionBufferSize);
     }
 
     // Implement the methods for KminPQ here
@@ -60,13 +64,13 @@ public class KminCustomArray implements Sample {
     }
 
     public long getMemoryFootprint() {
-        //analyzeDeletes();
+//        analyzeDeletes();
         return Formulas.ramSingleKmin(getCurSampleSize() + getBufferSize(), b);
     }
 
     @Override
     public void reset() {
-        sample = new ArrayWithBuffer(B); // Resetting the sample without a buffer
+        sample = new ArrayWithIngestionBuffer(B, this.ingestionBufferSize); // Resetting the sample without a buffer
         n = 0;
     }
 
@@ -83,7 +87,11 @@ public class KminCustomArray implements Sample {
     @Override
     public int getCurSampleSize() {
         if (beta != 0) {
-            return (int) Math.min(sample.getCurSampleSize(), B / beta);
+            if (onlyUseValidSamples) {
+                return (int) Math.min(sample.getCurSampleSize(), B / beta);
+            } else {
+                return (int) Math.min(sample.getCurSampleSize(), Math.max(B / beta, B - sample.getTotalDeletes()));
+            }
         }
         return sample.getCurSampleSize();
     }

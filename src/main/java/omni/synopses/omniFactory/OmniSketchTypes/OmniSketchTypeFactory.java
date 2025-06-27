@@ -13,6 +13,8 @@ public class OmniSketchTypeFactory {
             case "SampleLaterArrayRegBuffer" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminArrayRegBuffer");
 
             case "SampleLaterArrayWithBuffer" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminArrayWithBuffer");
+            case "SampleLaterArrayWithBufferOnlyValid" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminArrayWithBufferOnlyValid");
+
             case "SampleLaterTreeSet" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminTreeSet");
             case "SampleLaterTreeSetWithoutBuffer" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminTreeSetWithoutBuffer");
             case "SampleLaterArrayWithoutBuffer" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminArrayWithoutBuffer");

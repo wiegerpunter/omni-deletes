@@ -32,6 +32,7 @@ public class Config {
     public boolean expOmniSketchVLDBArray;
     public boolean expOmniSketchVLDBArrayRegBuffer;
     public boolean expOmniSketchVLDBArrayWithBuffer;
+    public boolean expOmniSketchVLDBArrayWithBufferOnlyValid;
     public boolean expOmniSketchVLDBArrayWithoutBuffer;
     public boolean expOmniSketchVLDBSimpleBuffer;
     public boolean expOmniSketchVLDBSimpleBufferNoDeleteBuffer;

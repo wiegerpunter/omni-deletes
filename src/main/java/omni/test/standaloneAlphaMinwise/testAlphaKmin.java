@@ -132,7 +132,7 @@ public class testAlphaKmin {
            samples = new KminCustomArray[data.numberOfSets];
 
             for (int i = 0; i < data.numberOfSets; i++) {
-                samples[i] = new KminCustomArray(B, 31, beta, "alpha");
+                samples[i] = new KminCustomArray(B, 31, beta, "alpha", false);
             }
         } else if (setting.equals("KminTreeSet")) {
             samples = new KminTreeSet[data.numberOfSets];

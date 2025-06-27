@@ -22,8 +22,6 @@ public class ExperimentFactory {
         experiments.put("OmniSketchVLDBTreeSet", new OmniVLDBTreeSetExperiment());
         experiments.put("OmniSketchVLDBTreeSetWithoutBuffer", new OmniVLDBTreeSetWithoutBufferExperiment());
 
-
-
         experiments.put("OmniSketchSFQLOptimized", new OmniSFQLOptimizedExperiment());
         experiments.put("OmniSketchSFQLOptimizedOnlyNew", new OmniSFQLOptimizedOnlyNewExperiment());
         experiments.put("OmniSketchTWOLHS", new OmniTWOLHSExperiment());
@@ -40,6 +38,8 @@ public class ExperimentFactory {
         experiments.put("OmniSketchVLDBArrayCustom", new OmniVLDBArrayCustomExperiment());
         experiments.put("OmniSketchVLDBArrayRegBufferCustom", new OmniVLDBArrayRegBufferCustomExperiment());
         experiments.put("OmniSketchVLDBArrayWithBufferCustom", new OmniVLDBArrayWithBufferCustomExperiment());
+        experiments.put("OmniSketchVLDBArrayWithBufferOnlyValidCustom", new OmniVLDBArrayWithBufferOnlyValidCustomExperiment());
+
         experiments.put("OmniSketchVLDBArrayWithoutBufferCustom", new OmniVLDBArrayWithoutBufferCustomExperiment());
         experiments.put("OmniSketchVLDBTreeSetCustom", new OmniVLDBTreeSetCustomExperiment());
         experiments.put("OmniSketchVLDBTreeSetWithoutBufferCustom", new OmniVLDBTreeSetWithoutBufferCustomExperiment());

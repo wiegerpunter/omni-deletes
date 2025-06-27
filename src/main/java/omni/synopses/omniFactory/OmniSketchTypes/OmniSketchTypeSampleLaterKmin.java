@@ -14,20 +14,19 @@ import java.util.Comparator;
 import java.util.List;
 
 public class OmniSketchTypeSampleLaterKmin extends OmniSketchType {
-    private String KminType;
+    private final String KminType;
     AttrSketchKmin[] attributeSketches;
     HashFunction[] xx;
     private final int b;
-    private int maxHash;
     private final int B;
 
-    private double delta;
-    private double eps;
+    private final double delta;
+    private final double eps;
 
     double lastTermInBoundAcrossRows;
     double lastTermInBoundPerRow;
 
-    private int[] hx;
+    private final int[] hx;
 
     public OmniSketchTypeSampleLaterKmin(OmniSketchConfig sketchConfig, String KminType) {
         this.sketchConfig = sketchConfig;
@@ -51,7 +50,6 @@ public class OmniSketchTypeSampleLaterKmin extends OmniSketchType {
             attributeSketches[i] = new AttrSketchKmin(sketchConfig, depth, width, B, b, KminType);
         }
 
-        maxHash = (int) Math.pow(2, b) - 1;
         xx = new HashFunction[depth];
         for (int i = 0; i < depth; i++) {
             xx[i] = Hashing.murmur3_32_fixed(i + sketchConfig.getSeed());
