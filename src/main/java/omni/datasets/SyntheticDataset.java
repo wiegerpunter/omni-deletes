@@ -14,6 +14,7 @@ public class SyntheticDataset {
     private String datasetFileName;
     private String queryFileName;
     private int datasetSize;
+    private int noiseSize;
     private long[][] pointQueries;
     private int[] pointQueryAnswers;
     private int[] pointQueryUnion;
@@ -29,11 +30,13 @@ public class SyntheticDataset {
         config.domain = 10000;
         int numQueries = config.numQueries * config.numPredicates;
         pointQueries = new long[numQueries][];
-        pointQueryAnswers = new int[numQueries];
-        pointQueryUnion = new int[numQueries];
-        pointQueriesNumAttrs = new int[numQueries];
-        pointQueryBinNumber = new int[numQueries];
-        pointQueriesNumZipfian = new int[numQueries];
+    }
+
+    public String getDatasetFileName() {
+        return datasetFileName;
+    }
+    public String getQueryFileName() {
+        return queryFileName;
     }
 
     public void synthDevDataGenerator(double perc, double sizeFactor,
@@ -46,7 +49,7 @@ public class SyntheticDataset {
     public void synthDevQueryGenerator(double perc, double sizeFactor,
                                   double zipfAlpha) {
         setupDataset(perc, sizeFactor, zipfAlpha);
-        generateSynthQueries(perc);
+        generateSynthQueries();
     }
 
     public void synthDevLoader(double perc, double sizeFactor, double zipfAlpha) {
@@ -60,13 +63,24 @@ public class SyntheticDataset {
         int numZipfianAttrs = config.numZipfAttributes;
         int numUniformAttrs = config.numUniformAttributes;
         datasetSize = (int) Math.pow(2, sizeFactor);
-        datasetFileName = setDatasetName(setting, numAttrs, domain, sizeFactor, datasetSize, numZipfianAttrs, zipfAlpha, numUniformAttrs);
-        queryFileName = datasetFileName + "_queries.csv";
+        noiseSize = (int) (datasetSize * perc);
+        datasetFileName = setDatasetName(setting, numAttrs, domain, sizeFactor, datasetSize, numZipfianAttrs, zipfAlpha, numUniformAttrs, perc);
+        queryFileName = setQueryFileName(datasetFileName);
     }
 
-    private String setDatasetName(String setting, int numAttrs, int domain, double sizeFactor, int datasetSize, int numZipfianAttrs, double zipfAlpha, int numUniformAttrs) {
-        return config.readFolder + "input/" + "syntheticDataset_" + setting + "_" + numAttrs + "_" + domain + "_" + sizeFactor + "_" + datasetSize + "_" +
-                numZipfianAttrs + "_" + zipfAlpha + "_" + numUniformAttrs + ".csv";
+    private String setDatasetName(String setting, int numAttrs, int domain, double sizeFactor, int datasetSize,
+                                  int numZipfianAttrs, double zipfAlpha, int numUniformAttrs,
+                                  double perc) {
+        return config.readFolder + "input/data/synth/" + "syntheticDataset_" + setting + "_" + numAttrs + "_" + domain + "_" + sizeFactor + "_" + datasetSize + "_" +
+                numZipfianAttrs + "_" + zipfAlpha + "_" + numUniformAttrs + "_" + perc + ".csv";
+    }
+
+    private String setQueryFileName(String datasetFileName) {
+        if (datasetFileName.endsWith(".csv")) {
+            return datasetFileName.substring(0, datasetFileName.length() - 4) + "_queries.csv";
+        } else {
+            throw new IllegalArgumentException("Dataset filename does not end with .csv");
+        }
     }
 
     private long[] createRecord (int index, ZipfDistribution zipf, Random unifRandom, int numAttrs, int numZipfianAttrs, int numUniformAttrs, int domain, double zipfAlpha) {
@@ -104,8 +118,13 @@ public class SyntheticDataset {
             for (int i = 0; i < datasetSize; i++) {
                 // Create a record
                 long[] record = createRecord(i, zipf, unifRandom, numAttrs, numZipfianAttrs, numUniformAttrs, domain, zipfAlpha);
-                writeRecord(writer, record);
-
+                writeRecord(writer, record, 1);
+            }
+            for (int i = 0; i < 2*noiseSize; i++) {
+                // Create a noise record
+                long[] record = createRecord(i + datasetSize, zipf, unifRandom, numAttrs, numZipfianAttrs, numUniformAttrs, domain, zipfAlpha);
+                writeRecord(writer, record, 1);
+                writeRecord(writer, record, -1);
             }
         } catch (IOException except)
         {
@@ -116,7 +135,7 @@ public class SyntheticDataset {
 
 
 
-    private void generateSynthQueries(double percToDelete){
+    private void generateSynthQueries(){
         int numAttrs = 9;
         int numZipfianAttrs = config.numZipfAttributes;
 
@@ -126,6 +145,12 @@ public class SyntheticDataset {
         } catch (IOException e) {
             System.err.println("Error opening file for queries: " + datasetFileName);
         }
+
+        pointQueryAnswers = new int[pointQueries.length];
+        pointQueryUnion = new int[pointQueries.length];
+        pointQueriesNumAttrs = new int[pointQueries.length];
+        pointQueryBinNumber = new int[pointQueries.length];
+        pointQueriesNumZipfian = new int[pointQueries.length];
         applyPredicates(numAttrs);
         deduplicateQueries(numAttrs);
         computeExactAnswers();
@@ -217,7 +242,7 @@ public class SyntheticDataset {
     }
 
     private void writeQueriesToFile() {
-        queryFileName = "syntheticQueries_" + datasetFileName;
+        queryFileName = datasetFileName + "_queries.csv";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(queryFileName))) {
             writeHeader(writer, pointQueries[0].length);
@@ -272,6 +297,9 @@ public class SyntheticDataset {
             }
         }
 
+        // shrink the pointQueries array to the actual number of queries added
+        pointQueries = Arrays.copyOf(pointQueries, added);
+
     }
 
     private void loadQueries() {
@@ -315,10 +343,12 @@ public class SyntheticDataset {
         }
     }
 
-    private void writeRecord(BufferedWriter writer, long[] record) {
+    private void writeRecord(BufferedWriter writer, long[] record, int sign) {
         String[] recordStr = Arrays.stream(record)
                 .mapToObj(String::valueOf)
                 .toArray(String[]::new);
+        recordStr = Arrays.copyOf(recordStr, recordStr.length + 1);
+        recordStr[recordStr.length - 1] = String.valueOf(sign); // Append sign at the end
         try {
             writeLine(writer, recordStr);
         } catch (IOException e) {
@@ -328,11 +358,12 @@ public class SyntheticDataset {
     }
 
     private void writeHeader(BufferedWriter writer, int numAttrs) {
-        String[] header = new String[numAttrs + 1];
+        String[] header = new String[numAttrs + 2];
         header[0] = "id";
         for (int i = 1; i <= numAttrs; i++) {
             header[i] = "attr" + i;
         }
+        header[header.length - 1] = "sign"; // Append sign at the end
         try {
             writeLine(writer, header);
         } catch (IOException e) {
@@ -343,10 +374,10 @@ public class SyntheticDataset {
 
     private long[] readRecord(String line, int numAttrs) {
         String[] parts = line.split(",");
-        if (parts.length != numAttrs + 1) {
+        if (parts.length != numAttrs + 2) {
             throw new IllegalArgumentException("Record does not match expected number of attributes: " + line);
         }
-        long[] record = new long[numAttrs + 1];
+        long[] record = new long[numAttrs + 2];
         for (int i = 0; i < parts.length; i++) {
             record[i] = Long.parseLong(parts[i]);
         }
@@ -369,55 +400,13 @@ public class SyntheticDataset {
     private Set<Integer> selectRandomIndices(int datasetSize, int numQueries) {
         Set<Integer> randomIndices = new HashSet<>();
         Random random = new Random(0);
-        while (randomIndices.size() < numQueries) {
+        while (randomIndices.size() < numQueries && randomIndices.size() < datasetSize) {
             int index = random.nextInt(datasetSize);
             randomIndices.add(index);
         }
+        if (randomIndices.size() < numQueries) {
+            config.numQueries = randomIndices.size(); // Adjust numQueries if not enough unique indices
+        }
         return randomIndices;
-    }
-
-    public void generateEventStream(int numAttrs, int numResidu, int numNoise, String eventFileName, String residuFileName) {
-        try (BufferedWriter eventWriter = new BufferedWriter(new FileWriter(eventFileName));
-             BufferedWriter residuWriter = new BufferedWriter(new FileWriter(residuFileName))) {
-
-            Random random = new Random(0);
-            int eventId = 0;
-
-            // Generate Residu Events
-            for (int i = 0; i < numResidu; i++) {
-                long[] record = generateRandomRecord(numAttrs);
-                writeEvent(eventWriter, eventId++, 1, record);
-                writeRecord(residuWriter, record);
-            }
-
-            // Generate Noise Events (Insert + Delete)
-            for (int i = 0; i < numNoise; i++) {
-                long[] record = generateRandomRecord(numAttrs);
-                writeEvent(eventWriter, eventId++, 1, record);
-                writeEvent(eventWriter, eventId++, -1, record);
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void writeEvent(BufferedWriter writer, int id, int sign, long[] record) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        sb.append(id).append(",").append(sign);
-        for (long attr : record) {
-            sb.append(",").append(attr);
-        }
-        writer.write(sb.toString());
-        writer.newLine();
-    }
-
-    private long[] generateRandomRecord(int numAttrs) {
-        long[] record = new long[numAttrs];
-        Random random = new Random(0);
-        for (int j = 0; j < numAttrs; j++) {
-            record[j] = random.nextInt(config.domain);
-        }
-        return record;
     }
 }

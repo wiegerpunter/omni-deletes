@@ -1,52 +1,73 @@
 package omni.datasets;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import omni.Config;
 
 import java.io.*;
 import java.util.*;
 
-public class MixedStreamReader {
+public class MixedStreamReader{
 
-    private final BufferedReader residuReader;
-    private final BufferedReader insertNoiseReader;
-    private final BufferedReader deleteNoiseReader;
 
-    private int insertsEmitted = 0;
-    private int deletesEmitted = 0;
-    private final Random random = new Random();
+    public MixedStreamReader(Config config) throws IOException {
+        BufferedReader residuReader = new BufferedReader(new FileReader(config.readFolder + "input/data/synth" + "residu_shuffled.csv"));
+        BufferedReader insertReader = new BufferedReader(new FileReader(config.readFolder + "input/data/synth" + "noise_inserts_shuffled.csv"));
+        BufferedReader deleteReader = new BufferedReader(new FileReader(config.readFolder + "input/data/synth" + "noise_deletes_shuffled.csv"));
+        BufferedWriter writer = new BufferedWriter(new FileWriter(config.readFolder + "input/data/synth" + "final_stream.csv"));
 
-    public MixedStreamReader(String residuFile, String noiseFile) throws IOException {
-        residuReader = new BufferedReader(new FileReader(residuFile));
-        insertNoiseReader = new BufferedReader(new FileReader(noiseFile));
-        deleteNoiseReader = new BufferedReader(new FileReader(noiseFile));
-    }
+        String residuLine = residuReader.readLine();
+        String insertLine = insertReader.readLine();
+        String deleteLine = deleteReader.readLine();
 
-    public String nextEvent() throws IOException {
-        List<String> availableStreams = new ArrayList<>();
+        Set<String> emittedNoiseIds = new HashSet<>();
+        Random rand = new Random();
 
-        if (residuReader.ready()) availableStreams.add("residu");
-        if (insertNoiseReader.ready()) availableStreams.add("insertNoise");
-        if (deletesEmitted < insertsEmitted && deleteNoiseReader.ready()) availableStreams.add("deleteNoise");
+        while (residuLine != null || insertLine != null || deleteLine != null) {
+            List<String> options = new ArrayList<>();
+            if (residuLine != null) options.add("residu");
+            if (insertLine != null) options.add("insert");
+            if (deleteLine != null && emittedNoiseIds.contains(getId(deleteLine))) options.add("delete");
 
-        if (availableStreams.isEmpty()) return null; // All streams exhausted
+            if (options.isEmpty()) break;
 
-        String choice = availableStreams.get(random.nextInt(availableStreams.size()));
+            String choice = options.get(rand.nextInt(options.size()));
 
-        return switch (choice) {
-            case "residu" -> residuReader.readLine();
-            case "insertNoise" -> {
-                insertsEmitted++;
-                yield insertNoiseReader.readLine();
+            switch (choice) {
+                case "residu":
+                    writer.write(residuLine + "\n");
+                    residuLine = residuReader.readLine();
+                    break;
+                case "insert":
+                    writer.write(insertLine + "\n");
+                    emittedNoiseIds.add(getId(insertLine));
+                    insertLine = insertReader.readLine();
+                    break;
+                case "delete":
+                    writer.write(deleteLine + "\n");
+                    deleteLine = deleteReader.readLine();
+                    break;
             }
-            case "deleteNoise" -> {
-                deletesEmitted++;
-                yield deleteNoiseReader.readLine();
-            }
-            default -> throw new IllegalStateException("Unknown stream selected.");
-        };
-    }
+        }
 
-    public void close() throws IOException {
         residuReader.close();
-        insertNoiseReader.close();
-        deleteNoiseReader.close();
+        insertReader.close();
+        deleteReader.close();
+        writer.close();
+    }
+
+    String getId(String line) {
+        return line.split(",")[0]; // Assuming ID is the first column
+    }
+
+    public static void main(String[] args) throws IOException {
+        String jsonFilePath = args[0];
+        ObjectMapper mapper = new ObjectMapper();
+        Config config = mapper.readValue(new File(jsonFilePath), Config.class);
+
+        try {
+            new MixedStreamReader(config);
+            System.out.println("Mixed stream created successfully.");
+        } catch (IOException e) {
+            System.err.println("Error creating mixed stream: " + e.getMessage());
+        }
     }
 }
