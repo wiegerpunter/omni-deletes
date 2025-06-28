@@ -3,6 +3,7 @@ package omni.datasets;
 import org.apache.commons.math3.distribution.ZipfDistribution;
 import org.apache.commons.math3.random.Well19937c;
 
+import java.io.BufferedWriter;
 import java.util.Random;
 
 public class ZipfGenerator {
@@ -16,6 +17,19 @@ public class ZipfGenerator {
             }
         }
         return data;
+    }
+
+    public static ZipfDistribution getZipfDistribution(int maxValue, double alpha, int seed) {
+        Well19937c random = new Well19937c(seed);
+        return new ZipfDistribution(random, maxValue, alpha);
+    }
+
+    public static long[] zipfDataRecord(ZipfDistribution zipf, int numberOfAttributes) {
+        long[] record = new long[numberOfAttributes];
+        for (int i=0;i<numberOfAttributes;i++) {
+            record[i] = zipf.sample();
+        }
+        return record;
     }
 
     public static long[][] zipfDataSparse(int numberOfRecords,int numberOfAttributes, int maxValue, double alpha) {

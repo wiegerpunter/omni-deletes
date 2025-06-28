@@ -1,0 +1,423 @@
+package omni.datasets;
+
+import omni.Config;
+import org.apache.commons.math3.distribution.ZipfDistribution;
+
+import java.io.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
+
+public class SyntheticDataset {
+    private final Config config;
+    private String datasetFileName;
+    private String queryFileName;
+    private int datasetSize;
+    private long[][] pointQueries;
+    private int[] pointQueryAnswers;
+    private int[] pointQueryUnion;
+
+    private int[] pointQueriesNumAttrs;
+    private int[] pointQueryBinNumber;
+    private int[] pointQueriesNumZipfian;
+    private String setting;
+
+    public SyntheticDataset(Config config, String setting) {
+        this.config = config;
+        this.setting = setting;
+        config.domain = 10000;
+        int numQueries = config.numQueries * config.numPredicates;
+        pointQueries = new long[numQueries][];
+        pointQueryAnswers = new int[numQueries];
+        pointQueryUnion = new int[numQueries];
+        pointQueriesNumAttrs = new int[numQueries];
+        pointQueryBinNumber = new int[numQueries];
+        pointQueriesNumZipfian = new int[numQueries];
+    }
+
+    public void synthDevDataGenerator(double perc, double sizeFactor,
+                                  double zipfAlpha) {
+        setupDataset(perc, sizeFactor, zipfAlpha);
+        generateSynthDataset(zipfAlpha);
+
+    }
+
+    public void synthDevQueryGenerator(double perc, double sizeFactor,
+                                  double zipfAlpha) {
+        setupDataset(perc, sizeFactor, zipfAlpha);
+        generateSynthQueries(perc);
+    }
+
+    public void synthDevLoader(double perc, double sizeFactor, double zipfAlpha) {
+        setupDataset(perc, sizeFactor, zipfAlpha);
+        loadQueries();
+    }
+
+    private void setupDataset(double perc, double sizeFactor, double zipfAlpha) {
+        int numAttrs = 9;
+        int domain = config.domain;
+        int numZipfianAttrs = config.numZipfAttributes;
+        int numUniformAttrs = config.numUniformAttributes;
+        datasetSize = (int) Math.pow(2, sizeFactor);
+        datasetFileName = setDatasetName(setting, numAttrs, domain, sizeFactor, datasetSize, numZipfianAttrs, zipfAlpha, numUniformAttrs);
+        queryFileName = datasetFileName + "_queries.csv";
+    }
+
+    private String setDatasetName(String setting, int numAttrs, int domain, double sizeFactor, int datasetSize, int numZipfianAttrs, double zipfAlpha, int numUniformAttrs) {
+        return config.readFolder + "input/" + "syntheticDataset_" + setting + "_" + numAttrs + "_" + domain + "_" + sizeFactor + "_" + datasetSize + "_" +
+                numZipfianAttrs + "_" + zipfAlpha + "_" + numUniformAttrs + ".csv";
+    }
+
+    private long[] createRecord (int index, ZipfDistribution zipf, Random unifRandom, int numAttrs, int numZipfianAttrs, int numUniformAttrs, int domain, double zipfAlpha) {
+        long[] record = new long[numAttrs + 1]; // +1 for id
+        record[0] = index; // id
+        if (numZipfianAttrs > 0) {
+            long[] zipfData = ZipfGenerator.zipfDataRecord(zipf, numZipfianAttrs);
+            System.arraycopy(zipfData, 0, record, 1, numZipfianAttrs);
+        }
+        if (numUniformAttrs > 0) {
+            long[] unifData = new long[numUniformAttrs];
+            for (int j = 0; j < numUniformAttrs; j++) {
+                unifData[j] = unifRandom.nextInt(domain);
+            }
+            System.arraycopy(unifData, 0, record, 1 + numZipfianAttrs, numUniformAttrs);
+        }
+
+        return record;
+    }
+
+    private void generateSynthDataset(double zipfAlpha) {
+        int numAttrs = 9;
+        int domain = config.domain;
+        int numZipfianAttrs = config.numZipfAttributes;
+        int numUniformAttrs = config.numUniformAttributes;
+        if (numAttrs != numZipfianAttrs + numUniformAttrs) {
+            throw new IllegalArgumentException("Number of attributes must be sum of Zipfian and Uniform attributes (" +
+                    numZipfianAttrs + " + " + numUniformAttrs + ") but got " + numAttrs);
+        }
+        try (BufferedWriter writer = getBufferedWriter(datasetFileName)) {
+            writeHeader(writer, numAttrs);
+            ZipfDistribution zipf = ZipfGenerator.getZipfDistribution(domain, zipfAlpha, 0);
+            Random unifRandom = new Random(0);
+
+            for (int i = 0; i < datasetSize; i++) {
+                // Create a record
+                long[] record = createRecord(i, zipf, unifRandom, numAttrs, numZipfianAttrs, numUniformAttrs, domain, zipfAlpha);
+                writeRecord(writer, record);
+
+            }
+        } catch (IOException except)
+        {
+            System.err.println("Error opening file for writing: " + datasetFileName);
+            except.printStackTrace();
+        }
+    }
+
+
+
+    private void generateSynthQueries(double percToDelete){
+        int numAttrs = 9;
+        int numZipfianAttrs = config.numZipfAttributes;
+
+        Set<Integer> selectedIndices = selectRandomIndices(datasetSize, config.numQueries);
+        try (BufferedReader reader = new BufferedReader(new FileReader(datasetFileName))) {
+            populatePointQueries(reader, numAttrs, selectedIndices);
+        } catch (IOException e) {
+            System.err.println("Error opening file for queries: " + datasetFileName);
+        }
+        applyPredicates(numAttrs);
+        deduplicateQueries(numAttrs);
+        computeExactAnswers();
+        computeQueryStats(numAttrs, numZipfianAttrs);
+    }
+
+
+    private void applyPredicates(int numAttrs) {
+        Random randomQueries = new Random(0);
+
+        for (int p = 0; p < config.numPredicates; p++) {
+            for (int i = p * config.numQueries; i < (p + 1) * config.numQueries; i++) {
+                int curNumPreds = 0;
+                while (curNumPreds < numAttrs - (p + 1)) {
+                    int index = randomQueries.nextInt(numAttrs);
+                    if (pointQueries[i][index] != -1) {
+                        pointQueries[i][index] = -1;
+                        curNumPreds++;
+                    }
+                }
+            }
+        }
+    }
+    private void deduplicateQueries(int numAttrs) {
+        // Deduplication process
+        Set<String> uniqueQueries = new HashSet<>();
+        int uniqueCount = 0;
+
+        for (long[] query : pointQueries) {
+            String key = buildQueryKey(query, numAttrs);
+
+            if (uniqueQueries.add(key)) {
+                pointQueries[uniqueCount] = query;
+                uniqueCount++;
+            }
+        }
+        // Resize the pointQueries array to contain only unique entries
+        pointQueries = Arrays.copyOf(pointQueries, uniqueCount);
+    }
+    private String buildQueryKey(long[] query, int numAttrs) {
+        StringBuilder keyBuilder = new StringBuilder();
+        for (int j = 0; j < numAttrs; j++) {
+            if (query[j] != -1) {
+                keyBuilder.append(j).append(":").append(query[j]).append(";");
+            }
+        }
+        return keyBuilder.toString();
+    }
+
+    private void computeExactAnswers() {
+        try (BufferedReader reader = new BufferedReader(new FileReader(datasetFileName))) {
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("id")) continue;
+
+                long[] record = readRecord(line, pointQueries[0].length);
+                updateAnswers(record);
+            }
+        } catch (IOException e) {
+            System.err.println("Error computing exact answers.");
+            e.printStackTrace();
+        }
+
+        writeQueriesToFile();
+    }
+
+    private void updateAnswers(long[] record) {
+        for (int i = 0; i < pointQueries.length; i++) {
+            boolean match = true;
+            boolean unionMatch = false;
+
+            for (int j = 0; j < pointQueries[i].length; j++) {
+                long queryVal = pointQueries[i][j];
+                long recordVal = record[j + 1];
+
+                if (queryVal != -1 && queryVal != recordVal) {
+                    match = false;
+                    break;
+                }
+                if (queryVal != -1 && queryVal == recordVal) {
+                    unionMatch = true;
+                }
+            }
+
+            if (match) pointQueryAnswers[i]++;
+            if (unionMatch) pointQueryUnion[i]++;
+        }
+    }
+
+    private void writeQueriesToFile() {
+        queryFileName = "syntheticQueries_" + datasetFileName;
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(queryFileName))) {
+            writeHeader(writer, pointQueries[0].length);
+            writer.write(",answer,union");
+            writer.newLine();
+
+            for (int i = 0; i < pointQueries.length; i++) {
+                StringBuilder line = new StringBuilder();
+                line.append(i);
+
+                for (long val : pointQueries[i]) {
+                    line.append(",").append(val);
+                }
+                line.append(",").append(pointQueryAnswers[i])
+                        .append(",").append(pointQueryUnion[i]);
+
+                writer.write(line.toString());
+                writer.newLine();
+            }
+
+        } catch (IOException e) {
+            System.err.println("Error writing queries to file.");
+            e.printStackTrace();
+        }
+    }
+
+    private void computeQueryStats(int numAttrs, int numZipfianAttrs) {
+        for (int i = 0; i < pointQueries.length; i++) {
+            for (int j = 0; j < numAttrs; j++) {
+                if (pointQueries[i][j] != -1) {
+                    pointQueriesNumAttrs[i]++;
+                    if (j < numZipfianAttrs) pointQueriesNumZipfian[i]++;
+                }
+            }
+            pointQueryBinNumber[i] = i;
+        }
+    }
+
+    private void populatePointQueries(BufferedReader reader, int numAttrs, Set<Integer> selectedIndices) throws IOException {
+        String line;
+        int added = 0;
+        while ((line = reader.readLine()) != null && added < pointQueries.length) {
+            if (line.startsWith("id")) continue;
+            long[] record = readRecord(line, numAttrs);
+            int id = (int) record[0];
+            if (selectedIndices.contains(id)) {
+                for (int p = 0; p < config.numPredicates; p++) {
+                    pointQueries[added] = new long[numAttrs];
+                    System.arraycopy(record, 1, pointQueries[added], 0, numAttrs);
+                    added++;
+                }
+            }
+        }
+
+    }
+
+    private void loadQueries() {
+        int numAttrs = 9;
+        // load queries and pointQueryAnswers from file
+        try (BufferedReader reader = new BufferedReader(new FileReader(queryFileName))) {
+            String line;
+            int queryCount = 0;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("id")) continue; // Skip header line
+
+                String[] parts = line.split(",");
+                if (parts.length != numAttrs + 3) { // +2 for answer and union
+                    throw new RuntimeException("Record does not match expected number of attributes: " + line);
+                }
+                long[] query = new long[numAttrs];
+                for (int i = 0; i < numAttrs; i++) {
+                    query[i] = Long.parseLong(parts[i + 1]); // Skip id
+                }
+                pointQueries[queryCount] = query;
+                pointQueryAnswers[queryCount] = Integer.parseInt(parts[numAttrs + 1]);
+                pointQueryUnion[queryCount] = Integer.parseInt(parts[numAttrs + 2]);
+                queryCount++;
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading dataset file: " + datasetFileName);
+            e.printStackTrace();
+        }
+
+        computeQueryStats(numAttrs, config.numZipfAttributes);
+    }
+
+
+    BufferedReader getDatasetReader(String filename) {
+        try {
+            return new BufferedReader(new java.io.FileReader(filename));
+        } catch (IOException e) {
+            System.err.println("Error opening file: " + filename);
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void writeRecord(BufferedWriter writer, long[] record) {
+        String[] recordStr = Arrays.stream(record)
+                .mapToObj(String::valueOf)
+                .toArray(String[]::new);
+        try {
+            writeLine(writer, recordStr);
+        } catch (IOException e) {
+            System.err.println("Error writing record to file: " + datasetFileName);
+            e.printStackTrace();
+        }
+    }
+
+    private void writeHeader(BufferedWriter writer, int numAttrs) {
+        String[] header = new String[numAttrs + 1];
+        header[0] = "id";
+        for (int i = 1; i <= numAttrs; i++) {
+            header[i] = "attr" + i;
+        }
+        try {
+            writeLine(writer, header);
+        } catch (IOException e) {
+            System.err.println("Error writing header to file: " + datasetFileName);
+            e.printStackTrace();
+        }
+    }
+
+    private long[] readRecord(String line, int numAttrs) {
+        String[] parts = line.split(",");
+        if (parts.length != numAttrs + 1) {
+            throw new IllegalArgumentException("Record does not match expected number of attributes: " + line);
+        }
+        long[] record = new long[numAttrs + 1];
+        for (int i = 0; i < parts.length; i++) {
+            record[i] = Long.parseLong(parts[i]);
+        }
+        return record;
+    }
+
+    private BufferedWriter getBufferedWriter(String filename) throws IOException {
+        return new BufferedWriter(new FileWriter(filename));
+    }
+
+    private BufferedReader getBufferedReader(String filename) throws IOException {
+        return new BufferedReader(new java.io.FileReader(filename));
+    }
+
+    private void writeLine(BufferedWriter writer, String... values) throws IOException {
+        writer.write(String.join(",", values));
+        writer.newLine();
+    }
+
+    private Set<Integer> selectRandomIndices(int datasetSize, int numQueries) {
+        Set<Integer> randomIndices = new HashSet<>();
+        Random random = new Random(0);
+        while (randomIndices.size() < numQueries) {
+            int index = random.nextInt(datasetSize);
+            randomIndices.add(index);
+        }
+        return randomIndices;
+    }
+
+    public void generateEventStream(int numAttrs, int numResidu, int numNoise, String eventFileName, String residuFileName) {
+        try (BufferedWriter eventWriter = new BufferedWriter(new FileWriter(eventFileName));
+             BufferedWriter residuWriter = new BufferedWriter(new FileWriter(residuFileName))) {
+
+            Random random = new Random(0);
+            int eventId = 0;
+
+            // Generate Residu Events
+            for (int i = 0; i < numResidu; i++) {
+                long[] record = generateRandomRecord(numAttrs);
+                writeEvent(eventWriter, eventId++, 1, record);
+                writeRecord(residuWriter, record);
+            }
+
+            // Generate Noise Events (Insert + Delete)
+            for (int i = 0; i < numNoise; i++) {
+                long[] record = generateRandomRecord(numAttrs);
+                writeEvent(eventWriter, eventId++, 1, record);
+                writeEvent(eventWriter, eventId++, -1, record);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void writeEvent(BufferedWriter writer, int id, int sign, long[] record) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append(id).append(",").append(sign);
+        for (long attr : record) {
+            sb.append(",").append(attr);
+        }
+        writer.write(sb.toString());
+        writer.newLine();
+    }
+
+    private long[] generateRandomRecord(int numAttrs) {
+        long[] record = new long[numAttrs];
+        Random random = new Random(0);
+        for (int j = 0; j < numAttrs; j++) {
+            record[j] = random.nextInt(config.domain);
+        }
+        return record;
+    }
+}
