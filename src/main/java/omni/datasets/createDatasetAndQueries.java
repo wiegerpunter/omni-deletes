@@ -16,7 +16,7 @@ public class createDatasetAndQueries {
         ObjectMapper mapper = new ObjectMapper();
         Config config = mapper.readValue(new File(jsonFilePath), Config.class);
 
-        SyntheticDataset residu = new SyntheticDataset(config, "residu");
+        SyntheticDataset residu = new SyntheticDataset(config);
         residu.synthDevDataGenerator(0.5, 5, 1.3);
         residu.synthDevQueryGenerator(0.5, 5, 1.3);
 

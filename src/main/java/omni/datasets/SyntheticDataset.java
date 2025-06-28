@@ -22,11 +22,9 @@ public class SyntheticDataset {
     private int[] pointQueriesNumAttrs;
     private int[] pointQueryBinNumber;
     private int[] pointQueriesNumZipfian;
-    private String setting;
 
-    public SyntheticDataset(Config config, String setting) {
+    public SyntheticDataset(Config config) {
         this.config = config;
-        this.setting = setting;
         config.domain = 10000;
         int numQueries = config.numQueries * config.numPredicates;
         pointQueries = new long[numQueries][];
@@ -64,14 +62,13 @@ public class SyntheticDataset {
         int numUniformAttrs = config.numUniformAttributes;
         datasetSize = (int) Math.pow(2, sizeFactor);
         noiseSize = (int) (datasetSize * perc);
-        datasetFileName = setDatasetName(setting, numAttrs, domain, sizeFactor, datasetSize, numZipfianAttrs, zipfAlpha, numUniformAttrs, perc);
-        queryFileName = setQueryFileName(datasetFileName);
+        datasetFileName = setDatasetName(numAttrs, domain, sizeFactor, datasetSize, numZipfianAttrs, zipfAlpha, numUniformAttrs, perc);
     }
 
-    private String setDatasetName(String setting, int numAttrs, int domain, double sizeFactor, int datasetSize,
+    private String setDatasetName(int numAttrs, int domain, double sizeFactor, int datasetSize,
                                   int numZipfianAttrs, double zipfAlpha, int numUniformAttrs,
                                   double perc) {
-        return config.readFolder + "input/data/synth/" + "syntheticDataset_" + setting + "_" + numAttrs + "_" + domain + "_" + sizeFactor + "_" + datasetSize + "_" +
+        return config.readFolder + "input/data/synthFromDisk/" + "syntheticDataset_" + numAttrs + "_" + domain + "_" + sizeFactor + "_" + datasetSize + "_" +
                 numZipfianAttrs + "_" + zipfAlpha + "_" + numUniformAttrs + "_" + perc + ".csv";
     }
 
@@ -242,7 +239,7 @@ public class SyntheticDataset {
     }
 
     private void writeQueriesToFile() {
-        queryFileName = datasetFileName + "_queries.csv";
+        queryFileName = setQueryFileName(datasetFileName);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(queryFileName))) {
             writeHeader(writer, pointQueries[0].length);
@@ -271,6 +268,7 @@ public class SyntheticDataset {
 
     private void computeQueryStats(int numAttrs, int numZipfianAttrs) {
         for (int i = 0; i < pointQueries.length; i++) {
+            // todo: fix error bc point queries ends early.
             for (int j = 0; j < numAttrs; j++) {
                 if (pointQueries[i][j] != -1) {
                     pointQueriesNumAttrs[i]++;
@@ -303,7 +301,13 @@ public class SyntheticDataset {
     }
 
     private void loadQueries() {
-        int numAttrs = 9;
+        pointQueryAnswers = new int[pointQueries.length];
+        pointQueryUnion = new int[pointQueries.length];
+        pointQueriesNumAttrs = new int[pointQueries.length];
+        pointQueryBinNumber = new int[pointQueries.length];
+        pointQueriesNumZipfian = new int[pointQueries.length];
+        queryFileName = setQueryFileName(datasetFileName);
+        int numAttrs = config.numStoredAttributes;
         // load queries and pointQueryAnswers from file
         try (BufferedReader reader = new BufferedReader(new FileReader(queryFileName))) {
             String line;
@@ -409,4 +413,25 @@ public class SyntheticDataset {
         }
         return randomIndices;
     }
+
+    public long[][] getPointQueries() {
+        return pointQueries;
+    }
+
+    public int[] getPointQueryAnswers() {
+        return pointQueryAnswers;
+    }
+
+    public int[] getPointQueriesNumAttrs() {
+        return pointQueriesNumAttrs;
+    }
+
+    public int[] getPointQueryBinNumber() {
+        return pointQueryBinNumber;
+    }
+
+    public int[] getPointQueryUnion() {
+        return pointQueryUnion;
+    }
+
 }

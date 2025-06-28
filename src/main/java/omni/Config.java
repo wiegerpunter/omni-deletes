@@ -75,6 +75,7 @@ public class Config {
     public boolean getUniqueRecords;
     public int domain;
     public int[] domain_sizes;
+    public boolean readFromDisk;
 
     // Old parameters, might use them in the future
 //    public List<Double> bufferValuesOmni;

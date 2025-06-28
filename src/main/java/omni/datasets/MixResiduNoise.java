@@ -5,14 +5,14 @@ import omni.Config;
 import java.io.*;
 import java.util.*;
 
-public class MixedStreamReader{
+public class MixResiduNoise {
 
 
-    public MixedStreamReader(Config config) throws IOException {
-        BufferedReader residuReader = new BufferedReader(new FileReader(config.readFolder + "input/data/synth" + "residu_shuffled.csv"));
-        BufferedReader insertReader = new BufferedReader(new FileReader(config.readFolder + "input/data/synth" + "noise_inserts_shuffled.csv"));
-        BufferedReader deleteReader = new BufferedReader(new FileReader(config.readFolder + "input/data/synth" + "noise_deletes_shuffled.csv"));
-        BufferedWriter writer = new BufferedWriter(new FileWriter(config.readFolder + "input/data/synth" + "final_stream.csv"));
+    public MixResiduNoise(Config config) throws IOException {
+        BufferedReader residuReader = new BufferedReader(new FileReader(config.readFolder + "input/data/synth/" + "residu_shuffled.csv"));
+        BufferedReader insertReader = new BufferedReader(new FileReader(config.readFolder + "input/data/synth/" + "noise_inserts_shuffled.csv"));
+        BufferedReader deleteReader = new BufferedReader(new FileReader(config.readFolder + "input/data/synth/" + "noise_deletes_shuffled.csv"));
+        BufferedWriter writer = new BufferedWriter(new FileWriter(config.readFolder + "input/data/synth/" + "final_stream.csv"));
 
         String residuLine = residuReader.readLine();
         String insertLine = insertReader.readLine();
@@ -64,7 +64,7 @@ public class MixedStreamReader{
         Config config = mapper.readValue(new File(jsonFilePath), Config.class);
 
         try {
-            new MixedStreamReader(config);
+            new MixResiduNoise(config);
             System.out.println("Mixed stream created successfully.");
         } catch (IOException e) {
             System.err.println("Error creating mixed stream: " + e.getMessage());

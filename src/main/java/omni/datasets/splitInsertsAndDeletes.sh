@@ -40,3 +40,8 @@ awk -F',' -v residu_size="$RESIDU_SIZE" -v data_folder="$DATA_FOLDER" '
 ' "$INPUT_FILE"
 
 echo "Splitting complete:"
+
+echo "shuffling inserts and deletes"
+shuf -o "$DATA_FOLDER/residu_shuffled.csv" "$DATA_FOLDER/residu.csv"
+shuf -o "$DATA_FOLDER/noise_inserts_shuffled.csv" "$DATA_FOLDER/noise_inserts.csv"
+shuf -o "$DATA_FOLDER/noise_deletes_shuffled.csv" "$DATA_FOLDER/noise_deletes.csv"

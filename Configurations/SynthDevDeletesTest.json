@@ -1,6 +1,6 @@
 {
   "setting": "Compare Synopses",
-  "datasetName": "synthDev",
+  "datasetName": "synthFromDisk",
   "numRepetitions": 3,
   "runOnODC": false,
   "readFolder": "/home/wieger/omni-deletes/",
@@ -16,7 +16,7 @@
   "parFactorGridSearch": [100],
   "numBins": 3,
   "numPredicates": 9,
-  "sizeFactorOptions": [24],
+  "sizeFactorOptions": [5],
   "sizeNoise": [0],
   "experimentName": "Deletes v0.1",
   "useMultNumAttributes": false,
@@ -56,5 +56,6 @@
   "expOmniSketchSFQLOptimizedOnlyNew": false,
   "parameterSettingType": "GridSearch",
   "getUniqueRecords": false,
-  "domain_sizes": [10000]
+  "domain_sizes": [10000],
+  "readFromDisk": true
 }

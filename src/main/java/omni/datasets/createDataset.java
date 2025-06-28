@@ -16,7 +16,7 @@ public class createDataset {
         Config config = mapper.readValue(new File(jsonFilePath), Config.class);
 
 
-        SyntheticDataset datasetGenerator = new SyntheticDataset(config, "residu");
+        SyntheticDataset datasetGenerator = new SyntheticDataset(config);
 //        datasetGenerator.synthDevDataGenerator(0.901,20,1.3);
 //        datasetGenerator.synthDevQueryGenerator(0.901,28,1.3);
         datasetGenerator.synthDevLoader(0.901,28,1.3);

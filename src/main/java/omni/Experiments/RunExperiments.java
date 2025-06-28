@@ -74,7 +74,7 @@ public class RunExperiments {
         }
         double perc = 0;
         if (config.withDeletes) {
-            perc = 0.901;
+            perc = 0.5;
         }
         readDataset(perc, sizeFactor, noiseSize, zipfAlpha);
     }
@@ -268,6 +268,9 @@ public class RunExperiments {
                 }
                 cd.synthDev(perc, sizeFactor, config.numZipfAttributes , zipfAlpha, config.numUniformAttributes);
             }
+            case "synthFromDisk" -> {
+                cd.synthFromDisk(perc, sizeFactor, zipfAlpha);
+            }
             case "Test" -> cd.testDataset();
             default -> cd.cleanDataset(d, perc, noiseSize);
         }
@@ -288,10 +291,17 @@ public class RunExperiments {
 
     public long runSynopsisRamBased(SynopsisRefactor syn, int repetition) throws IOException {
         long time_passed;
-        if (config.withDeletes) {
-            time_passed= runSynWithDeletes(syn);
+
+        if (config.readFromDisk) {
+            System.out.println("Reading dataset from disk");
+            time_passed = runDatasetFromDisk(syn);
         } else {
-            time_passed = runSynWithoutWarmup(syn);
+
+            if (config.withDeletes) {
+                time_passed = runSynWithDeletes(syn);
+            } else {
+                time_passed = runSynWithoutWarmup(syn);
+            }
         }
 
         System.out.println("Time passed for updates synopsis " + syn.getSetting() + " is: " + time_passed + " ms, average: " + (double) time_passed / (cd.getDatasetSize() + 2 * cd.numDeletes) + " ms");
@@ -308,6 +318,54 @@ public class RunExperiments {
         //ConditionChecks.run(d, s);
         return synMem;
     }
+
+    private long runDatasetFromDisk(SynopsisRefactor syn) {
+        System.out.println("Running synopsis");
+        int numUpdates = 0;
+        int numDeletes = 0;
+
+        long startTime = System.currentTimeMillis();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(cd.datasetReaderName))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(",");
+                long[] record = new long[values.length - 1];
+                for (int i = 0; i < values.length -1; i++) {
+                    record[i] = Long.parseLong(values[i]);
+                }
+                int sign = Integer.parseInt(values[values.length - 1]);
+
+                if (sign == 1) {
+                    syn.add(record);
+                    numUpdates++;
+                } else if (sign == -1){
+                    syn.delete(record);
+                    numDeletes++;
+                } else {
+                    throw new RuntimeException("Invalid sign value: " + sign);
+                }
+
+                if (numDeletes > 0 && numDeletes % 1000000 == 0) {
+                    System.out.printf("\rNumber of deletes: " + numDeletes);
+                }
+                if (numUpdates % 1000000 == 0) {
+                    System.out.printf("\rNumber of updates: " + numUpdates + " / ");
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        long endTime = System.currentTimeMillis();
+        cd.numDeletes = numDeletes;
+
+
+        return endTime - startTime;
+
+    }
+
     private long processDataset(SynopsisRefactor syn, long[][] dataset, boolean[] isDelete, boolean withDeletes) {
         System.out.println("Running synopsis");
         int numUpdates = 0;

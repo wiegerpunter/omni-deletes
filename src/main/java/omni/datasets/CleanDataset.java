@@ -1695,4 +1695,20 @@ public class CleanDataset {
     public long[][] getDataset() {
         return datasetResidu;
     }
+
+
+    public String datasetReaderName;
+    public void synthFromDisk(double perc, double sizeFactor, double zipfAlpha) {
+        String mixedFileName = config.readFolder + "/input/data/" + config.datasetName + "final_stream.csv";
+        SyntheticDataset dataset = new SyntheticDataset(config);
+        dataset.synthDevLoader(perc, sizeFactor, zipfAlpha);
+        pointQueries = dataset.getPointQueries();
+        pointQueryAnswers = dataset.getPointQueryAnswers();
+        pointQueriesNumAttrs = dataset.getPointQueriesNumAttrs();
+        pointQueryBinNumber = dataset.getPointQueryBinNumber();
+        pointQueryUnion = dataset.getPointQueryUnion();
+
+        datasetReaderName = mixedFileName;
+
+    }
 }
