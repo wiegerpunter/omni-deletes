@@ -78,7 +78,7 @@ public class ArrayWithIngestionBuffer {
             if (curSampleSize < K) {
                 int insertIndex = Arrays.binarySearch(arr, 0, curSampleSize, ingestionBuffer[i]);
                 if (insertIndex >= 0) {
-                    while (insertIndex > 0 & arr[insertIndex] == arr[insertIndex - 1]) {
+                    while (insertIndex > 0 && arr[insertIndex] == arr[insertIndex - 1]) {
                         insertIndex--;
                     }
                 } else {

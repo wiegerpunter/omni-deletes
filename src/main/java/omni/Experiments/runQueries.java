@@ -276,13 +276,13 @@ public class runQueries {
             String[] result = new String[48];
             // Dataset specific info;
             result[0] = String.valueOf(repetition);
-            result[1] = String.valueOf(d.dataset.length);
-            if (d.noiseUpdates == null) {
-                result[2] = String.valueOf(d.datasetNegUpdates.length);
+            result[1] = String.valueOf(d.getDatasetSize());
+            if (d.noiseUpdates == null && !config.readFromDisk) {
+                result[2] = String.valueOf(0);
             } else {
-                result[2] = String.valueOf(d.noiseUpdates.length);
+                result[2] = String.valueOf(d.getNoiseSize());
             }
-            result[3] = String.valueOf(d.datasetResidu.length);
+            result[3] = String.valueOf(d.getDatasetResiduSize());
             result[4] = String.valueOf(config.numAttributes);
 
             result[5] = String.valueOf(d.getMemoryUsage());
@@ -303,8 +303,8 @@ public class runQueries {
             result[18] = String.valueOf(estimatedAnswersPointQuery[i]);
             result[19] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]));
             result[20] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) / d.pointQueryAnswers[i]);
-            result[21] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) / d.datasetResidu.length);
-            result[22] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) <= Main.eps * d.datasetResidu.length);
+            result[21] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) / d.getDatasetResiduSize());
+            result[22] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) <= Main.eps * d.getDatasetResiduSize());
             result[23] = String.valueOf(queryExecutionTime[i]);
             result[24] = d.parsePointQueryToString(d.pointQueries[i]);
             result[25] = String.valueOf(SCap[i]);

@@ -1,4 +1,4 @@
-package omni.datasets;
+package omni.datasets.fromDisk;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import omni.Config;
@@ -17,8 +17,15 @@ public class createDatasetAndQueries {
         Config config = mapper.readValue(new File(jsonFilePath), Config.class);
 
         SyntheticDataset residu = new SyntheticDataset(config);
-        residu.synthDevDataGenerator(0.5, 5, 1.3);
-        residu.synthDevQueryGenerator(0.5, 5, 1.3);
+        double[] perc = {0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9};
+        for (double p : perc) {
+            System.out.printf("\rGenerating dataset with %.1f%% noise", p * 100);
+            residu.synthDevDataGenerator(p, 26, 1.3);
+            if (p == 0) {
+                residu.synthDevQueryGenerator(p, 26, 1.3);
+            }
+        }
+
 
     }
 }

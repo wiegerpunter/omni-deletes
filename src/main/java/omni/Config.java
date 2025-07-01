@@ -76,6 +76,7 @@ public class Config {
     public int domain;
     public int[] domain_sizes;
     public boolean readFromDisk;
+    public double[] percs;
 
     // Old parameters, might use them in the future
 //    public List<Double> bufferValuesOmni;

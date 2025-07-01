@@ -31,6 +31,7 @@ public class RunExperiments {
     public void run() throws IOException, CsvValidationException {
         bp = new BufferedParamMinwiseSettings(Main.inputFolder);
         cd = new CleanDataset(config);
+        double[] percs = config.percs;
         readDatasetSettings();
         for (int repetition = 0; repetition < config.numRepetitions; repetition++) {
             System.out.println("Running repetition " + repetition);
@@ -45,14 +46,40 @@ public class RunExperiments {
                                 for (int j = 2; j < cd.cleanIds.length; j++) {
                                     config.numStoredAttributes = j + 1;
                                     System.out.println("Running with " + config.numStoredAttributes + " attributes");
-                                    prepareDataset(i, zipfAlpha, n); // prepare dataset
-                                    runAllExperiments(repetition); // run all experiments in factory
+                                    if (config.readFromDisk) {
+                                        config.noiseUpdateFractions = new ArrayList<>();
+                                        config.noiseUpdateFractions.add(0.0);
+                                        for (double perc : percs) {
+                                            prepareDataset(i, zipfAlpha, n, perc); // prepare dataset
+                                            runAllExperiments(repetition); // run all experiments in factory
+                                        }
+                                    } else {
+                                        double perc = 0;
+                                        if (config.withDeletes) {
+                                            perc = 0.901;
+                                        }
+                                        prepareDataset(i, zipfAlpha, n, perc); // prepare dataset
+                                        runAllExperiments(repetition); // run all experiments in factory
+                                    }
                                 }
                             } else {
                                 config.numStoredAttributes = cd.cleanIds.length;
                                 System.out.println("Running with " + config.numStoredAttributes + " attributes");
-                                prepareDataset(i, zipfAlpha, n); // prepare dataset
-                                runAllExperiments(repetition); // run all experiments in factory
+                                if (config.readFromDisk) {
+                                    config.noiseUpdateFractions = new ArrayList<>();
+                                    config.noiseUpdateFractions.add(0.0);
+                                    for (double perc : percs) {
+                                        prepareDataset(i, zipfAlpha, n, perc); // prepare dataset
+                                        runAllExperiments(repetition); // run all experiments in factory
+                                    }
+                                } else {
+                                    double perc = 0;
+                                    if (config.withDeletes) {
+                                        perc = 0.901;
+                                    }
+                                    prepareDataset(i, zipfAlpha, n, perc); // prepare dataset
+                                    runAllExperiments(repetition); // run all experiments in factory
+                                }
                             }
                         }
                     }
@@ -61,7 +88,7 @@ public class RunExperiments {
         }
     }
 
-    private void prepareDataset(int conditionIndex, double zipfAlpha, int noiseSize) throws IOException, CsvValidationException {
+    private void prepareDataset(int conditionIndex, double zipfAlpha, int noiseSize, double perc) throws IOException, CsvValidationException {
         double sizeFactor = 0;
         if (config.datasetName.equals("SNMP") || config.datasetName.equals("CAIDA")) {
             config.fileStartCondition = conditions[conditionIndex];
@@ -72,10 +99,6 @@ public class RunExperiments {
             System.gc();
             System.out.println("Running with size factor " + sizeFactor);
         }
-        double perc = 0;
-        if (config.withDeletes) {
-            perc = 0.5;
-        }
         readDataset(perc, sizeFactor, noiseSize, zipfAlpha);
     }
     //double[] betas = new double[]{1,1.35,2.1,4.2,11};
@@ -84,9 +107,8 @@ public class RunExperiments {
         int ramMultiplyers_count = 0;
         RamToPar rtp = new RamToPar(config.numStoredAttributes, config.ramVals);
         for (double noiseUpdateFraction : config.noiseUpdateFractions) {
-            int numNoiseUpdates = (int) (cd.getDatasetSize() * noiseUpdateFraction);
-            System.out.println("Running with " + numNoiseUpdates + " deletes out of " + cd.getDatasetSize());
-            if (!cd.setNoiseUpdates(numNoiseUpdates)) {
+            int numNoiseUpdates = (int) (cd.getDatasetSize());
+            if (!config.readFromDisk && !cd.setNoiseUpdates(numNoiseUpdates)) {
                 continue;
             };
             for (long ram : config.ramVals) {
@@ -121,13 +143,25 @@ public class RunExperiments {
                                                         continue;
                                                     }
                                                     bp.add(ram, config.B, config.d, config.w, config.numStoredAttributes, config.b);
-                                                    for (double noiseUpdateFraction1 : config.noiseUpdateFractions) {
-                                                        config.bufferDeletesMinwise = getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTable.csv", noiseUpdateFraction1, ram, config.numStoredAttributes, config.d);
-                                                        System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
-                                                        experiment.run(ram, rtp, repetition, config);
-                                                        if (ramMultiplyers_count < config.noiseUpdateFractions.size()) {
-                                                            ramMultiplyers[ramMultiplyers_count] = config.bufferDeletesMinwise;
-                                                            ramMultiplyers_count++;
+                                                    if (config.readFromDisk) {
+                                                        for (double perc: config.percs) {
+                                                            config.bufferDeletesMinwise = getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTableFromPerc.csv", perc, ram, config.numStoredAttributes, config.d);
+                                                            System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
+                                                            experiment.run(ram, rtp, repetition, config);
+                                                            if (ramMultiplyers_count < config.noiseUpdateFractions.size()) {
+                                                                ramMultiplyers[ramMultiplyers_count] = config.bufferDeletesMinwise;
+                                                                ramMultiplyers_count++;
+                                                            }
+                                                        }
+                                                    } else {
+                                                        for (double noiseUpdateFraction1 : config.noiseUpdateFractions) {
+                                                            config.bufferDeletesMinwise = getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTable.csv", noiseUpdateFraction1, ram, config.numStoredAttributes, config.d);
+                                                            System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
+                                                            experiment.run(ram, rtp, repetition, config);
+                                                            if (ramMultiplyers_count < config.noiseUpdateFractions.size()) {
+                                                                ramMultiplyers[ramMultiplyers_count] = config.bufferDeletesMinwise;
+                                                                ramMultiplyers_count++;
+                                                            }
                                                         }
                                                     }
                                                 } else if (experimentName.contains("TWOLHS")) {
@@ -304,7 +338,7 @@ public class RunExperiments {
             }
         }
 
-        System.out.println("Time passed for updates synopsis " + syn.getSetting() + " is: " + time_passed + " ms, average: " + (double) time_passed / (cd.getDatasetSize() + 2 * cd.numDeletes) + " ms");
+        System.out.println("Time passed for updates synopsis " + syn.getSetting() + " is: " + time_passed + " ms, average: " + (double) time_passed / (cd.getDatasetSize()) + " ms");
         System.out.println("Memory usage synopsis " + syn.getSetting() + ": " + syn.getMemoryUsage());
         System.out.println("Memory usage dataset: " + cd.getMemoryUsage());
         System.out.println("Compression ratio: " + (double) syn.getMemoryUsage() / cd.getMemoryUsage());

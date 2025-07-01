@@ -8,9 +8,11 @@ import com.opencsv.exceptions.CsvValidationException;
 import omni.Config;
 import omni.Main;
 import omni.datasets.Record.Record;
+import omni.datasets.fromDisk.SyntheticDataset;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class CleanDataset {
     private final Config config;
@@ -985,9 +987,8 @@ public class CleanDataset {
         System.out.println("Dataset has " + dataset.length + " records.");
     }
 
-
     public long getMemoryUsage() {
-        long usg = (long) dataset.length * (config.numStoredAttributes + 1) * 32L;
+        long usg = (long) getDatasetSize() * (config.numStoredAttributes + 1) * 32L;
         return usg;
     }
 
@@ -1688,8 +1689,24 @@ public class CleanDataset {
 
     }
 
-    public double getDatasetSize() {
-        return datasetResidu.length;
+    public long getDatasetResiduSize() {
+        if (config.readFromDisk) {
+            return datasetResiduSize;
+        } else {
+            return datasetResidu.length;
+        }
+    }
+
+    public long getNoiseSize() {
+        if (config.readFromDisk) {
+            return noiseSize;
+        } else {
+            return noiseUpdates.length;
+        }
+    }
+
+    public long getDatasetSize() {
+        return getDatasetResiduSize() + 2 *getNoiseSize();
     }
 
     public long[][] getDataset() {
@@ -1698,8 +1715,37 @@ public class CleanDataset {
 
 
     public String datasetReaderName;
+    int datasetResiduSize = 0;
+    int noiseSize = 0;
+
     public void synthFromDisk(double perc, double sizeFactor, double zipfAlpha) {
-        String mixedFileName = config.readFolder + "/input/data/" + config.datasetName + "final_stream.csv";
+        String datasetFolder = config.readFolder + "/input/data/" + config.datasetName + "/" + sizeFactor + "/" + perc +"/";
+        File folder = new File(datasetFolder);
+
+        if (!folder.exists() || !folder.isDirectory()) {
+            throw new IllegalArgumentException("Dataset folder does not exist: " + datasetFolder);
+        }
+
+        String expectedSuffix = String.format("_%.1f_.*_%.1f_.*_%.1f\\.csv", sizeFactor, zipfAlpha, perc).replace(",", "\\,");
+        Pattern pattern = Pattern.compile("final_stream" + expectedSuffix);
+
+        String matchedFile = null;
+
+        for (File file : Objects.requireNonNull(folder.listFiles())) {
+            String name = file.getName();
+            if (pattern.matcher(name).matches()) {
+                matchedFile = file.getAbsolutePath();
+                break;
+            }
+        }
+
+        if (matchedFile == null) {
+            throw new RuntimeException("Could not find final_stream file matching sizeFactor=" + sizeFactor +
+                    ", zipfAlpha=" + zipfAlpha + ", perc=" + perc + " in " + datasetFolder);
+        }
+
+        System.out.println("Using final_stream file: " + matchedFile);
+
         SyntheticDataset dataset = new SyntheticDataset(config);
         dataset.synthDevLoader(perc, sizeFactor, zipfAlpha);
         pointQueries = dataset.getPointQueries();
@@ -1708,7 +1754,12 @@ public class CleanDataset {
         pointQueryBinNumber = dataset.getPointQueryBinNumber();
         pointQueryUnion = dataset.getPointQueryUnion();
 
-        datasetReaderName = mixedFileName;
+        // Compute answers for deletes
+        pointQueryAnswersDeletes = new int[pointQueries.length];
+        pointQueryUnionDeletes = new int[pointQueries.length];
 
+        datasetReaderName = matchedFile;
+        datasetResiduSize = (int) (Math.pow(2, sizeFactor));
+        noiseSize = (int) (Math.pow(2, sizeFactor) * perc);
     }
 }
