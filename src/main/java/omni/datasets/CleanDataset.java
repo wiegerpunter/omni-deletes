@@ -1719,14 +1719,14 @@ public class CleanDataset {
     int noiseSize = 0;
 
     public void synthFromDisk(double perc, double sizeFactor, double zipfAlpha) {
-        String datasetFolder = config.readFolder + "/input/data/" + config.datasetName + "/" + sizeFactor + "/" + perc +"/";
+        String datasetFolder = config.readFolder + "input/data/" + config.datasetName + "/" + sizeFactor + "/" + perc +"/";
         File folder = new File(datasetFolder);
 
         if (!folder.exists() || !folder.isDirectory()) {
             throw new IllegalArgumentException("Dataset folder does not exist: " + datasetFolder);
         }
 
-        String expectedSuffix = String.format("_%.1f_.*_%.1f_.*_%.1f\\.csv", sizeFactor, zipfAlpha, perc).replace(",", "\\,");
+        String expectedSuffix = String.format("_%.1f_.*_%.1f_.*_%s\\.csv", sizeFactor, zipfAlpha, perc).replace(",", "\\,");
         Pattern pattern = Pattern.compile("final_stream" + expectedSuffix);
 
         String matchedFile = null;
@@ -1741,7 +1741,7 @@ public class CleanDataset {
 
         if (matchedFile == null) {
             throw new RuntimeException("Could not find final_stream file matching sizeFactor=" + sizeFactor +
-                    ", zipfAlpha=" + zipfAlpha + ", perc=" + perc + " in " + datasetFolder);
+                    ", zipfAlpha=" + zipfAlpha + ", perc=" + perc + " in " + datasetFolder + " suffix: " + expectedSuffix);
         }
 
         System.out.println("Using final_stream file: " + matchedFile);

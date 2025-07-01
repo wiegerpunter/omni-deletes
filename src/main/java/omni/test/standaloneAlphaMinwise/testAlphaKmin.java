@@ -23,30 +23,29 @@ public class testAlphaKmin {
 
 
 
-        int[] intersectionSizes = {1000, 10000};
+        int[] intersectionSizes = {100000};
         int[] numSets = {9};
-        int[] noiseSizes = {1000};
-        int[] Bs = {100};
-        int[] domains = {10,100,100000};
+        int[] Bs = {1000};
+        int[] domains = {10000};
         double[][] betaPairs = new double[][]{
                 {1, 1},
-                {1.33, 1.35},
-                {2, 2.2},
-                {4, 4.2},
-                {10, 11}
+                {1.33, 1.38},
+                {2, 2.12},
+                {4,4.43},
+                {10,11.97}
         };
 
         int numSeeds = 2;
 
         for (int intersectionSize : intersectionSizes) {
             for (int numSet : numSets) {
-                for (int noiseSize : noiseSizes) {
                     for (int domain : domains) {
                         for (int seed = 0; seed < numSeeds; seed++) {
                             for (int B : Bs) {
                                 for (double[] betaPair : betaPairs) {
                                     double beta = betaPair[1];
                                     double alpha = betaPair[0];
+                                    int noiseSize = (int) (intersectionSize * (alpha - 1));
                                     System.out.printf("\r Running test with intersectionSize: " + intersectionSize +
                                             ", numSet: " + numSet + ", noiseSize: " + noiseSize +
                                             ", seed: " + seed + ", B: " + B + ", beta: " + beta + ", alpha: " + alpha);
@@ -61,7 +60,6 @@ public class testAlphaKmin {
                             }
                         }
                     }
-                }
             }
         }
     }
@@ -117,7 +115,7 @@ public class testAlphaKmin {
         Data data = data_generation(intersectionSize, numSets, noiseSize, domain);
 
         int estimate = experiment(setting, data, B, beta, alpha, seed);
-        int exact = (int) (data.intersection.length / alpha);
+        int exact = (int) (data.intersection.length);
         int error = estimate - exact;
         int absoluteError = Math.abs(error);
 
@@ -132,7 +130,7 @@ public class testAlphaKmin {
            samples = new KminCustomArray[data.numberOfSets];
 
             for (int i = 0; i < data.numberOfSets; i++) {
-                samples[i] = new KminCustomArray(B, 31, beta, "alpha", false);
+                samples[i] = new KminCustomArray(B, 31, beta, "alpha", false, false);
             }
         } else if (setting.equals("KminTreeSet")) {
             samples = new KminTreeSet[data.numberOfSets];
@@ -198,10 +196,10 @@ public class testAlphaKmin {
             int v = intersection[i];
             events.add(new Event(-1, v, 1)); // insert to all sets
         }
-        for (int i = 0; i < intersection.length / alpha; i++) {
-            int v = intersection[i];
-            events.add(new Event(-1, v, -1)); // delete from all sets
-        }
+//        for (int i = 0; i < intersection.length / alpha; i++) {
+//            int v = intersection[i];
+//            events.add(new Event(-1, v, -1)); // delete from all sets
+//        }
 
         // Add insert/delete events for noise (per set)
         for (int set = 0; set < noiseSets.length; set++) {
@@ -209,7 +207,7 @@ public class testAlphaKmin {
             for (int i = 0; i < noise.length; i++) {
                 events.add(new Event(set, noise[i], 1)); // insert to specific set
             }
-            for (int i = 0; i < noise.length / alpha; i++) {
+            for (int i = 0; i < noise.length; i++) {
                 events.add(new Event(set, noise[i], -1)); // delete from specific set
             }
         }

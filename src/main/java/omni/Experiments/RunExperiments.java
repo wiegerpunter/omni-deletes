@@ -145,8 +145,9 @@ public class RunExperiments {
                                                     bp.add(ram, config.B, config.d, config.w, config.numStoredAttributes, config.b);
                                                     if (config.readFromDisk) {
                                                         for (double perc: config.percs) {
-                                                            config.bufferDeletesMinwise = getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTableFromPerc.csv", perc, ram, config.numStoredAttributes, config.d);
-                                                            System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
+                                                            config.bufferDeletesMinwise = getBeta(Main.inputFolder +
+                                                                    "/paramTable/bufferMinwiseTable.csv", perc,
+                                                                    ram, config.numStoredAttributes, config.d, 1);
                                                             experiment.run(ram, rtp, repetition, config);
                                                             if (ramMultiplyers_count < config.noiseUpdateFractions.size()) {
                                                                 ramMultiplyers[ramMultiplyers_count] = config.bufferDeletesMinwise;
@@ -155,8 +156,10 @@ public class RunExperiments {
                                                         }
                                                     } else {
                                                         for (double noiseUpdateFraction1 : config.noiseUpdateFractions) {
-                                                            config.bufferDeletesMinwise = getBeta(Main.inputFolder + "/paramTable/bufferMinwiseTable.csv", noiseUpdateFraction1, ram, config.numStoredAttributes, config.d);
-                                                            System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
+                                                            config.bufferDeletesMinwise = getBeta(Main.inputFolder +
+                                                                    "/paramTable/bufferMinwiseTable.csv",
+                                                                    noiseUpdateFraction1, ram, config.numStoredAttributes,
+                                                                    config.d, 1);
                                                             experiment.run(ram, rtp, repetition, config);
                                                             if (ramMultiplyers_count < config.noiseUpdateFractions.size()) {
                                                                 ramMultiplyers[ramMultiplyers_count] = config.bufferDeletesMinwise;
@@ -200,7 +203,7 @@ public class RunExperiments {
         }
     }
 
-    private static Double getBeta(String filePath, double factor, double RAM, int attrs, int d) {
+    private static Double getBeta(String filePath, double factor, double RAM, int attrs, int d, int factorIndex) {
         String line;
         String csvSplitBy = ",";
 
@@ -213,7 +216,7 @@ public class RunExperiments {
                 String[] values = line.split(csvSplitBy);
 
                 // Assuming columns: alpha, insert_stream_size, cells, Y, beta, iterations
-                double factorValue = Double.parseDouble(values[1]);
+                double factorValue = Double.parseDouble(values[factorIndex]);
                 double ramValue = Double.parseDouble(values[7])*8*Math.pow(10,6);
                 int cellsValue = (int) Double.parseDouble(values[3]);
                 double betaValue = Double.parseDouble(values[5]);
@@ -249,6 +252,8 @@ public class RunExperiments {
             if (config.expOmniSketchVLDBArrayRegBuffer) enabledExperiments.add("OmniSketchVLDBArrayRegBufferCustom");
 
             if (config.expOmniSketchVLDBArrayWithBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithBufferCustom");
+            if (config.expOmniSketchVLDBArrayWithBufferPessDeleteCount) enabledExperiments.add("OmniSketchVLDBArrayWithBufferPessDeleteCountCustom");
+
             if (config.expOmniSketchVLDBArrayWithBufferOnlyValid) enabledExperiments.add("OmniSketchVLDBArrayWithBufferOnlyValidCustom");
 
             if (config.expOmniSketchVLDBArrayWithoutBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithoutBufferCustom");

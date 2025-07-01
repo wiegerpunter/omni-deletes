@@ -159,6 +159,13 @@ public class OmniSketchBuilder {
                 .setSketchType("SampleLaterArrayWithBuffer");
     }
 
+    public static OmniSketchBuilder QFirstSampleLaterArrayWithBufferPessDeleteCount() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(true)
+                .setUseNMax(true)
+                .setSketchType("SampleLaterArrayWithBufferPessDeleteCount");
+    }
+
     public static OmniSketchBuilder QFirstSampleLaterArrayWithBufferOnlyValid() {
         return new OmniSketchBuilder()
                 .setUseAcrossRows(true)

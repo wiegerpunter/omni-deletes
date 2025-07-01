@@ -12,6 +12,8 @@ public class ArrayWithIngestionBuffer {
     int deletesFromBuffer = 0;
     private int curTreeRoot = Integer.MAX_VALUE;
 
+    private int minRejectedValue = Integer.MAX_VALUE;
+
     public ArrayWithIngestionBuffer(int budget, int ingestionBufferSize) {
         this.K = budget;
         this.arr = new int[this.K];
@@ -69,6 +71,10 @@ public class ArrayWithIngestionBuffer {
                 flushBuffer();
             }
             insertSorted(val, bufferSize);
+        } else {
+            if (val < minRejectedValue) {
+                minRejectedValue = val; // Update the minimum rejected value
+            }
         }
     }
 
@@ -108,7 +114,11 @@ public class ArrayWithIngestionBuffer {
         Arrays.sort(ingestionBuffer, 0, bufferSize); // Sort the buffer before processing
         for (int i = 0; i < bufferSize; i++) {
             if (arr[pointerArr] <= ingestionBuffer[pointerBuffer]) {
+                if (ingestionBuffer[pointerBuffer] < minRejectedValue) {
+                    minRejectedValue = ingestionBuffer[pointerBuffer]; // Update the minimum rejected value
+                }
                 pointerBuffer--;
+
             } else {
                 pointerArr--;
             }
@@ -246,5 +256,11 @@ public class ArrayWithIngestionBuffer {
         return deletesFromSample + deletesFromBuffer;
     }
 
+    public int getMinRejectedValue() {
+        if (bufferSize > 0) {
+            flushBuffer();
+        }
+        return minRejectedValue;
+    }
 }
 

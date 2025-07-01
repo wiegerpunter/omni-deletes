@@ -15,13 +15,15 @@ public class KminCustomArray implements Sample {
     private final String setting;
     private final double beta;
     private final boolean onlyUseValidSamples;
+    private final boolean pessimisticDeleteCounter; // Flag to indicate if we are using pessimistic delete counter
 
-    public KminCustomArray(int B, int b, double beta, String setting, boolean onlyUseValidSamples) {
+    public KminCustomArray(int B, int b, double beta, String setting, boolean onlyUseValidSamples, boolean pessimisticDeleteCounter) {
         this.b = b;
         this.setting = setting;
         this.n = 0;
         this.beta = beta;
         this.onlyUseValidSamples = onlyUseValidSamples;
+        this.pessimisticDeleteCounter = pessimisticDeleteCounter; // Default to false, can be set via constructor if needed
         ingestionBufferSize = Math.max(1, B / 80);
         if (beta == 0) {
             this.B = B - ingestionBufferSize;
@@ -89,8 +91,20 @@ public class KminCustomArray implements Sample {
         if (beta != 0) {
             if (onlyUseValidSamples) {
                 return (int) Math.min(sample.getCurSampleSize(), B / beta);
-            } else {
+            } else if (pessimisticDeleteCounter){
                 return (int) Math.min(sample.getCurSampleSize(), Math.max(B / beta, B - sample.getTotalDeletes()));
+            } else {
+                // get sample count before minRejectedValue
+                int minRejectedValue = sample.getMinRejectedValue();
+                if (minRejectedValue == Integer.MAX_VALUE) {
+                    return sample.getCurSampleSize();
+                }
+                int[] k = sample.getK();
+                int index = Arrays.binarySearch(k, minRejectedValue);
+                if (index < 0) {
+                    index = -index - 1; // Convert to insertion point
+                }
+                return index;
             }
         }
         return sample.getCurSampleSize();

@@ -11,7 +11,7 @@ public class MixResiduNoise {
 
 
     public MixResiduNoise(Config config) throws IOException {
-        File synthRootFolder = new File(config.readFolder + "input/data/synthFromDisk/26.0/");
+        File synthRootFolder = new File(config.readFolder + "input/data/synthFromDisk/23.0/");
         if (!synthRootFolder.exists() || !synthRootFolder.isDirectory()) {
             throw new IOException("Synth folder does not exist: " + synthRootFolder.getAbsolutePath());
         }

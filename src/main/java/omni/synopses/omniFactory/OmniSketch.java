@@ -4,6 +4,8 @@ import omni.synopses.SynopsisRefactor;
 import omni.synopses.omniFactory.OmniSketchTypes.OmniSketchType;
 import omni.synopses.omniFactory.OmniSketchTypes.OmniSketchTypeFactory;
 
+import java.util.Arrays;
+
 public class OmniSketch extends SynopsisRefactor {
     private final OmniSketchConfig config;
     private final OmniSketchType sketch;
@@ -51,7 +53,7 @@ public class OmniSketch extends SynopsisRefactor {
     }
 
     public void printParams() {
-        System.out.println("OmniSketch Configuration: " + config);
+        System.out.println("OmniSketch Configuration: " + Arrays.toString(config.getParams()));
     }
 
     @Override

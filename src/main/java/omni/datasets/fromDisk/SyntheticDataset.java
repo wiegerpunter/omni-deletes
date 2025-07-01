@@ -84,9 +84,24 @@ public class SyntheticDataset {
         File sizeFactorFolder = percFolder.getParentFile();  // e.g., .../5.0
 
         if (datasetFileName.endsWith(".csv")) {
-            String queryFileName = datasetFile.getName().replace(".csv", "_queries.csv").replace(String.valueOf(perc), "0.0");
-            File queryFile = new File(sizeFactorFolder, "0.0/" + queryFileName);
-            return queryFile.getAbsolutePath();
+            String queryFileName = datasetFile.getName().replace(".csv", "_queries.csv");
+            // Find positions of the last two underscores
+            int lastUnderscore = queryFileName.lastIndexOf("_");
+            int secondLastUnderscore = queryFileName.lastIndexOf("_", lastUnderscore - 1);
+
+            if (secondLastUnderscore != -1 && lastUnderscore != -1 && lastUnderscore > secondLastUnderscore) {
+                String before = queryFileName.substring(0, secondLastUnderscore + 1);
+                String after = queryFileName.substring(lastUnderscore); // includes the underscore and the .csv part
+
+                String modified = before + "0.0" + after;
+
+                System.out.println(modified);
+                File queryFile = new File(sizeFactorFolder, "0.0/" + modified);
+                return queryFile.getAbsolutePath();
+            } else {
+                throw new IllegalArgumentException("Dataset filename does not contain the expected underscores for modification: " + datasetFileName);
+            }
+
         } else {
             throw new IllegalArgumentException("Dataset filename does not end with .csv");
         }
