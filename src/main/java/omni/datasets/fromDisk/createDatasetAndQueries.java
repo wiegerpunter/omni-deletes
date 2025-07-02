@@ -20,9 +20,9 @@ public class createDatasetAndQueries {
         double[] perc = {0,0.33,1,3,9};
         for (double p : perc) {
             System.out.printf("\rGenerating dataset with %.1f%% noise", p * 100);
-            residu.synthDevDataGenerator(p, 23, 1.3);
+            residu.synthDevDataGenerator(p, 20, 1.3);
             if (p == 0) {
-                residu.synthDevQueryGenerator(p, 23, 1.3);
+                residu.synthDevQueryGenerator(p, 20, 1.3);
             }
         }
 

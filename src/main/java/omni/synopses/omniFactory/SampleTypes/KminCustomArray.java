@@ -54,7 +54,7 @@ public class KminCustomArray implements Sample {
 
     private void remove(int hx) {
         n--;
-        sample.removeAlt(hx);
+        sample.removeSimple(hx);
     }
 
     public int[] query() {

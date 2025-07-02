@@ -4,7 +4,7 @@
 
 
 # Root folder where synthFromDisk resides
-ROOT_FOLDER="/home/wieger/omni-deletes/input/data/synthFromDisk/23.0"
+ROOT_FOLDER="/home/wieger/omni-deletes/input/data/synthFromDisk/20.0"
 
 set -e
 
@@ -90,20 +90,20 @@ find "$ROOT_FOLDER" -mindepth 2 -maxdepth 2 -type f -name "*.csv" | while read -
   #        print > (data_folder "/noise_deletes.csv");
   #}
   #' "$INPUT_FILE"
+#
+#  # Shuffle the files
+#  echo "Shuffling inserts and deletes"
 
-  # Shuffle the files
-  echo "Shuffling inserts and deletes"
-
-  # Shuffle only if files exist and are not empty
-  if [ -s "$SPLIT_FOLDER/residu$SUFFIX" ]; then
-      shuf -o "$SPLIT_FOLDER/residu_shuffled$SUFFIX" "$SPLIT_FOLDER/residu$SUFFIX"
-  fi
-
-  if [ -s "$SPLIT_FOLDER/noise_inserts$SUFFIX" ]; then
-      shuf -o "$SPLIT_FOLDER/noise_inserts_shuffled$SUFFIX" "$SPLIT_FOLDER/noise_inserts$SUFFIX"
-  fi
-
-  if [ -s "$SPLIT_FOLDER/noise_deletes$SUFFIX" ]; then
-      shuf -o "$SPLIT_FOLDER/noise_deletes_shuffled$SUFFIX" "$SPLIT_FOLDER/noise_deletes$SUFFIX"
-  fi
+#  # Shuffle only if files exist and are not empty
+#  if [ -s "$SPLIT_FOLDER/residu$SUFFIX" ]; then
+#      shuf -o "$SPLIT_FOLDER/residu_shuffled$SUFFIX" "$SPLIT_FOLDER/residu$SUFFIX"
+#  fi
+#
+#  if [ -s "$SPLIT_FOLDER/noise_inserts$SUFFIX" ]; then
+#      shuf -o "$SPLIT_FOLDER/noise_inserts_shuffled$SUFFIX" "$SPLIT_FOLDER/noise_inserts$SUFFIX"
+#  fi
+#
+#  if [ -s "$SPLIT_FOLDER/noise_deletes$SUFFIX" ]; then
+#      shuf -o "$SPLIT_FOLDER/noise_deletes_shuffled$SUFFIX" "$SPLIT_FOLDER/noise_deletes$SUFFIX"
+#  fi
 done

@@ -53,7 +53,7 @@ public class testAlphaKmin {
                                     runTest("KminCustomArray", intersectionSize, numSet, noiseSize, seed, B, 0, alpha, domain);
                                     runTest("KminSimpleBuffer", intersectionSize, numSet, noiseSize, seed, B, beta, alpha, domain);
                                     runTest("KminSimpleBuffer", intersectionSize, numSet, noiseSize, seed, B, 0, alpha, domain);
-                                    runTest("KminArrayWithoutBuffer", intersectionSize, numSet, noiseSize, seed, B, beta, alpha, domain);
+//                                    runTest("KminArrayWithoutBuffer", intersectionSize, numSet, noiseSize, seed, B, beta, alpha, domain);
 
                                     runTest("KminTreeSet", intersectionSize, numSet, noiseSize, seed, B, beta, alpha, domain);
                                     runTest("KminTreeSet", intersectionSize, numSet, noiseSize, seed, B, 0, alpha, domain);

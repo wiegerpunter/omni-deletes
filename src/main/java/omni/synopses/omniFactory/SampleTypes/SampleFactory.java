@@ -17,7 +17,7 @@ public class SampleFactory {
 
             case "KminArrayWithBuffer" -> new KminCustomArray(B, b, config.getBufferBeta(), "KminArrayWithBuffer", false, false);
             case "KminArrayWithBufferOnlyValid" -> new KminCustomArray(B, b, config.getBufferBeta(), "KminArrayWithBuffer", true, false);
-            case "KminArrayWithoutBuffer" -> new KminCustomArray(B, b, b,"KminArrayWithoutBuffer", false, false);
+            case "KminArrayWithoutBuffer" -> new KminCustomArray(B, b, config.getBufferBeta(),"KminArrayWithoutBuffer", false, false);
             case "KminArrayWithBufferPessDeleteCount" -> new KminCustomArray(B, b, 0,"KminArrayWithBuffer", false, false);
 
             case "KminSimpleBuffer" -> new KminSimpleBuffer(B, b, config.getBufferBeta(), "KminSimpleBuffer");

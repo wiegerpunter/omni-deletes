@@ -273,8 +273,6 @@ public class SyntheticDataset {
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(queryFileName))) {
             writeHeaderQueryFile(writer, pointQueries[0].length);
-            writer.newLine();
-
             for (int i = 0; i < pointQueries.length; i++) {
                 StringBuilder line = new StringBuilder();
                 line.append(i);

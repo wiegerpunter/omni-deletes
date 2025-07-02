@@ -386,10 +386,10 @@ public class RunExperiments {
                 }
 
                 if (numDeletes > 0 && numDeletes % 1000000 == 0) {
-                    System.out.printf("\rNumber of deletes: " + numDeletes);
+                    System.out.printf("\rNumber of deletes: " + numDeletes + " / " + cd.getNoiseSize());
                 }
                 if (numUpdates % 1000000 == 0) {
-                    System.out.printf("\rNumber of updates: " + numUpdates + " / ");
+                    System.out.print("\rProgress: " + numUpdates / cd.getDatasetSize() + "%");
                 }
             }
         } catch (IOException e) {

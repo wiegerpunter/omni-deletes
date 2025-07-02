@@ -11,13 +11,13 @@ public class MixResiduNoise {
 
 
     public MixResiduNoise(Config config) throws IOException {
-        File synthRootFolder = new File(config.readFolder + "input/data/synthFromDisk/23.0/");
+        File synthRootFolder = new File(config.readFolder + "input/data/synthFromDisk/20.0/");
         if (!synthRootFolder.exists() || !synthRootFolder.isDirectory()) {
             throw new IOException("Synth folder does not exist: " + synthRootFolder.getAbsolutePath());
         }
 
         // Pattern to detect shuffled residu file and extract suffix
-        Pattern pattern = Pattern.compile("residu_shuffled(.*)\\.csv");
+        Pattern pattern = Pattern.compile("residu(.*)\\.csv");
 
         // Recursively process subfolders
         processFolderRecursively(synthRootFolder, pattern);
@@ -41,8 +41,8 @@ public class MixResiduNoise {
                 if (matcher.matches()) {
                     suffix = matcher.group(1);  // Includes leading underscores
                     residuFile = file.getAbsolutePath();
-                    insertFile = new File(folder, "noise_inserts_shuffled" + suffix + ".csv").getAbsolutePath();
-                    deleteFile = new File(folder, "noise_deletes_shuffled" + suffix + ".csv").getAbsolutePath();
+                    insertFile = new File(folder, "noise_inserts" + suffix + ".csv").getAbsolutePath();
+                    deleteFile = new File(folder, "noise_deletes" + suffix + ".csv").getAbsolutePath();
                     foundResidu = true;
                     break;
                 }
@@ -57,8 +57,8 @@ public class MixResiduNoise {
             boolean hasInserts = new File(insertFile).exists();
             boolean hasDeletes = new File(deleteFile).exists();
 
-            System.out.println("Processing folder: " + folder.getAbsolutePath());
-            System.out.println("Residu: " + residuFile);
+            System.out.printf("\rProcessing folder: " + folder.getAbsolutePath());
+            System.out.printf("\rResidu: " + residuFile);
             if (hasInserts) System.out.println("Inserts: " + insertFile);
             if (hasDeletes) System.out.println("Deletes: " + deleteFile);
 
@@ -82,15 +82,18 @@ public class MixResiduNoise {
 
         Set<Integer> emittedNoiseIds = new HashSet<>();
         Random rand = new Random();
-
+        int differenceInsertsAndDeletes = 0;
+        int threshold = 100; // Threshold for noise mixing
         while (residuLine != null || insertLine != null || deleteLine != null) {
             List<String> options = new ArrayList<>();
             if (residuLine != null) options.add("residu");
             if (insertLine != null) options.add("insert");
             if (deleteLine != null) {
-                int id = getId(deleteLine);
-                if (emittedNoiseIds.contains(id)) {
-                    options.add("delete");
+                if (differenceInsertsAndDeletes > threshold ) {
+                    int id = getId(deleteLine);
+                    if (emittedNoiseIds.contains(id)) {
+                        options.add("delete");
+                    }
                 }
             }
             if (options.isEmpty()) break;
@@ -107,14 +110,23 @@ public class MixResiduNoise {
                     assert insertLine != null;
                     emittedNoiseIds.add(getId(insertLine));
                     insertLine = insertReader.readLine();
+                    differenceInsertsAndDeletes++;
                     break;
                 case "delete":
                     writer.write(deleteLine + "\n");
                     assert deleteReader != null;
                     deleteLine = deleteReader.readLine();
+                    differenceInsertsAndDeletes--;
                     break;
             }
         }
+
+        // Phase 2: Output remaining deletes unconditionally
+        while (deleteLine != null) {
+            writer.write(deleteLine + "\n");
+            deleteLine = deleteReader.readLine();
+        }
+
         residuReader.close();
         if (insertReader != null) insertReader.close();
         if (deleteReader != null) deleteReader.close();
