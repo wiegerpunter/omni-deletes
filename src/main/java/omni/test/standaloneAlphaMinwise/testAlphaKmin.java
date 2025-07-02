@@ -3,9 +3,7 @@ package omni.test.standaloneAlphaMinwise;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import omni.Experiments.utils.QueryInfo;
-import omni.synopses.omniFactory.SampleTypes.KminCustomArray;
-import omni.synopses.omniFactory.SampleTypes.KminTreeSet;
-import omni.synopses.omniFactory.SampleTypes.Sample;
+import omni.synopses.omniFactory.SampleTypes.*;
 import omni.synopses.omniFactory.utils.KminUtils;
 import omni.test.standaloneAlphaMinwise.Data;
 import omni.test.standaloneAlphaMinwise.Event;
@@ -23,10 +21,10 @@ public class testAlphaKmin {
 
 
 
-        int[] intersectionSizes = {100000};
+        int[] intersectionSizes = {1000};
         int[] numSets = {9};
-        int[] Bs = {1000};
-        int[] domains = {10000};
+        int[] Bs = {100};
+        int[] domains = {10000000};
         double[][] betaPairs = new double[][]{
                 {1, 1},
                 {1.33, 1.38},
@@ -53,8 +51,14 @@ public class testAlphaKmin {
                                     // Run tests with different beta and alpha values
                                     runTest("KminCustomArray", intersectionSize, numSet, noiseSize, seed, B, beta, alpha, domain);
                                     runTest("KminCustomArray", intersectionSize, numSet, noiseSize, seed, B, 0, alpha, domain);
+                                    runTest("KminSimpleBuffer", intersectionSize, numSet, noiseSize, seed, B, beta, alpha, domain);
+                                    runTest("KminSimpleBuffer", intersectionSize, numSet, noiseSize, seed, B, 0, alpha, domain);
+                                    runTest("KminArrayWithoutBuffer", intersectionSize, numSet, noiseSize, seed, B, beta, alpha, domain);
+
                                     runTest("KminTreeSet", intersectionSize, numSet, noiseSize, seed, B, beta, alpha, domain);
                                     runTest("KminTreeSet", intersectionSize, numSet, noiseSize, seed, B, 0, alpha, domain);
+                                    runTest("ExactSolution", intersectionSize, numSet, noiseSize, seed, B, beta, alpha, domain);
+//                                    runTest("ExactSolution", intersectionSize, numSet, noiseSize, seed, B, 0, alpha, domain);
 
                                 }
                             }
@@ -71,7 +75,7 @@ public class testAlphaKmin {
 
         try (FileWriter csvWriter = new FileWriter(filePath)) {
             // Write CSV header
-            csvWriter.append("setting,intersectionSize,numSets,noiseSize,domain,seed,B,beta,alpha,estimate,error,absoluteError\n");
+            csvWriter.append("setting,intersectionSize,numSets,noiseSize,domain,seed,B,beta,alpha,estimate,error,absoluteError,SCap,UsedMaxSize\n");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -79,7 +83,8 @@ public class testAlphaKmin {
 
     private static void add_result(String setting, int intersectionSize, int numSets, int noiseSize, int domain,
                                    int seed,
-                                   int B, double beta, double alpha, int estimate, int error, int absoluteError) throws SQLException, IOException {
+                                   int B, double beta, double alpha, int estimate, int error, int absoluteError,
+                                   QueryInfo queryInfo) throws SQLException, IOException {
         String datestamp = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
         String filePath = "output/tests/testAlphaKmin_" + datestamp + ".csv";
 
@@ -95,7 +100,10 @@ public class testAlphaKmin {
                     .append(",").append(String.valueOf(alpha))
                     .append(",").append(String.valueOf(estimate))
                     .append(",").append(String.valueOf(error))
-                    .append(",").append(String.valueOf(absoluteError)).append("\n");
+                    .append(",").append(String.valueOf(absoluteError))
+                    .append(",").append(String.valueOf(queryInfo.getScap()))
+                    .append(",").append(String.valueOf(queryInfo.getUsedMaxSize()))
+                    .append("\n");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -114,46 +122,71 @@ public class testAlphaKmin {
         // three streams of data for the three sets. Intersecting three sets to find result which is intersection
         Data data = data_generation(intersectionSize, numSets, noiseSize, domain);
 
-        int estimate = experiment(setting, data, B, beta, alpha, seed);
+        QueryInfo queryInfo = new QueryInfo();
+        int estimate = experiment(setting, data, B, beta, alpha, seed, queryInfo);
         int exact = (int) (data.intersection.length);
         int error = estimate - exact;
         int absoluteError = Math.abs(error);
 
         add_result(setting, intersectionSize, numSets, noiseSize, domain, seed, B, beta, alpha,
-                estimate, error, absoluteError);
+                estimate, error, absoluteError, queryInfo);
 
     }
 
-    private static int experiment(String setting, Data data, int B, double beta, double alpha, int seed) {
+    private static int experiment(String setting, Data data, int B, double beta, double alpha, int seed, QueryInfo queryInfo) {
         Sample[] samples;
-        if (setting.equals("KminCustomArray")) {
-           samples = new KminCustomArray[data.numberOfSets];
+        switch (setting) {
+            case "KminCustomArray" -> {
+                samples = new KminCustomArray[data.numberOfSets];
 
-            for (int i = 0; i < data.numberOfSets; i++) {
-                samples[i] = new KminCustomArray(B, 31, beta, "alpha", false, false);
+                for (int i = 0; i < data.numberOfSets; i++) {
+                    samples[i] = new KminCustomArray(B, 31, beta, "alpha", true, false);
+                }
             }
-        } else if (setting.equals("KminTreeSet")) {
-            samples = new KminTreeSet[data.numberOfSets];
-            for (int i = 0; i < data.numberOfSets; i++) {
-                samples[i] = new KminTreeSet(B, 31, beta, "alpha");
+            case "KminArrayWithoutBuffer" -> {
+                samples = new KminCustomArray[data.numberOfSets];
+
+                for (int i = 0; i < data.numberOfSets; i++) {
+                    samples[i] = new KminCustomArray(B, 31, beta, "KminArrayWithoutBuffer", false, false);
+                }
             }
-        } else {
-            throw new IllegalArgumentException("Unknown setting: " + setting);
+            case "KminTreeSet" -> {
+                samples = new KminTreeSet[data.numberOfSets];
+                for (int i = 0; i < data.numberOfSets; i++) {
+                    samples[i] = new KminTreeSet(B, 31, beta, "alpha");
+                }
+            }
+            case "KminSimpleBuffer" -> {
+                samples = new KminSimpleBuffer[data.numberOfSets];
+                for (int i = 0; i < data.numberOfSets; i++) {
+                    samples[i] = new KminSimpleBuffer(B, 31, beta, "alpha");
+                }
+            }
+            case "ExactSolution" -> {
+                samples = new Sample[data.numberOfSets];
+                for (int i = 0; i < data.numberOfSets; i++) {
+                    samples[i] = new ExactSolution();
+                }
+            }
+            default -> throw new IllegalArgumentException("Unknown setting: " + setting);
         }
 
 
         HashFunction x = Hashing.murmur3_32_fixed(seed);
 
-        ingest_data(samples, data, x, alpha);
+        ingest_data(samples, data, x);
 
         Sample[] results = new Sample[data.numberOfSets];
         System.arraycopy(samples, 0, results, 0, data.numberOfSets);
-        QueryInfo queryInfo = new QueryInfo();
         // compute intersection of results
-        if (setting.equals("KminCustomArray")) {
+        if (setting.equals("KminCustomArray") || setting.equals("KminArrayWithoutBuffer")) {
             return KminUtils.estimateArray(results, queryInfo, 0, data.numberOfSets);
         } else if (setting.equals("KminTreeSet")) {
             return KminUtils.estimateTreeSet(results, queryInfo, 0, data.numberOfSets);
+        } else if (setting.equals("KminSimpleBuffer")) {
+            return KminUtils.estimateArray(results, queryInfo, 0, data.numberOfSets);
+        } else if (setting.equals("ExactSolution")) {
+            return KminUtils.estimateSetExact(results, queryInfo, 0, data.numberOfSets);
         } else {
             throw new IllegalArgumentException("Unknown setting: " + setting);
         }
@@ -185,15 +218,14 @@ public class testAlphaKmin {
         // Here you can return or store the generated data as needed
     }
 
-    private static void ingest_data(Sample[] samples, Data data, HashFunction x, double alpha) {
+    private static void ingest_data(Sample[] samples, Data data, HashFunction x) {
         List<Event> events = new ArrayList<>();
 
         int[] intersection = data.intersection;
         int[][] noiseSets = data.noise;
 
         // Add insert/delete events for intersection (shared across all sets)
-        for (int i = 0; i < intersection.length; i++) {
-            int v = intersection[i];
+        for (int v : intersection) {
             events.add(new Event(-1, v, 1)); // insert to all sets
         }
 //        for (int i = 0; i < intersection.length / alpha; i++) {
@@ -204,16 +236,15 @@ public class testAlphaKmin {
         // Add insert/delete events for noise (per set)
         for (int set = 0; set < noiseSets.length; set++) {
             int[] noise = noiseSets[set];
-            for (int i = 0; i < noise.length; i++) {
-                events.add(new Event(set, noise[i], 1)); // insert to specific set
+            for (int j : noise) {
+                events.add(new Event(set, j, 1)); // insert to specific set
             }
-            for (int i = 0; i < noise.length; i++) {
-                events.add(new Event(set, noise[i], -1)); // delete from specific set
+            for (int j : noise) {
+                events.add(new Event(set, j, -1)); // delete from specific set
             }
         }
 
         // Shuffle while maintaining insert-before-delete logic automatically
-        Collections.shuffle(events, new Random());
 
         // Track what's been inserted to ensure valid deletes
         Set<Integer>[] inserted = new HashSet[samples.length];
@@ -235,14 +266,12 @@ public class testAlphaKmin {
                 }
             } else { // deletion
                 if (e.setIndex == -1) {
-                    for (int i = 0; i < samples.length; i++) {
-                        if (inserted[i].contains(e.value)) {
-                            samples[i].ingest(hx, -1);
-                        }
-                    }
+                    throw new IllegalArgumentException("Cannot delete from all sets at once in this context.");
                 } else {
                     if (inserted[e.setIndex].contains(e.value)) {
                         samples[e.setIndex].ingest(hx, -1);
+                    } else {
+                        throw new IllegalArgumentException("Trying to delete value " + e.value + " that was never inserted in set " + e.setIndex);
                     }
                 }
             }

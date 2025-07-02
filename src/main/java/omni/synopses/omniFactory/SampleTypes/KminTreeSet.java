@@ -121,7 +121,7 @@ public class KminTreeSet implements Sample {
     @Override
     public int getCurSampleSize() {
         if (beta != 0) {
-            return (int) Math.min(sample.size(), B/ beta);
+            return (int) Math.min(sample.size(), B/beta);
         }
         return sample.size();
     }

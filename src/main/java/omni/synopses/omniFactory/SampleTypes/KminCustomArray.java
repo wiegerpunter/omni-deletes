@@ -54,7 +54,7 @@ public class KminCustomArray implements Sample {
 
     private void remove(int hx) {
         n--;
-        sample.remove(hx);
+        sample.removeAlt(hx);
     }
 
     public int[] query() {
@@ -89,6 +89,10 @@ public class KminCustomArray implements Sample {
     @Override
     public int getCurSampleSize() {
         if (beta != 0) {
+            if (setting.equals("KminArrayWithoutBuffer")) {
+                // For KminArrayWithoutBuffer, we return the current sample size directly
+                return sample.getCurSampleSize();
+            }
             if (onlyUseValidSamples) {
                 return (int) Math.min(sample.getCurSampleSize(), B / beta);
             } else if (pessimisticDeleteCounter){

@@ -100,6 +100,9 @@ public class QueryInfo {
     public int getScap() {
         return Scap;
     }
+    public int getUsedMaxSize() {
+        return maxSize;
+    }
 
     public boolean isCase1() {
         return case1;

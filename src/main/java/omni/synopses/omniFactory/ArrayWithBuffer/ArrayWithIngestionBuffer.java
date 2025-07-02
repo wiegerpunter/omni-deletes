@@ -13,7 +13,7 @@ public class ArrayWithIngestionBuffer {
     private int curTreeRoot = Integer.MAX_VALUE;
 
     private int minRejectedValue = Integer.MAX_VALUE;
-
+    private boolean isSorted = false;
     public ArrayWithIngestionBuffer(int budget, int ingestionBufferSize) {
         this.K = budget;
         this.arr = new int[this.K];
@@ -143,6 +143,82 @@ public class ArrayWithIngestionBuffer {
         }
         curTreeRoot = arr[K- 1];
         bufferSize = 0;
+    }
+
+    public void removeAlt(int hx) {
+        if (curSampleSize == 0) {
+            return; // Nothing to remove
+        }
+
+        if (hx > curTreeRoot) {
+            // Element is larger than the largest in the sample, ignore
+            return;
+        }
+
+//        // check if present in buffer
+//        int bufferIndex = Arrays.binarySearch(buffer, 0, bufferSize, hx);
+//        if (bufferIndex >= 0) {
+//            // Element found in buffer, remove it
+//            System.arraycopy(buffer, bufferIndex + 1, buffer, bufferIndex, bufferSize - bufferIndex - 1);
+//            bufferSize--;
+//            deletesFromBuffer++;
+//            return;
+//        }
+////
+        for (int i = 0; i < bufferSize; i++) {
+            if (ingestionBuffer[i] == hx) {
+                // delete buffer[i]
+                System.arraycopy(ingestionBuffer, i + 1,ingestionBuffer, i, bufferSize - i - 1);
+                bufferSize--;
+                deletesFromBuffer++;
+                return;
+            }
+        }
+
+        if (!isSorted) {
+            Arrays.sort(arr, 0, Math.min(curSampleSize + 1, K)); // Sort the array if not sorted
+            isSorted = true;
+        }
+
+        int index = Arrays.binarySearch(arr, 0, Math.min(curSampleSize + 1, K), hx);
+        if (index >= 0) {
+            // Element found, shift elements to the left
+            System.arraycopy(arr, index + 1, arr, index, Math.min(curSampleSize + 1, K) - index -1);
+            arr[Math.min(curSampleSize, K - 1)] = Integer.MAX_VALUE; // Set the last element to a large value
+            curSampleSize--;
+            deletesFromSample++;
+        } else {
+            // Element not found in neither buffer or sample, do nothing
+            return;
+        }
+
+        // If buffer is not empty, we can try to fill the gap
+        if (bufferSize > 0) {
+            int insertIndex = Arrays.binarySearch(arr, 0, Math.min(curSampleSize + 1, K), ingestionBuffer[0]);
+            if (insertIndex >= 0) {
+                while (insertIndex > 0 && arr[insertIndex] == arr[insertIndex -1]) {
+                    insertIndex--; // Find the first occurrence of the value
+                }
+            } else {
+                insertIndex = -insertIndex - 1;
+            }
+
+            // Shift elements to the right to make space for the buffer element
+            System.arraycopy(arr, insertIndex, arr, insertIndex + 1, Math.min(curSampleSize + 1, K) - insertIndex - 1);
+            // Insert the last element from the buffer into the sample
+            arr[insertIndex] = ingestionBuffer[0];
+            bufferSize--;
+            curSampleSize++;
+            // Shift the remaining buffer elements to the left
+            System.arraycopy(ingestionBuffer, 1, ingestionBuffer, 0, bufferSize);
+        }
+
+        // Update the current tree root if necessary
+        if (curSampleSize > 0) {
+            curTreeRoot = arr[Math.min(curSampleSize, K-1)];
+        } else {
+            curTreeRoot = Integer.MAX_VALUE; // Reset if the sample is empty
+        }
     }
 
     public void remove(int hx) {

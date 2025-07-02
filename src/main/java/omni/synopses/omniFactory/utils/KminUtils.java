@@ -1,5 +1,6 @@
 package omni.synopses.omniFactory.utils;
 
+import omni.datasets.Record.Query;
 import omni.synopses.omniFactory.CustomPriorityQueue.PriorityQueue;
 import omni.Experiments.utils.QueryInfo;
 import omni.synopses.omniFactory.SampleTypes.Sample;
@@ -141,6 +142,28 @@ public class KminUtils {
             queryInfo.case1 = true;
         }
         return (int) ((long) S_cap * n_max[0] / n_max[1]);
+    }
+
+    public static int estimateSetExact(Sample[] kminSets, QueryInfo queryInfo, double bound, int numPreds) {
+        if (kminSets == null || kminSets.length == 0) {
+            throw new IllegalArgumentException("kminSets is null or empty");
+        }
+
+        if (Objects.equals(kminSets[0].getKminType(), "ExactSolution")) {
+            int intersection = 0;
+            Set<Integer> intersectionSet = new HashSet<>((Set<Integer>) kminSets[0].query());
+
+            for (int i = 1; i < kminSets.length; i++) {
+                intersectionSet.retainAll((Set<Integer>) kminSets[i].query());
+            }
+
+            intersection = intersectionSet.size();
+            queryInfo.setScap(intersection, kminSets[0].getN(), kminSets[0].getCurSampleSize(), false);
+            bound = 0;
+            return intersection;
+        } else {
+            throw new IllegalArgumentException("Unsupported kmin type: " + kminSets[0].getKminType());
+        }
     }
 
     private static int intersectionArray(int[][] arrays) {

@@ -14,17 +14,22 @@ public class KminSimpleBuffer implements Sample {
     private final String setting;
     private final double beta;
 
+    private final int ingestionBufferSize;
+
     public KminSimpleBuffer(int B, int b, double beta, String setting) {
         this.b = b;
         this.setting = setting;
         this.n = 0;
         this.beta = beta;
-        if (beta != 0) {
-            this.B = (int) (B * beta);
+        ingestionBufferSize = Math.max(1, B / 80);
+        if (beta == 0) {
+            this.B = B - ingestionBufferSize;
+        } else if (beta >= 0) {
+            this.B = (int) ((B - ingestionBufferSize) * beta);
         } else {
-            this.B = B;
+            throw new IllegalArgumentException("Beta should be >= 0");
         }
-        this.sample = new  ArraySimpleBuffer(this.B);
+        this.sample = new ArraySimpleBuffer(this.B, ingestionBufferSize);
     }
 
     // Implement the methods for KminPQ here
@@ -64,7 +69,7 @@ public class KminSimpleBuffer implements Sample {
 
     @Override
     public void reset() {
-        sample = new ArraySimpleBuffer(B); // Resetting the sample without a buffer
+        sample = new ArraySimpleBuffer(B, ingestionBufferSize); // Resetting the sample without a buffer
         n = 0;
     }
 
@@ -81,7 +86,7 @@ public class KminSimpleBuffer implements Sample {
     @Override
     public int getCurSampleSize() {
         if (beta != 0) {
-            return (int) (sample.getCurSampleSize() / beta);
+            return (int) Math.min(sample.getCurSampleSize(), this.B / beta);
         }
         return sample.getCurSampleSize();
     }

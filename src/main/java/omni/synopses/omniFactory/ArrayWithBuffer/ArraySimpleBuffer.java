@@ -1,5 +1,6 @@
 package omni.synopses.omniFactory.ArrayWithBuffer;
 
+import java.lang.reflect.Array;
 import java.util.Arrays;
 
 public class ArraySimpleBuffer {
@@ -12,19 +13,16 @@ public class ArraySimpleBuffer {
     private int deletesFromSample = 0;
     private int deletesFromBuffer = 0;
 
-    public ArraySimpleBuffer(int budget) {
-        int bufferBudget = Math.max(1, budget / 80);
-        this.K = budget - bufferBudget;
+    public ArraySimpleBuffer(int budget, int ingestionBufferSize) {
+        this.K = budget;
         this.arr = new int[K];
-        this.buffer = new int[bufferBudget];
+        this.buffer = new int[ingestionBufferSize];
     }
 
     public void insert(int val) {
         if (curSampleSize < K) {
             arr[curSampleSize++] = val;
-            if (curSampleSize == K) {
-                Arrays.sort(arr, 0, K);
-            }
+            Arrays.sort(arr, 0, curSampleSize);
         } else {
             buffer[bufferSize++] = val;
             if (bufferSize == buffer.length) {
@@ -54,14 +52,22 @@ public class ArraySimpleBuffer {
     private void flushBuffer() {
         int total = curSampleSize + bufferSize;
         int[] merged = new int[total];
+
+        // Copy existing sample
         System.arraycopy(arr, 0, merged, 0, curSampleSize);
+
+        // Copy buffer
         System.arraycopy(buffer, 0, merged, curSampleSize, bufferSize);
+
+        // Sort the merged array
         Arrays.sort(merged, 0, total);
 
-        // Keep only the smallest K
-        System.arraycopy(merged, 0, arr, 0, K);
+        // Keep only the smallest K elements
+        System.arraycopy(merged, 0, arr, 0, Math.min(K, curSampleSize + bufferSize));
+
         curSampleSize = K;
         bufferSize = 0;
+
     }
 
     public int[] getK() {
