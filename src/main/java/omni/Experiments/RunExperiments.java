@@ -175,6 +175,10 @@ public class RunExperiments {
                                                 } else if (experimentName.contains("TWOLHS")) {
                                                     config.B = (int) ((ram / (config.d * config.w * config.numStoredAttributes) - 32) / (31 * 32 *32));
                                                     System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
+                                                    if (config.B < 1) {
+                                                        System.err.println("B is less than 1, skipping experiment");
+                                                        continue;
+                                                    }
                                                     experiment.run(ram, rtp, repetition, config);
                                                 } else {
                                                     throw new RuntimeException("OmniSketch experiment name not recognized " + experimentName);

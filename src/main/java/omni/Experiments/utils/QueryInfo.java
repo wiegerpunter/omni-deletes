@@ -79,9 +79,9 @@ public class QueryInfo {
         this.case1 = case1;
     }
 
-    public void set2LHS(double unionEstimate, int witness2LHS, double jaccardEstimate) {
+    public void set2LHS(double unionEstimate, int estimate, double jaccardEstimate) {
         this.unionEstimate = unionEstimate;
-        this.witness2LHS = witness2LHS;
+        this.estimate = estimate;
         this.jaccardEstimate = jaccardEstimate;
     }
     public void addJaccardEstimate(double jaccardEstimate, int witness2LHS) {

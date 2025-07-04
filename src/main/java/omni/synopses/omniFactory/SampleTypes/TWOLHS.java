@@ -46,6 +46,7 @@ public class TWOLHS implements Sample {
                 sketchIndex = i;
                 countSignatures[i][0] += sign;
             }
+            countSignatures[sketchIndex][i+1] += sign;
         }
     }
 
