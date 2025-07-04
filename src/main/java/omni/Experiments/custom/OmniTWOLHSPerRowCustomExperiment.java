@@ -4,16 +4,15 @@ import omni.Config;
 import omni.Experiments.Experiment;
 import omni.Experiments.RunExperiments;
 import omni.Experiments.parameterSetting.RamToPar;
-import omni.Main;
 import omni.synopses.omniFactory.OmniSketchBuilder;
 
 import java.io.IOException;
 
-public class OmniTWOLHSCustomExperiment implements Experiment {
+public class OmniTWOLHSPerRowCustomExperiment implements Experiment {
     private RunExperiments runExperiments;
     private final OmniSketchBuilder omniSketchBuilder;
-    public OmniTWOLHSCustomExperiment() {
-        this.omniSketchBuilder = OmniSketchBuilder.TWOLHS();
+    public OmniTWOLHSPerRowCustomExperiment() {
+        this.omniSketchBuilder = OmniSketchBuilder.TWOLHSPerRow();
     }
 
     @Override

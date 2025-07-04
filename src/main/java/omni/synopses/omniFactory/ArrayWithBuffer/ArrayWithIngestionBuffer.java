@@ -24,25 +24,17 @@ public class ArrayWithIngestionBuffer {
 
 
     private void insertFromBufferToDeleteSlot(int bufferIndex, int deleteIndex, int insertIndex) {
-        if (!isSorted(arr, Math.min(curSampleSize + 1, K))) {
-            throw new IllegalStateException("Array is not sorted before remove");
-        }
+
         if (insertIndex < deleteIndex) {
             // need to shift elements between arrIndexCloseToDelete and index, and then insert at arrIndexCloseToDelete
             System.arraycopy(arr, insertIndex, arr, insertIndex + 1, deleteIndex - insertIndex);
             arr[insertIndex] = ingestionBuffer[bufferIndex];
-            if (!isSorted(arr, Math.min(curSampleSize + 1, K))) {
-                throw new IllegalStateException("Array is not sorted after remove");
-            }
         } else {
             System.arraycopy(arr, deleteIndex + 1, arr, deleteIndex, insertIndex - deleteIndex);
             if (insertIndex == arr.length - 1) {
                 arr[insertIndex] = ingestionBuffer[bufferIndex];
             } else {
                 arr[insertIndex - 1] = ingestionBuffer[bufferIndex];
-            }
-            if (!isSorted(arr, Math.min(curSampleSize + 1, K))) {
-                throw new IllegalStateException("Array is not sorted after remove");
             }
         }
 
@@ -91,14 +83,11 @@ public class ArrayWithIngestionBuffer {
                 minRejectedValue = val; // Update the minimum rejected value
             }
         }
-        if (!isSorted(arr, Math.min(curSampleSize, K))) {
-            throw new IllegalStateException("not sorted after try insert");
-        }
     }
 
     void flushBufferSampleNotFull() {
         int i = 0;
-        while (i < bufferSize) {
+        while (i < bufferSize) { // todo: make sure to include the i in the shifting st we only have to shift each number ONCE.
             if (curSampleSize < K) {
                 int insertIndex = Arrays.binarySearch(arr, 0, curSampleSize, ingestionBuffer[i]);
                 if (insertIndex >= 0) {
@@ -120,9 +109,6 @@ public class ArrayWithIngestionBuffer {
         // remove i items from buffer;
         System.arraycopy(ingestionBuffer, i , ingestionBuffer, 0, bufferSize - i);
         bufferSize -= i;
-        if (!isSorted(arr, Math.min(curSampleSize, K))) {
-            throw new IllegalStateException("Not sorted after flushing buffer sample not full");
-        }
 
         // if we have buffer left, sample
         flushBuffer();
@@ -164,9 +150,6 @@ public class ArrayWithIngestionBuffer {
         }
         curTreeRoot = arr[K- 1];
         bufferSize = 0;
-        if (!isSorted(arr, Math.min(curSampleSize, K))) {
-            throw new IllegalStateException("Array not sorted after flushing buffer");
-        }
     }
 
     public void removeAlt(int hx) {
@@ -375,10 +358,6 @@ public class ArrayWithIngestionBuffer {
         if (hx > curTreeRoot) {
             // Element is larger than the largest in the sample, ignore
             return;
-        }
-
-        if (!isSorted(ingestionBuffer, bufferSize)) {
-            throw new IllegalStateException("Buffer is not sorted before remove");
         }
         // check if present in buffer
         int bufferIndex = Arrays.binarySearch(ingestionBuffer, 0, bufferSize, hx);

@@ -1727,7 +1727,7 @@ public class CleanDataset {
         }
 
         String expectedSuffix = String.format("_%.1f_.*_%.1f_.*_%s\\.csv", sizeFactor, zipfAlpha, perc).replace(",", "\\,");
-        Pattern pattern = Pattern.compile("final_stream" + expectedSuffix);
+        Pattern pattern = Pattern.compile("final_stream_spread_out" + expectedSuffix);
 
         String matchedFile = null;
 

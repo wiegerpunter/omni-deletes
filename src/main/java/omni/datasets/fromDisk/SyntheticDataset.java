@@ -137,17 +137,20 @@ public class SyntheticDataset {
         }
         try (BufferedWriter writer = getBufferedWriter(datasetFileName)) {
             writeHeader(writer, numAttrs);
-            ZipfDistribution zipf = ZipfGenerator.getZipfDistribution(domain, zipfAlpha, 0);
+            ZipfDistribution zipfResidu = ZipfGenerator.getZipfDistribution(domain, zipfAlpha, 0);
+            double zipfNoiseAlpha = zipfAlpha - 0.2; // Slightly lower alpha for noise
+            ZipfDistribution zipfNoise = ZipfGenerator.getZipfDistribution(domain, zipfNoiseAlpha, 1);
+
             Random unifRandom = new Random(0);
 
             for (int i = 0; i < datasetSize; i++) {
                 // Create a record
-                long[] record = createRecord(i, zipf, unifRandom, numAttrs, numZipfianAttrs, numUniformAttrs, domain, zipfAlpha);
+                long[] record = createRecord(i, zipfResidu, unifRandom, numAttrs, numZipfianAttrs, numUniformAttrs, domain, zipfAlpha);
                 writeRecord(writer, record, 1);
             }
             for (int i = 0; i < noiseSize; i++) {
                 // Create a noise record
-                long[] record = createRecord(i + datasetSize, zipf, unifRandom, numAttrs, numZipfianAttrs, numUniformAttrs, domain, zipfAlpha);
+                long[] record = createRecord(i + datasetSize, zipfNoise, unifRandom, numAttrs, numZipfianAttrs, numUniformAttrs, domain, zipfNoiseAlpha);
                 writeRecord(writer, record, 1);
                 writeRecord(writer, record, -1);
             }

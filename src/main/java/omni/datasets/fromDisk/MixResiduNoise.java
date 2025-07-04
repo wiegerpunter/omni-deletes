@@ -83,6 +83,8 @@ public class MixResiduNoise {
         Set<Integer> emittedNoiseIds = new HashSet<>();
         Random rand = new Random();
         int differenceInsertsAndDeletes = 0;
+
+        //change shuffling, do it in memory
         int threshold = 100; // Threshold for noise mixing
         while (residuLine != null || insertLine != null || deleteLine != null) {
             List<String> options = new ArrayList<>();

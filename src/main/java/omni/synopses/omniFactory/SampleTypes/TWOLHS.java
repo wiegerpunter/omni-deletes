@@ -20,8 +20,10 @@ public class TWOLHS implements Sample {
     }
 
     public void initialize() {
-        countSignatures = new int[bitSize][bitSize+1];
+        countSignatures = new int[bitSize][bitSize + 1];
         for (int i =0; i < countSignatures.length; i++) {
+//            countSignatures[i] = new int[bitSize - i];
+//
             for (int j = 0; j < countSignatures[0].length; j++) {
                 countSignatures[i][j] = 0;
             }
@@ -32,7 +34,7 @@ public class TWOLHS implements Sample {
 
     @Override
     public void ingest(int id, int sign) {
-        int h = hashFunction.hashInt(id).asInt();
+        int h = hashFunction.hashInt(id).asInt() >>> 1;
         int sketchIndex = -1;
         for (int i = 0; i < bitSize; i++) {
             int mask = 1 << i;
@@ -44,7 +46,6 @@ public class TWOLHS implements Sample {
                 sketchIndex = i;
                 countSignatures[i][0] += sign;
             }
-            countSignatures[sketchIndex][i + 1] += sign;
         }
     }
 
@@ -98,7 +99,7 @@ public class TWOLHS implements Sample {
 
     @Override
     public String getKminType() {
-        return "";
+        return "TWOLHS";
     }
 
     @Override

@@ -24,7 +24,7 @@ public class KminCustomArray implements Sample {
         this.beta = beta;
         this.onlyUseValidSamples = onlyUseValidSamples;
         this.pessimisticDeleteCounter = pessimisticDeleteCounter; // Default to false, can be set via constructor if needed
-        ingestionBufferSize = Math.max(1, B / 80);
+        ingestionBufferSize = (int) Math.max(1, (B*beta) / 80); // todo: optimize buffer size of ingestion.
         if (beta == 0) {
             this.B = B - ingestionBufferSize;
         } else if (beta >= 0) {
@@ -54,7 +54,7 @@ public class KminCustomArray implements Sample {
 
     private void remove(int hx) {
         n--;
-        sample.removeSimple(hx);
+        sample.removeAlt(hx);
     }
 
     public int[] query() {

@@ -103,7 +103,12 @@ public class RunExperiments {
     }
     //double[] betas = new double[]{1,1.35,2.1,4.2,11};
     private void runAllExperiments(int repetition) throws IOException {
-        double[] ramMultiplyers = new double[config.noiseUpdateFractions.size()];
+        double[] ramMultiplyers;
+        if (config.readFromDisk) {
+            ramMultiplyers = new double[config.percs.length];
+        } else {
+            ramMultiplyers = new double[config.noiseUpdateFractions.size()];
+        }
         int ramMultiplyers_count = 0;
         RamToPar rtp = new RamToPar(config.numStoredAttributes, config.ramVals);
         for (double noiseUpdateFraction : config.noiseUpdateFractions) {
@@ -149,7 +154,7 @@ public class RunExperiments {
                                                                     "/paramTable/bufferMinwiseTable.csv", perc,
                                                                     ram, config.numStoredAttributes, config.d, 1);
                                                             experiment.run(ram, rtp, repetition, config);
-                                                            if (ramMultiplyers_count < config.noiseUpdateFractions.size()) {
+                                                            if (ramMultiplyers_count < config.percs.length) {
                                                                 ramMultiplyers[ramMultiplyers_count] = config.bufferDeletesMinwise;
                                                                 ramMultiplyers_count++;
                                                             }
@@ -264,6 +269,8 @@ public class RunExperiments {
 
             if (config.expTWOLHS) enabledExperiments.add("OmniSketchTWOLHSCustom");
             if (config.expFastTWOLHS) enabledExperiments.add("OmniSketchFastTWOLHSCustom");
+            if (config.expTWOLHSPerRow) enabledExperiments.add("OmniSketchTWOLHSPerRowCustom");
+            if (config.expFastTWOLHSPerRow) enabledExperiments.add("OmniSketchFastTWOLHSPerRowCustom");
 
 
             if (config.expOmniSketchSFQLOptimized) enabledExperiments.add("OmniSketchSFQLOptimizedCustom");
@@ -366,6 +373,7 @@ public class RunExperiments {
         long startTime = System.currentTimeMillis();
 
         try (BufferedReader br = new BufferedReader(new FileReader(cd.datasetReaderName))) {
+            br.readLine(); // Skip header line
             String line;
             while ((line = br.readLine()) != null) {
                 String[] values = line.split(",");
@@ -389,7 +397,8 @@ public class RunExperiments {
                     System.out.printf("\rNumber of deletes: " + numDeletes + " / " + cd.getNoiseSize());
                 }
                 if (numUpdates % 1000000 == 0) {
-                    System.out.print("\rProgress: " + numUpdates / cd.getDatasetSize() + "%");
+                    double progress = (double) (numUpdates + numDeletes) / cd.getDatasetSize() * 100;
+                    System.out.printf("\rProgress: " + progress);
                 }
             }
         } catch (IOException e) {

@@ -228,6 +228,24 @@ public class OmniSketchBuilder {
                 .setSketchType("TWOLHS");
     }
 
+    public static OmniSketchBuilder TWOLHSPerRow() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(false)
+                .setUseNMax(true)
+                .setUseFastTWOLHS(false)
+                .setEps(0.1)
+                .setSketchType("TWOLHS");
+    }
+
+    public static OmniSketchBuilder FastTWOLHSPerRow() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(false)
+                .setUseNMax(true)
+                .setUseFastTWOLHS(true)
+                .setEps(0.1)
+                .setSketchType("TWOLHS");
+    }
+
     public static OmniSketchBuilder QFirstSampleLaterOptimized() {
         return new OmniSketchBuilder()
                 .setUseAcrossRows(true)

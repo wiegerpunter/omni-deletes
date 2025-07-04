@@ -8,7 +8,7 @@ import java.util.*;
 public class aSH extends SynopsisRefactor{
     // Adaptive Sample and Hold. Sketch for estimating count of elements in a stream.
     int numAttrs;
-    HashMap<List<Long>, Double[]> sketch; // Double[] is of form c_i, tau_i, u_i, z_i
+    HashMap<List<Long>, double[]> sketch; // Double[] is of form c_i, tau_i, u_i, z_i
     //HashMap<long[], Double[]> buffer; // Double[] is of form c_i, tau_i, u_i, z_i
     int count;
 
@@ -36,7 +36,7 @@ public class aSH extends SynopsisRefactor{
 //        this.bufferSize = parameters[1];
         this.parameters = parameters;
         this.ram = ram;
-        this.sketch = new HashMap<>(parameters[0] + parameters[1]);
+        this.sketch = new HashMap<List<Long>, double[]>(parameters[0] + parameters[1]);
         //this.buffer = new HashMap<long[], Double[]>(parameters[1]);
         this.bufferFactor = ingestBuffer;
         this.seed = repetition;
@@ -71,24 +71,24 @@ public class aSH extends SynopsisRefactor{
         }
         //System.arraycopy(record, 1, sampleRecord, 0, record.length - 1);
 
-        if (sketch.containsKey(sampleRecord) && sketch.get(sampleRecord) != null) {
+        if (sketch.containsKey(sampleRecord)) { //add  && sketch.get(sampleRecord) != null if broken
             sameRecCounter++;
             // increment the count of the record
-            Double[] recordValue = sketch.get(sampleRecord);
+            double[] recordValue = sketch.get(sampleRecord);
             recordValue[0] += sign;
             if (recordValue[0] <= 0) {
                 sketch.remove(sampleRecord);
                 size--;
                 numRemovals++;
             } else {
-                sketch.put(sampleRecord, recordValue);
+                sketch.put(sampleRecord, recordValue); // todo: check if needed, or if its just a pointer
             }
         } else {
             if (sign > 0) {
                 // add the record to the sketch
-                Double[] recordValue = new Double[4];
-                recordValue[0] = (double) sign; // c_i
-                recordValue[1] = (double) 0; // tau_i
+                double[] recordValue = new double[4];
+                recordValue[0] = sign; // c_i
+                recordValue[1] = 0; // tau_i
 
 //                recordValue[2] = rn.nextDouble(); // u_i see page 347, u is rv uniformly distributed in (0, 1].
 //                recordValue[3] = Math.log(rn1.nextDouble()); // z_i. z is rv uniformly distributed in (0, 1].
@@ -112,14 +112,14 @@ public class aSH extends SynopsisRefactor{
         double[] Tis = new double[sketch.size()];
         //double[] us = new double[keys.size()];
         //double[] zs = new double[keys.size()];
-        Iterator<Double[]> iterator = sketch.values().iterator();//Set().iterator();
+        Iterator<double[]> iterator = sketch.values().iterator();//Set().iterator();
         int numToEject = size - sketchSize;
 
         PriorityQueue<Double> bs_minvalues = new PriorityQueue<>(Comparator.reverseOrder());//Ascending: we want the min values to eject. Comparator.reverseOrder());
 
         int i = 0;
         while (iterator.hasNext()) {
-            Double[] sample = iterator.next();//sketch.get(key);
+            double[] sample = iterator.next();//sketch.get(key); // todo: check if pointer, otherwise it might not update
             sample[2] = rn.nextDouble(0, 1);
             sample[3] = Math.log(rn1.nextDouble(0, 1));
             Tis[i] = Math.max(sample[1] / sample[2], sample[0] / (-sample[3]));
@@ -142,7 +142,7 @@ public class aSH extends SynopsisRefactor{
                 iterator1.remove();
                 size--;
             } else { // Update the records that are not ejected.
-                Double[] sample = sketch.get(key);
+                double[] sample = sketch.get(key);
                 if (sample[1] <= tstar) {
                     if (tstar * sample[2] > sample[1]) {
                         //sketch.get(key)[0] += tstar * sample[3];
@@ -222,7 +222,7 @@ public class aSH extends SynopsisRefactor{
 
     @Override
     public void reset() {
-        sketch = new HashMap<>(parameters[0] + parameters[1]);
+        sketch = new HashMap<List<Long>, double[]>(parameters[0] + parameters[1]);
         size = 0;
         count = 0;
     }

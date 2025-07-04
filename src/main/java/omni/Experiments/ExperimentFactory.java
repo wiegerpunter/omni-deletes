@@ -49,6 +49,8 @@ public class ExperimentFactory {
         experiments.put("OmniSketchVLDBSimpleBufferNoDeleteBufferCustom", new OmniVLDBSimpleBufferNoDeleteBufferCustomExperiment());
         experiments.put("OmniSketchTWOLHSCustom", new OmniTWOLHSCustomExperiment());
         experiments.put("OmniSketchFastTWOLHSCustom", new OmniFastTWOLHSCustomExperiment());
+        experiments.put("OmniSketchTWOLHSPerRowCustom", new OmniTWOLHSPerRowCustomExperiment());
+        experiments.put("OmniSketchFastTWOLHSPerRowCustom", new OmniFastTWOLHSPerRowCustomExperiment());
 
 
 

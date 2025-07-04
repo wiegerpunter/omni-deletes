@@ -143,7 +143,7 @@ public class OmniSketchTypeSampleLaterTWOLHS extends OmniSketchType {
         if (!sketchConfig.isUseAcrossRows()) {
             accrRows = "PerRow";
         }
-        return "OmniSketchSampleLater_" + SampleType + "_" + accrRows;
+        return "OmniSketchSampleLater_" + SampleType + "_" + (sketchConfig.getUseFastTWOLHS() ? "Fast" : "Slow") +"_" + accrRows;
     }
 
     @Override
