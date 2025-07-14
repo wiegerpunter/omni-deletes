@@ -248,10 +248,14 @@ public class ArrayWithIngestionBuffer {
         }
 
         // Ensure arr is sorted (optional if you maintain sorted state elsewhere)
-        if (!isSorted) {
-            Arrays.sort(arr, 0, Math.min(curSampleSize + 1, K));
-            isSorted = true;
-        }
+//        if (!isSorted) {
+//            Arrays.sort(arr, 0, Math.min(curSampleSize + 1, K));
+//            isSorted = true;
+//        }
+//        if (!isSorted(arr, Math.min(curSampleSize + 1, K))) {
+//            //todo: erase after testing
+//            throw new IllegalStateException("Array is not sorted. Please sort the array before removing elements.");
+//        }
 
         // Search in arr
         int deleteIndex = Arrays.binarySearch(arr, 0, Math.min(curSampleSize + 1, K), hx);
