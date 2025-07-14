@@ -20,7 +20,7 @@ public class MixInMemory {
 
     public MixInMemory(Config config) throws IOException {
         System.out.println(config.readFolder);
-        File synthRootFolder = new File(config.readFolder + "input/data/synthFromDisk/23.0/9.0");
+        File synthRootFolder = new File(config.readFolder + "input/data/synthFromDisk/25.0/3.0");
         if (!synthRootFolder.exists() || !synthRootFolder.isDirectory()) {
             throw new IOException("Synth folder does not exist: " + synthRootFolder.getAbsolutePath());
         }

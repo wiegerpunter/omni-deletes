@@ -12,9 +12,6 @@ public class QueryInfo {
     public boolean case1;
 
     public double unionEstimate;
-    public ArrayList<Double> jaccardEstimates;
-    public ArrayList<Integer> witnessEstimates;
-
     public double jaccardEstimate;
     public int witness2LHS;
     public int numberOfKmins;
@@ -36,9 +33,6 @@ public class QueryInfo {
         unionEstimate=0;
         jaccardEstimate=0;
         witness2LHS=0;
-        jaccardEstimates = new ArrayList<>();
-        witnessEstimates = new ArrayList<>();
-
         numberOfKmins=0;
         exactUnion=0;
         exactIntersection= 0;
@@ -51,13 +45,11 @@ public class QueryInfo {
         this.case1 = qi.case1;
         this.CMRow = qi.CMRow;
         // deepcopy
-        this.jaccardEstimates = new ArrayList<>(qi.jaccardEstimates);
         this.bound = qi.bound;
         this.nmax = qi.nmax;
         this.Scap = qi.Scap;
         this.maxSize = qi.maxSize;
         this.unionEstimate = qi.unionEstimate;
-        this.witnessEstimates = new ArrayList<>(qi.witnessEstimates);
         this.jaccardEstimate = qi.jaccardEstimate;
         this.numberOfKmins = qi.numberOfKmins;
         this.numberOfKminsExceedingBound = qi.numberOfKminsExceedingBound;
@@ -68,10 +60,6 @@ public class QueryInfo {
         this.expSetting = new ExpSetting(qi.expSetting.getIntersectionSize(), qi.expSetting.getB(), qi.expSetting.getSetSizes());
     }
 
-    public void setCMRow(int CMRow) {
-        this.CMRow = CMRow;
-    }
-
     public void setScap(int Scap, int nmax, int maxSize, boolean case1) {
         this.Scap = Scap;
         this.nmax = nmax;
@@ -79,14 +67,11 @@ public class QueryInfo {
         this.case1 = case1;
     }
 
-    public void set2LHS(double unionEstimate, int estimate, double jaccardEstimate) {
+    public void setEstimate(double unionEstimate, int witness2LHS, double jaccardEstimate, int estimate) {
         this.unionEstimate = unionEstimate;
-        this.estimate = estimate;
+        this.witness2LHS = witness2LHS;
         this.jaccardEstimate = jaccardEstimate;
-    }
-    public void addJaccardEstimate(double jaccardEstimate, int witness2LHS) {
-        this.jaccardEstimates.add(jaccardEstimate);
-        this.witnessEstimates.add(witness2LHS);
+        this.estimate = estimate;
     }
 
     public void setEstimate(int estimate) {

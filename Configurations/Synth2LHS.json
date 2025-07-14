@@ -12,7 +12,7 @@
   "dGridSearch": [3],
   "bGridSearch": [31],
   "BGridSearch": [1],
-  "wGridSearch": [8,16,28,64,128],
+  "wGridSearch": [8,28,128,256],
   "parFactorGridSearch": [100],
   "numBins": 3,
   "numPredicates": 9,

@@ -2,14 +2,13 @@ package omni.synopses.omniFactory.OmniSketchTypes;
 
 import com.google.common.hash.HashFunction;
 import omni.Experiments.utils.QueryInfo;
+import omni.datasets.Record.Query;
 import omni.synopses.omniFactory.OmniSketchConfig;
 import omni.synopses.omniFactory.SampleTypes.Sample;
-import omni.synopses.omniFactory.SampleTypes.TWOLHS;
 import omni.synopses.omniFactory.attributeSketchTypes.AttrSketchTWOLHS;
 import omni.synopses.omniFactory.utils.TWOLHSUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -68,13 +67,10 @@ public class OmniSketchTypeSampleLaterTWOLHS extends OmniSketchType {
             double estimate = TWOLHSUtils.setIntersectEstimator(samples,
                     u, sketchConfig.getUseFastTWOLHS(), queryInfo);
 
-            if (queryInfo.jaccardEstimates.isEmpty()) {
-                throw new IllegalArgumentException("Jaccard estimates not set");
-            }
-            double jaccardEstimate = queryInfo.jaccardEstimates.get(0);
-            int witnessEstimate = queryInfo.witnessEstimates.get(0);
+            double jaccardEstimate = queryInfo.jaccardEstimate;
+            int witnessEstimate = queryInfo.witness2LHS;
 
-            queryInfo.set2LHS(u, witnessEstimate, jaccardEstimate);
+            queryInfo.setEstimate(u, witnessEstimate, jaccardEstimate, (int) estimate);
             return (int) estimate;
         } else {
             ArrayList<QueryInfo> queryInfos = new ArrayList<>(depth);
@@ -87,15 +83,12 @@ public class OmniSketchTypeSampleLaterTWOLHS extends OmniSketchType {
                         numTWOLHSRepetitions, sketchConfig.getUseFastTWOLHS());
                 estimates[j] = TWOLHSUtils.setIntersectEstimator(cellsToIntersect[j],
                         unionEstimates[j], sketchConfig.getUseFastTWOLHS(), queryInfos.get(j));
-                if (queryInfos.get(j).jaccardEstimates.isEmpty()) {
-                    throw new IllegalArgumentException("Jaccard estimates not set");
-                }
-                queryInfos.get(j).set2LHS(unionEstimates[j], (int) estimates[j],
-                        queryInfos.get(j).jaccardEstimates.get(0));
             }
             // sort queryInfos on estimates
             QueryInfoSorter.sortByEstimateSize(queryInfos);
-            queryInfo = queryInfos.get(queryInfos.size()/2);
+            QueryInfo medianQueryInfo = queryInfos.get(queryInfos.size() / 2);
+            queryInfo.setEstimate(medianQueryInfo.unionEstimate, medianQueryInfo.witness2LHS,
+                    medianQueryInfo.jaccardEstimate, medianQueryInfo.getEstimate());
             return queryInfo.getEstimate();
         }
     }

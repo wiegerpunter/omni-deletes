@@ -1,8 +1,6 @@
 package omni.synopses.omniFactory.utils;
 
 import omni.Experiments.utils.QueryInfo;
-import omni.Main;
-import omni.synopses.omniFactory.OmniSketchConfig;
 import omni.synopses.omniFactory.SampleTypes.Sample;
 import omni.synopses.omniFactory.SampleTypes.TWOLHS;
 
@@ -67,17 +65,14 @@ public class TWOLHSUtils {
             sum += bde[0];
             count+=bde[1];
         }
-        double result;
-        result = ceil(((double) sum / count) * unionEstimate);
+        int result = (int) ceil(((double) sum / count) * unionEstimate);
        
-        queryInfo.addJaccardEstimate((double) sum / count, sum);
-        int resultInt = (int) result;
-        if (resultInt < 0) {
+        queryInfo.setEstimate(unionEstimate, sum, (double) sum / count, result);
+        if (result < 0) {
             System.out.println("Error: result > unionSize");
             System.exit(1);
         }
-
-        return resultInt;
+        return result;
     }
 
     private static int[] bucketDiffEstimatorFastTWOLHS(Sample[][] samples, int repetition) {
@@ -118,9 +113,9 @@ public class TWOLHSUtils {
                 count++;
             }
         }
-        double result;
-        result = ceil(((double) sum/ count)  * unionEstimate);
-        queryInfo.addJaccardEstimate((double) sum /count, sum);
+        int result;
+        result = (int) ceil(((double) sum/ count)  * unionEstimate);
+        queryInfo.setEstimate(unionEstimate, sum,(double) sum /count, result);
         return result;
         
     }
@@ -133,16 +128,10 @@ public class TWOLHSUtils {
             sum += bde[0];
             count+=bde[1];
         }
-        double result;
-        result = ceil(((double) sum / count) * unionEstimate);
-        queryInfo.addJaccardEstimate((double) sum /count, sum);
-        int resultInt = (int) result;
-        if (resultInt < 0) {
-            System.out.println("Error: result > unionSize");
-            System.exit(1);
-        }
-
-        return resultInt;
+        int result;
+        result = (int) ceil(((double) sum / count) * unionEstimate);
+        queryInfo.setEstimate(unionEstimate, sum, (double) sum /count, result);
+        return result;
     }
 
 

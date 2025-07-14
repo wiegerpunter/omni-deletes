@@ -118,7 +118,11 @@ public class ArrayWithIngestionBuffer {
     void flushBuffer() {
         int pointerArr = K - 1;
         int pointerBuffer = bufferSize - 1;
-        Arrays.sort(ingestionBuffer, 0, bufferSize); // Sort the buffer before processing
+//        if (!isSorted(ingestionBuffer, bufferSize)) {
+//            throw new IllegalStateException("Buffer is not sorted. Please sort the buffer before flushing.");
+//            // todo: delete if not needed
+////        Arrays.sort(ingestionBuffer, 0, bufferSize); // Sort the buffer before processing
+//        }
         for (int i = 0; i < bufferSize; i++) {
             if (arr[pointerArr] <= ingestionBuffer[pointerBuffer]) {
                 if (ingestionBuffer[pointerBuffer] < minRejectedValue) {
