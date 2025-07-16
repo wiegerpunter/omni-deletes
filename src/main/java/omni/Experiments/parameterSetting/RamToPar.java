@@ -147,7 +147,7 @@ public class RamToPar {
     private double[] compParamsCMBaseline(long ram) {
         int d = 3;
         int w = (int) (ram / (d * 32));
-        double info[] = new double[2];
+        double[] info = new double[2];
         if (w > 0) {
             info = new double[]{d, w};
         }

@@ -4,12 +4,12 @@
 
 
 # Root folder where synthFromDisk resides
-ROOT_FOLDER="/home/wieger/omni-deletes/input/data/synthFromDisk/20.0"
+ROOT_FOLDER="/home/wieger/omni-deletes/input/data/synthFromDisk/23.0/99.0"
 
 set -e
 
 # Loop over all relevant CSV files recursively
-find "$ROOT_FOLDER" -mindepth 2 -maxdepth 2 -type f -name "*.csv" | while read -r INPUT_FILE; do
+find "$ROOT_FOLDER" -mindepth 1 -maxdepth 1 -type f -name "*.csv" | while read -r INPUT_FILE; do
 
 #if [ $# -ne 1 ]; then
 #    echo "Usage: $0 <input_csv_file>"

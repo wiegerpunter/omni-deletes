@@ -63,28 +63,16 @@ public class OmniSketchTypeSampleLaterTWOLHS extends OmniSketchType {
             Sample[][] samples = getCellsToIntersectAcrossRows(query, numPreds);
             double estimate = TWOLHSUtils.estimate(sampleType, samples, epsilon,
                     numTWOLHSRepetitions, queryInfo);
-
-//            double u = TWOLHSUtils.setUnionEstimator(samples, epsilon,
-//                    numTWOLHSRepetitions, sketchConfig.getUseFastTWOLHS());
-//            double estimate = TWOLHSUtils.setIntersectEstimator(samples,
-//                    u, sketchConfig.getUseFastTWOLHS(), queryInfo);
-
-            double jaccardEstimate = queryInfo.jaccardEstimate;
-            int witnessEstimate = queryInfo.witness2LHS;
-
             queryInfo.setEstimate(queryInfo, (int) estimate);
             return (int) estimate;
         } else {
             ArrayList<QueryInfo> queryInfos = new ArrayList<>(depth);
             Sample[][][] cellsToIntersect = getCellsToIntersectPerRow(query, numPreds);
-            double[] unionEstimates = new double[depth];
-            double[] estimates = new double[depth];
             for (int j = 0; j < depth; j++) {
                 queryInfos.add(new QueryInfo());
-                unionEstimates[j] = TWOLHSUtils.setUnionEstimator(cellsToIntersect[j], epsilon,
-                        numTWOLHSRepetitions, sketchConfig.getUseFastTWOLHS());
-                estimates[j] = TWOLHSUtils.setIntersectEstimatorAllBuckets(cellsToIntersect[j],
-                        unionEstimates[j], sketchConfig.getUseFastTWOLHS(), queryInfos.get(j));
+                TWOLHSUtils.estimate(sampleType, cellsToIntersect[j], epsilon,
+                        numTWOLHSRepetitions, queryInfos.get(j));
+
             }
             // sort queryInfos on estimates
             QueryInfoSorter.sortByEstimateSize(queryInfos);
@@ -137,7 +125,7 @@ public class OmniSketchTypeSampleLaterTWOLHS extends OmniSketchType {
         if (!sketchConfig.isUseAcrossRows()) {
             accrRows = "PerRow";
         }
-        return "OmniSketchSampleLater_" + sampleType + "_" + (sketchConfig.getUseFastTWOLHS() ? "Fast" : "Slow") +"_" + accrRows;
+        return "OmniSketchSampleLater_" + sampleType + "_" + accrRows;
     }
 
     @Override

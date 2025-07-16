@@ -328,21 +328,18 @@ public class TWOLHSUtils {
             throw new IllegalArgumentException("Sets is null or empty");
         }
 
-        if (Objects.equals(sets[0].getKminType(), "TWOLHSExact")) {
-            Set<Integer> intersectionSet = new HashSet<>((Set<Integer>) sets[0].query());
-            Set<Integer> unionSet = new HashSet<>((Set<Integer>) sets[0].query());
-            for (int i = 1; i < sets.length; i++) {
-                intersectionSet.retainAll((Set<Integer>) sets[i].query());
-                unionSet.addAll((Set<Integer>) sets[i].query());
-            }
-
-            int intersectionSize = intersectionSet.size();
-            int unionSize = unionSet.size();
-            queryInfo.setEstimate(unionSize, 0, (double) intersectionSize /unionSize, intersectionSize);
-            return intersectionSize;
-        } else {
-            throw new IllegalArgumentException("Unsupported sample type: " + sets[0].getKminType());
+        Set<Integer> intersectionSet = new HashSet<>((Set<Integer>) sets[0].query());
+        Set<Integer> unionSet = new HashSet<>((Set<Integer>) sets[0].query());
+        for (int i = 1; i < sets.length; i++) {
+            intersectionSet.retainAll((Set<Integer>) sets[i].query());
+            unionSet.addAll((Set<Integer>) sets[i].query());
         }
+
+        int intersectionSize = intersectionSet.size();
+        int unionSize = unionSet.size();
+        queryInfo.setEstimate(unionSize, 0, (double) intersectionSize /unionSize, intersectionSize);
+        return intersectionSize;
+
     }
 
 }
