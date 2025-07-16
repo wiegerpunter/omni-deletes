@@ -36,7 +36,7 @@ public class aSH extends SynopsisRefactor {
 //        this.bufferSize = parameters[1];
         this.parameters = parameters;
         this.ram = ram;
-        this.sketch = new HashMap<List<Long>, double[]>(parameters[0] + parameters[1]);
+        this.sketch = new HashMap<>(parameters[0] + parameters[1]);
         //this.buffer = new HashMap<long[], Double[]>(parameters[1]);
         this.bufferFactor = ingestBuffer;
         this.seed = repetition;
@@ -214,7 +214,7 @@ public class aSH extends SynopsisRefactor {
 
     @Override
     public void reset() {
-        sketch = new HashMap<List<Long>, double[]>(parameters[0] + parameters[1]);
+        sketch = new HashMap<>(parameters[0] + parameters[1]);
         size = 0;
         count = 0;
     }
