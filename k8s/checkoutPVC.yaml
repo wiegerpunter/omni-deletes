@@ -6,11 +6,8 @@ spec:
   containers:
     - name: check-pv-container
       image: ubuntu
-      command:
-        - /bin/sh
-      args:
-        - -c
-        - while true; do echo hello; sleep 10;done
+      command: ["/bin/bash", "-c", "--"]
+      args: ["while true; do sleep 30; done;"]
       securityContext:
         allowPrivilegeEscalation: false
         capabilities:
@@ -22,18 +19,18 @@ spec:
         runAsUser: 70
       resources:
         limits:
-          cpu: 500m
+          cpu: 50m
           memory: 30Gi
         requests:
-          cpu: 500m
+          cpu: 50m
           memory: 30Gi
       volumeMounts:
-        - name: nfs-01
+        - name: wieger-01
           mountPath: "/app/data/"
   volumes:
-    - name: nfs-01
+    - name: wieger-01
       persistentVolumeClaim:
-        claimName: nfs-01
+        claimName: wieger-01
   securityContext:
     seccompProfile:
       type: RuntimeDefault

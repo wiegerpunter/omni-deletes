@@ -17,6 +17,9 @@ spec:
         runAsGroup: 70
         runAsNonRoot: true
         runAsUser: 70
+      volumeMounts:
+        - name: nfs-01
+          mountPath: "/app/data"
       resources:
         limits:
           cpu: 50m
@@ -24,6 +27,10 @@ spec:
         requests:
           cpu: 50m
           memory: 30Gi
+  volumes:
+    - name: nfs-01
+      persistentVolumeClaim:
+        claimName: nfs-01
   securityContext:
     seccompProfile:
       type: RuntimeDefault
