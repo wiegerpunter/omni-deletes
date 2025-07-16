@@ -25,7 +25,14 @@ public class OmniSketchTypeFactory {
             case "SampleLaterSimpleBuffer" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminSimpleBuffer");
             case "SampleLaterSimpleBufferNoDeleteBuffer" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminSimpleBufferNoDeleteBuffer");
 
-            case "TWOLHS" -> new OmniSketchTypeSampleLaterTWOLHS(sketchConfig, "TWOLHS");
+            case "FastTWOLHS" -> new OmniSketchTypeSampleLaterTWOLHS(sketchConfig, "FastTWOLHS");
+            case "FastTWOLHSOneBucket" -> new OmniSketchTypeSampleLaterTWOLHS(sketchConfig, "FastTWOLHSOneBucket");
+
+            case "SlowTWOLHS" -> new OmniSketchTypeSampleLaterTWOLHS(sketchConfig, "SlowTWOLHS");
+            case "NMaxTWOLHS" -> new OmniSketchTypeSampleLaterTWOLHS(sketchConfig, "NMaxTWOLHS");
+            case "TWOLHSExact" -> new OmniSketchTypeSampleLaterTWOLHS(sketchConfig, "TWOLHSExact");
+
+
 
             case "SampleLaterOptimized" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminPQOptimized");
             case "SampleLaterOptimizedOnlyNew" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminPQOptimizedOnlyNew");

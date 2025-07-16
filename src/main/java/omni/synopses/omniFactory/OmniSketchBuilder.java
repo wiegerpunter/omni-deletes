@@ -1,8 +1,10 @@
 package omni.synopses.omniFactory;
 
 public class OmniSketchBuilder {
+    public static final int G_HASH_OFFSET = 2346 ;
     private String sketchType;
     private final OmniSketchConfig config = new OmniSketchConfig();
+
 
     public OmniSketchBuilder setSeed(int seed) {
         config.setSeed(seed);
@@ -210,13 +212,13 @@ public class OmniSketchBuilder {
     }
 
 
-    public static OmniSketchBuilder TWOLHS() {
+    public static OmniSketchBuilder SlowTWOLHS() {
         return new OmniSketchBuilder()
                 .setUseAcrossRows(true)
                 .setUseNMax(true)
                 .setUseFastTWOLHS(false)
                 .setEps(0.1)
-                .setSketchType("TWOLHS");
+                .setSketchType("SlowTWOLHS");
     }
 
     public static OmniSketchBuilder FastTWOLHS() {
@@ -225,16 +227,44 @@ public class OmniSketchBuilder {
                 .setUseNMax(true)
                 .setUseFastTWOLHS(true)
                 .setEps(0.1)
-                .setSketchType("TWOLHS");
+                .setSketchType("FastTWOLHS");
     }
 
-    public static OmniSketchBuilder TWOLHSPerRow() {
+
+    public static OmniSketchBuilder TWOLHSPerRowExact() {
         return new OmniSketchBuilder()
                 .setUseAcrossRows(false)
                 .setUseNMax(true)
                 .setUseFastTWOLHS(false)
                 .setEps(0.1)
-                .setSketchType("TWOLHS");
+                .setSketchType("TWOLHSExact");
+    }
+
+    public static OmniSketchBuilder NMaxTWOLHS() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(true)
+                .setUseNMax(true)
+                .setUseFastTWOLHS(true)
+                .setEps(0.1)
+                .setSketchType("NMaxTWOLHS");
+    }
+
+    public static OmniSketchBuilder FastTWOLHSOneBucket() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(true)
+                .setUseNMax(true)
+                .setUseFastTWOLHS(true)
+                .setEps(0.1)
+                .setSketchType("FastTWOLHSOneBucket");
+    }
+
+    public static OmniSketchBuilder SlowTWOLHSPerRow() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(false)
+                .setUseNMax(true)
+                .setUseFastTWOLHS(false)
+                .setEps(0.1)
+                .setSketchType("SlowTWOLHS");
     }
 
     public static OmniSketchBuilder FastTWOLHSPerRow() {
@@ -243,8 +273,28 @@ public class OmniSketchBuilder {
                 .setUseNMax(true)
                 .setUseFastTWOLHS(true)
                 .setEps(0.1)
-                .setSketchType("TWOLHS");
+                .setSketchType("FastTWOLHS");
     }
+
+    public static OmniSketchBuilder NMaxTWOLHSPerRow() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(false)
+                .setUseNMax(true)
+                .setUseFastTWOLHS(true)
+                .setEps(0.1)
+                .setSketchType("NMaxTWOLHS");
+    }
+
+    public static OmniSketchBuilder FastTWOLHSOneBucketPerRow() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(false)
+                .setUseNMax(true)
+                .setUseFastTWOLHS(true)
+                .setEps(0.1)
+                .setSketchType("FastTWOLHSOneBucket");
+    }
+
+
 
     public static OmniSketchBuilder QFirstSampleLaterOptimized() {
         return new OmniSketchBuilder()

@@ -9,6 +9,7 @@ public class TWOLHS implements Sample {
     public int[][] countSignatures;
     int repetition;
     int seed;
+    int n = 0; // number of elements ingested
 
     HashFunction hashFunction;
 
@@ -34,6 +35,7 @@ public class TWOLHS implements Sample {
 
     @Override
     public void ingest(int id, int sign) {
+        n += sign;
         int h = hashFunction.hashInt(id).asInt() >>> 1;
         int sketchIndex = -1;
         for (int i = 0; i < bitSize; i++) {
@@ -105,7 +107,7 @@ public class TWOLHS implements Sample {
 
     @Override
     public int getN() {
-        return 0;
+        return n;
     }
 
     @Override

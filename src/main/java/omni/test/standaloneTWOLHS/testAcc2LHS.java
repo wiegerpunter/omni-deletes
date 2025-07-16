@@ -4,7 +4,6 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import omni.Experiments.utils.QueryInfo;
 import omni.synopses.omniFactory.SampleTypes.*;
-import omni.synopses.omniFactory.utils.KminUtils;
 import omni.synopses.omniFactory.utils.TWOLHSUtils;
 import omni.test.standaloneAlphaMinwise.Data;
 import omni.test.standaloneAlphaMinwise.Event;
@@ -150,25 +149,19 @@ public class testAcc2LHS {
         // compute intersection of results
         if (setting.equals("FastTWOLHS")) {
             double u = TWOLHSUtils.setUnionEstimator(samples, 0.1, B, true);
-            double estimate = TWOLHSUtils.setIntersectEstimator(samples, u, true, queryInfo);
-            double jaccardEstimate = queryInfo.jaccardEstimate;
-            int witnessEstimate = queryInfo.witness2LHS;
-            queryInfo.setEstimate(u, witnessEstimate, jaccardEstimate, (int) estimate);
+            double estimate = TWOLHSUtils.setIntersectEstimatorAllBuckets(samples, u, true, queryInfo);
+            queryInfo.setEstimate(queryInfo, (int) estimate);
             return (int) estimate;
         } else if (setting.equals("NMaxTWOLHS")) {
             double u = data.getIntersectionSize() + data.getNoiseSize();
-            double estimate = TWOLHSUtils.setIntersectEstimator(samples, u, true, queryInfo);
-            double jaccardEstimate = queryInfo.jaccardEstimate;
-            int witnessEstimate = queryInfo.witness2LHS;
-            queryInfo.setEstimate(u, witnessEstimate, jaccardEstimate, (int) estimate);
+            double estimate = TWOLHSUtils.setIntersectEstimatorAllBuckets(samples, u, true, queryInfo);
+            queryInfo.setEstimate(queryInfo, (int) estimate);
             return (int) estimate;
         }
         else if (setting.equals("SlowTWOLHS")) {
             double u = TWOLHSUtils.setUnionEstimator(samples, 0.1, B, false);
-            double estimate = TWOLHSUtils.setIntersectEstimator(samples, u, false, queryInfo);
-            double jaccardEstimate = queryInfo.jaccardEstimate;
-            int witnessEstimate = queryInfo.witness2LHS;
-            queryInfo.setEstimate(u, witnessEstimate, jaccardEstimate, (int) estimate);
+            double estimate = TWOLHSUtils.setIntersectEstimatorAllBuckets(samples, u, false, queryInfo);
+            queryInfo.setEstimate(queryInfo, (int) estimate);
             return (int) estimate;
         } else if (setting.equals("ExactSolution")) {
             // For ExactSolution, we can directly compute the intersection size

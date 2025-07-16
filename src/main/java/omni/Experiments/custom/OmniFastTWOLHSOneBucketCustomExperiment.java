@@ -8,17 +8,16 @@ import omni.synopses.omniFactory.OmniSketchBuilder;
 
 import java.io.IOException;
 
-public class OmniTWOLHSPerRowCustomExperiment implements Experiment {
+public class OmniFastTWOLHSOneBucketCustomExperiment implements Experiment {
     private RunExperiments runExperiments;
     private final OmniSketchBuilder omniSketchBuilder;
-    public OmniTWOLHSPerRowCustomExperiment() {
-        this.omniSketchBuilder = OmniSketchBuilder.SlowTWOLHSPerRow();
+    public OmniFastTWOLHSOneBucketCustomExperiment() {
+        this.omniSketchBuilder = OmniSketchBuilder.FastTWOLHSOneBucket();
     }
 
     @Override
     public void run(long ram, RamToPar rtp, int repetition, Config config) throws IOException {
-//        rtp.computeOmniSketchParametersFromRAM(config.d, config.b, config.parFactor);
-        int[] params = new int[]{config.d, config.w, config.B};
+        int[] params =  new int[]{config.d, config.w, config.B};
         RunExperiments.omniExperiment(ram, repetition, config, params, omniSketchBuilder, runExperiments);
     }
 

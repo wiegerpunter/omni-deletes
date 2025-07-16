@@ -13,6 +13,56 @@ import static java.lang.Math.*;
 
 public class TWOLHSUtils {
 
+    public static double estimate(String setting, Sample[][] samples, double eps, int numTWOLHSRepetitions, QueryInfo queryInfo){
+        switch (setting) {
+            case "FastTWOLHS" -> {
+                double u = TWOLHSUtils.setUnionEstimator(samples, eps, numTWOLHSRepetitions, true);
+                double estimate = TWOLHSUtils.setIntersectEstimatorAllBuckets(samples, u, true, queryInfo);
+                queryInfo.setEstimate(queryInfo, (int) estimate);
+                return (int) estimate;
+            }
+            case "FastTWOLHSOneBucket" -> {
+                double u = TWOLHSUtils.setUnionEstimator(samples, eps, numTWOLHSRepetitions, true);
+                double estimate = TWOLHSUtils.setIntersectEstimatorOneBucket(samples, u, eps, queryInfo);
+                queryInfo.setEstimate(queryInfo, (int) estimate);
+                return (int) estimate;
+            }
+            case "NMaxTWOLHS" -> {
+                double u = TWOLHSUtils.getNMax(samples);
+                double estimate = TWOLHSUtils.setIntersectEstimatorAllBuckets(samples, u, true, queryInfo);
+                queryInfo.setEstimate(queryInfo, (int) estimate);
+                return (int) estimate;
+            }
+            case "SlowTWOLHS" -> {
+                double u = TWOLHSUtils.setUnionEstimator(samples, 0.1, numTWOLHSRepetitions, false);
+                double estimate = TWOLHSUtils.setIntersectEstimatorAllBuckets(samples, u, false, queryInfo);
+                queryInfo.setEstimate(queryInfo, (int) estimate);
+                return (int) estimate;
+            }
+            case "TWOLHSExact" -> {
+                // Use to compute error from collisions in attr hashes + signature collisions.
+                return TWOLHSUtils.exactSolution(samples, queryInfo);
+                // Use to compute error from collisions in attr hashes + signature collisions.
+            }
+            default -> throw new IllegalArgumentException("Unknown setting: " + setting);
+        }
+    }
+
+    private static double getNMax(Sample[][] samples) {
+        int nmax = 0;
+        for (Sample[] sample : samples) {
+            for (Sample s : sample) {
+                if (s instanceof TWOLHS) {
+                    nmax = max(nmax, (s).getN());
+                }
+            }
+        }
+        if (nmax == 0) {
+            throw new IllegalArgumentException("Nmax is 0, cannot estimate union size.");
+        }
+        return nmax;
+    }
+
     // UNION ESTIMATOR
     public static double setUnionEstimator(Sample[][] samples, double eps, int numTWOLHSRepetitions, boolean useFastTWOLHS) {
         // estimate union used in 2lhs estimator.
@@ -53,8 +103,8 @@ public class TWOLHSUtils {
     }
 
     // SET INTERSECTION ESTIMATOR
-    public static double setIntersectEstimator(Sample[][] samples, double unionEstimate, boolean useFastTWOLHS,
-                                               QueryInfo queryInfo) {
+    public static double setIntersectEstimatorAllBuckets(Sample[][] samples, double unionEstimate, boolean useFastTWOLHS,
+                                                         QueryInfo queryInfo) {
         if (useFastTWOLHS) {
             return setIntersectEstimatorFastTWOLHS(samples, unionEstimate, queryInfo);
         } else {
@@ -135,9 +185,9 @@ public class TWOLHSUtils {
     }
 
 
-    // TWOLHS Intersection Estimator with slow ingestion
-    private static double setIntersectEstimatorTWOLHS(Sample[][] samples, double unionEstimate, double eps,
-                                                      QueryInfo queryInfo) {
+    // TWOLHS Intersection Estimator from original paper, choosing only one bucket to check
+    private static double setIntersectEstimatorOneBucket(Sample[][] samples, double unionEstimate, double eps,
+                                                         QueryInfo queryInfo) {
         int sum = 0;
         int count = 0;
         for (int i = 0; i < samples[0].length; i++) {
@@ -275,10 +325,10 @@ public class TWOLHSUtils {
         }
 
         if (sets == null || sets.length == 0) {
-            throw new IllegalArgumentException("kminSets is null or empty");
+            throw new IllegalArgumentException("Sets is null or empty");
         }
 
-        if (Objects.equals(sets[0].getKminType(), "ExactSolution")) {
+        if (Objects.equals(sets[0].getKminType(), "TWOLHSExact")) {
             Set<Integer> intersectionSet = new HashSet<>((Set<Integer>) sets[0].query());
             Set<Integer> unionSet = new HashSet<>((Set<Integer>) sets[0].query());
             for (int i = 1; i < sets.length; i++) {
@@ -291,7 +341,7 @@ public class TWOLHSUtils {
             queryInfo.setEstimate(unionSize, 0, (double) intersectionSize /unionSize, intersectionSize);
             return intersectionSize;
         } else {
-            throw new IllegalArgumentException("Unsupported kmin type: " + sets[0].getKminType());
+            throw new IllegalArgumentException("Unsupported sample type: " + sets[0].getKminType());
         }
     }
 

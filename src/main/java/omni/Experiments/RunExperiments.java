@@ -271,10 +271,19 @@ public class RunExperiments {
             if (config.expOmniSketchVLDBSimpleBuffer) enabledExperiments.add("OmniSketchVLDBSimpleBufferCustom");
             if (config.expOmniSketchVLDBSimpleBufferNoDeleteBuffer) enabledExperiments.add("OmniSketchVLDBSimpleBufferNoDeleteBufferCustom");
 
-            if (config.expTWOLHS) enabledExperiments.add("OmniSketchTWOLHSCustom");
+            if (config.expSlowTWOLHS) enabledExperiments.add("OmniSketchSlowTWOLHSCustom");
             if (config.expFastTWOLHS) enabledExperiments.add("OmniSketchFastTWOLHSCustom");
-            if (config.expTWOLHSPerRow) enabledExperiments.add("OmniSketchTWOLHSPerRowCustom");
+
+            if (config.expFastTWOLHSOneBucket) enabledExperiments.add("OmniSketchFastTWOLHSOneBucketCustom");
+            if (config.expNMaxTWOLHS) enabledExperiments.add("OmniSketchNMaxTWOLHSCustom");
+
+
+            if (config.expSlowTWOLHSPerRow) enabledExperiments.add("OmniSketchSlowTWOLHSPerRowCustom");
             if (config.expFastTWOLHSPerRow) enabledExperiments.add("OmniSketchFastTWOLHSPerRowCustom");
+            if (config.expFastTWOLHSOneBucketPerRow) enabledExperiments.add("OmniSketchFastTWOLHSOneBucketPerRowCustom");
+            if (config.expNMaxTWOLHSPerRow) enabledExperiments.add("OmniSketchNMaxTWOLHSPerRowCustom");
+
+            if (config.expTWOLHSPerRowExact) enabledExperiments.add("OmniSketchTWOLHSPerRowExactCustom");
 
 
             if (config.expOmniSketchSFQLOptimized) enabledExperiments.add("OmniSketchSFQLOptimizedCustom");
@@ -293,7 +302,7 @@ public class RunExperiments {
             if (config.expOmniSketchSampleFirstQLater) enabledExperiments.add("OmniSketchSampleFirstQLater");
             if (config.expOmniSketchSampleFirstQLaterPerRow) enabledExperiments.add("OmniSketchSampleFirstQLaterPerRow");
 
-            if (config.expTWOLHS) enabledExperiments.add("OmniSketchTWOLHS");
+            if (config.expSlowTWOLHS) enabledExperiments.add("OmniSketchTWOLHS");
             if (config.expFastTWOLHS) enabledExperiments.add("OmniSketchFastTWOLHS");
         }
 

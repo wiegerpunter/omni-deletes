@@ -49,7 +49,7 @@ public class test2LHS {
         QueryInfo queryInfo = new QueryInfo();
         // Estimate union and intersection
         double unionEstimate = omni.synopses.omniFactory.utils.TWOLHSUtils.setUnionEstimator(samples, 0.1, numReps, false);
-        double intersectionEstimate = omni.synopses.omniFactory.utils.TWOLHSUtils.setIntersectEstimator(samples, unionEstimate, false, queryInfo);
+        double intersectionEstimate = omni.synopses.omniFactory.utils.TWOLHSUtils.setIntersectEstimatorAllBuckets(samples, unionEstimate, false, queryInfo);
         System.out.println("Union Estimate: " + unionEstimate);
         System.out.println("Intersection Estimate: " + intersectionEstimate);
         System.out.println("Intersection Size: " + data.intersection.length);
@@ -89,7 +89,7 @@ public class test2LHS {
 
         // Estimate union and intersection
         double unionEstimate = omni.synopses.omniFactory.utils.TWOLHSUtils.setUnionEstimator(samples, 0.1, numReps, false);
-        double intersectionEstimate = omni.synopses.omniFactory.utils.TWOLHSUtils.setIntersectEstimator(samples, unionEstimate, false, queryInfo);
+        double intersectionEstimate = omni.synopses.omniFactory.utils.TWOLHSUtils.setIntersectEstimatorAllBuckets(samples, unionEstimate, false, queryInfo);
         System.out.println("Union Estimate: " + unionEstimate);
         System.out.println("Intersection Estimate: " + intersectionEstimate);
 

@@ -8,11 +8,11 @@ import omni.synopses.omniFactory.OmniSketchBuilder;
 
 import java.io.IOException;
 
-public class OmniTWOLHSPerRowCustomExperiment implements Experiment {
+public class OmniSlowTWOLHSCustomExperiment implements Experiment {
     private RunExperiments runExperiments;
     private final OmniSketchBuilder omniSketchBuilder;
-    public OmniTWOLHSPerRowCustomExperiment() {
-        this.omniSketchBuilder = OmniSketchBuilder.SlowTWOLHSPerRow();
+    public OmniSlowTWOLHSCustomExperiment() {
+        this.omniSketchBuilder = OmniSketchBuilder.SlowTWOLHS();
     }
 
     @Override

@@ -9,7 +9,7 @@ public class OmniTWOLHSExperiment implements Experiment {
     private RunExperiments runExperiments;
     private final OmniSketchBuilder omniSketchBuilder;
     public OmniTWOLHSExperiment() {
-        this.omniSketchBuilder = OmniSketchBuilder.TWOLHS();
+        this.omniSketchBuilder = OmniSketchBuilder.SlowTWOLHS();
     }
 
     @Override

@@ -72,6 +72,14 @@ public class QueryInfo {
         this.estimate = estimate;
     }
 
+
+    public void setEstimate(QueryInfo queryInfo, int estimate) {
+        this.unionEstimate = queryInfo.unionEstimate;
+        this.witness2LHS = queryInfo.witness2LHS;
+        this.jaccardEstimate = queryInfo.jaccardEstimate;
+        this.estimate = estimate;
+    }
+
     public void setEstimate(int estimate) {
         this.estimate = estimate;
     }

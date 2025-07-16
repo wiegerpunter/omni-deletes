@@ -2,7 +2,6 @@ package omni.synopses.omniFactory.OmniSketchTypes;
 
 import com.google.common.hash.HashFunction;
 import omni.Experiments.utils.QueryInfo;
-import omni.datasets.Record.Query;
 import omni.synopses.omniFactory.OmniSketchConfig;
 import omni.synopses.omniFactory.SampleTypes.Sample;
 import omni.synopses.omniFactory.attributeSketchTypes.AttrSketchTWOLHS;
@@ -13,7 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class OmniSketchTypeSampleLaterTWOLHS extends OmniSketchType {
-    private String SampleType;
+    private String sampleType;
     AttrSketchTWOLHS[] attributeSketches;
     HashFunction[] xx;
     private int numTWOLHSRepetitions;
@@ -21,7 +20,7 @@ public class OmniSketchTypeSampleLaterTWOLHS extends OmniSketchType {
 
     public OmniSketchTypeSampleLaterTWOLHS(OmniSketchConfig sketchConfig, String SampleType) {
         this.sketchConfig = sketchConfig;
-        this.SampleType = SampleType;
+        this.sampleType = SampleType;
         this.depth = sketchConfig.getParams()[0];
         this.width = sketchConfig.getParams()[1];
         this.numTWOLHSRepetitions = sketchConfig.getParams()[2];
@@ -36,7 +35,7 @@ public class OmniSketchTypeSampleLaterTWOLHS extends OmniSketchType {
         // Initialize the sketch with sample-later logic
         attributeSketches = new AttrSketchTWOLHS[numStoredAttributes];
         for (int i = 0; i < numStoredAttributes; i++) {
-            attributeSketches[i] = new AttrSketchTWOLHS(sketchConfig, depth, width, numTWOLHSRepetitions, SampleType);
+            attributeSketches[i] = new AttrSketchTWOLHS(sketchConfig, depth, width, numTWOLHSRepetitions, sampleType);
         }
     }
 
@@ -62,15 +61,18 @@ public class OmniSketchTypeSampleLaterTWOLHS extends OmniSketchType {
     public int query(long[] query, int numPreds, QueryInfo queryInfo) {
         if (sketchConfig.isUseAcrossRows()) {
             Sample[][] samples = getCellsToIntersectAcrossRows(query, numPreds);
-            double u = TWOLHSUtils.setUnionEstimator(samples, epsilon,
-                    numTWOLHSRepetitions, sketchConfig.getUseFastTWOLHS());
-            double estimate = TWOLHSUtils.setIntersectEstimator(samples,
-                    u, sketchConfig.getUseFastTWOLHS(), queryInfo);
+            double estimate = TWOLHSUtils.estimate(sampleType, samples, epsilon,
+                    numTWOLHSRepetitions, queryInfo);
+
+//            double u = TWOLHSUtils.setUnionEstimator(samples, epsilon,
+//                    numTWOLHSRepetitions, sketchConfig.getUseFastTWOLHS());
+//            double estimate = TWOLHSUtils.setIntersectEstimator(samples,
+//                    u, sketchConfig.getUseFastTWOLHS(), queryInfo);
 
             double jaccardEstimate = queryInfo.jaccardEstimate;
             int witnessEstimate = queryInfo.witness2LHS;
 
-            queryInfo.setEstimate(u, witnessEstimate, jaccardEstimate, (int) estimate);
+            queryInfo.setEstimate(queryInfo, (int) estimate);
             return (int) estimate;
         } else {
             ArrayList<QueryInfo> queryInfos = new ArrayList<>(depth);
@@ -81,14 +83,13 @@ public class OmniSketchTypeSampleLaterTWOLHS extends OmniSketchType {
                 queryInfos.add(new QueryInfo());
                 unionEstimates[j] = TWOLHSUtils.setUnionEstimator(cellsToIntersect[j], epsilon,
                         numTWOLHSRepetitions, sketchConfig.getUseFastTWOLHS());
-                estimates[j] = TWOLHSUtils.setIntersectEstimator(cellsToIntersect[j],
+                estimates[j] = TWOLHSUtils.setIntersectEstimatorAllBuckets(cellsToIntersect[j],
                         unionEstimates[j], sketchConfig.getUseFastTWOLHS(), queryInfos.get(j));
             }
             // sort queryInfos on estimates
             QueryInfoSorter.sortByEstimateSize(queryInfos);
             QueryInfo medianQueryInfo = queryInfos.get(queryInfos.size() / 2);
-            queryInfo.setEstimate(medianQueryInfo.unionEstimate, medianQueryInfo.witness2LHS,
-                    medianQueryInfo.jaccardEstimate, medianQueryInfo.getEstimate());
+            queryInfo.setEstimate(medianQueryInfo, medianQueryInfo.getEstimate());
             return queryInfo.getEstimate();
         }
     }
@@ -136,7 +137,7 @@ public class OmniSketchTypeSampleLaterTWOLHS extends OmniSketchType {
         if (!sketchConfig.isUseAcrossRows()) {
             accrRows = "PerRow";
         }
-        return "OmniSketchSampleLater_" + SampleType + "_" + (sketchConfig.getUseFastTWOLHS() ? "Fast" : "Slow") +"_" + accrRows;
+        return "OmniSketchSampleLater_" + sampleType + "_" + (sketchConfig.getUseFastTWOLHS() ? "Fast" : "Slow") +"_" + accrRows;
     }
 
     @Override

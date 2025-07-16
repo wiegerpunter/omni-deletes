@@ -18,11 +18,12 @@ public class AttrSketchTWOLHS {
     int[] reusableHashes;
     OmniSketchConfig omniSketchConfig;
     HashFunction hashFunction;
+    HashFunction hashFunctionG;
 
 
     private int hashG(long id) {
         // id hash modulo numTWOLHSRepetitions
-        return (int) (id % numTWOLHSRepetitions);
+        return (((hashFunctionG.hashLong(id)).asInt() >>>1) % numTWOLHSRepetitions);
     }
 
     public AttrSketchTWOLHS(OmniSketchConfig config, int depth, int width, int numTWOLHSRepetitions, String sampleType) {
@@ -30,7 +31,17 @@ public class AttrSketchTWOLHS {
         this.width = width;
         this.numTWOLHSRepetitions = numTWOLHSRepetitions;
         this.omniSketchConfig = config;
+        if (sampleType.equals("SlowTWOLHS") && omniSketchConfig.getUseFastTWOLHS()) {
+            throw new IllegalArgumentException("Cannot use SlowTWOLHS with FastTWOLHS configuration");
+        } else if ((sampleType.equals("FastTWOLHS") ||
+                sampleType.equals("NMaxTWOLHS") ||
+                sampleType.equals("FastTWOLHSOneBucket"))
+                        && !omniSketchConfig.getUseFastTWOLHS()) {
+            throw new IllegalArgumentException("Cannot use FastTWOLHS with SlowTWOLHS configuration");
+        }
+
         hashFunction = Hashing.murmur3_32_fixed(omniSketchConfig.getSeed());
+        hashFunctionG = Hashing.murmur3_32_fixed(omniSketchConfig.getSeed() + OmniSketchBuilder.G_HASH_OFFSET);
 
         this.sketch = new Sample[depth][width][numTWOLHSRepetitions];
         for (int j = 0; j < depth; j++) {

@@ -42,7 +42,7 @@ public class Config {
     public boolean expHydra;
     public boolean expResSample;
     public boolean expCM;
-    public boolean expTWOLHS;
+    public boolean expSlowTWOLHS;
     public boolean expFastTWOLHS;
     public String[] sizeFactorOptions;
     public List<Integer> sizeNoise;
@@ -78,10 +78,13 @@ public class Config {
     public int[] domain_sizes;
     public boolean readFromDisk;
     public double[] percs;
-    public boolean expTWOLHSPerRow;
+    public boolean expSlowTWOLHSPerRow;
     public boolean expFastTWOLHSPerRow;
-
-
+    public boolean expFastTWOLHSOneBucket;
+    public boolean expFastTWOLHSOneBucketPerRow;
+    public boolean expNMaxTWOLHS;
+    public boolean expNMaxTWOLHSPerRow;
+    public boolean expTWOLHSPerRowExact;
     // Old parameters, might use them in the future
 //    public List<Double> bufferValuesOmni;
 //    public boolean expOmniSet;
