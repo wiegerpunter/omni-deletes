@@ -5,7 +5,7 @@ import omni.synopses.SynopsisRefactor;
 
 import java.util.*;
 
-public class aSH extends SynopsisRefactor{
+public class aSH extends SynopsisRefactor {
     // Adaptive Sample and Hold. Sketch for estimating count of elements in a stream.
     int numAttrs;
     HashMap<List<Long>, double[]> sketch; // Double[] is of form c_i, tau_i, u_i, z_i
@@ -15,7 +15,7 @@ public class aSH extends SynopsisRefactor{
     int size; // The number of records seen so far.
     final int maxSize; // The maximum size of the sketch.
     int sketchSize; // The size of the sketch.
-//    int bufferSize; // The size of the buffer.
+    //    int bufferSize; // The size of the buffer.
     double bufferFactor; // The factor by which the buffer is smaller than the sketch.
     Random rn;
     Random rn1;
@@ -29,7 +29,7 @@ public class aSH extends SynopsisRefactor{
         if (useBufferInQuery) {
             setting += "_buffer_" + ingestBuffer;
         }
-        this.size=0;
+        this.size = 0;
         this.maxSize = parameters[0] + parameters[1];
         this.numAttrs = numAttributes;
         this.sketchSize = parameters[0];
@@ -41,7 +41,7 @@ public class aSH extends SynopsisRefactor{
         this.bufferFactor = ingestBuffer;
         this.seed = repetition;
         this.useBufferInQuery = useBufferInQuery;
-        int firstSeed = 12 +  seed;
+        int firstSeed = 12 + seed;
         int secondSeed = 10 + seed;
         rn = new Random(firstSeed);
         rn1 = new Random(secondSeed);
@@ -80,9 +80,8 @@ public class aSH extends SynopsisRefactor{
                 sketch.remove(sampleRecord);
                 size--;
                 numRemovals++;
-            } else {
-                sketch.put(sampleRecord, recordValue); // todo: check if needed, or if its just a pointer
             }
+            // no need to re-put recordValue
         } else {
             if (sign > 0) {
                 // add the record to the sketch
@@ -107,19 +106,16 @@ public class aSH extends SynopsisRefactor{
     // Where is the sample[0] and sample[1] increased in this function?
     //
     private void eject() {
-        double tstar;// = Double.MAX_VALUE;
-        //Set<long[]> keys = sketch.keySet();
-        double[] Tis = new double[sketch.size()];
-        //double[] us = new double[keys.size()];
-        //double[] zs = new double[keys.size()];
-        Iterator<double[]> iterator = sketch.values().iterator();//Set().iterator();
+        List<Map.Entry<List<Long>, double[]>> entries = new ArrayList<>(sketch.entrySet());
+
+
+        double[] Tis = new double[entries.size()];
         int numToEject = size - sketchSize;
 
         PriorityQueue<Double> bs_minvalues = new PriorityQueue<>(Comparator.reverseOrder());//Ascending: we want the min values to eject. Comparator.reverseOrder());
 
-        int i = 0;
-        while (iterator.hasNext()) {
-            double[] sample = iterator.next();//sketch.get(key); // todo: check if pointer, otherwise it might not update
+        for (int i = 0; i < entries.size(); i++) {
+            double[] sample = entries.get(i).getValue();
             sample[2] = rn.nextDouble(0, 1);
             sample[3] = Math.log(rn1.nextDouble(0, 1));
             Tis[i] = Math.max(sample[1] / sample[2], sample[0] / (-sample[3]));
@@ -127,22 +123,20 @@ public class aSH extends SynopsisRefactor{
             if (bs_minvalues.size() > numToEject) { // We only want to eject numToEject records with the smallest values. If we have more, we eject the largest ones.
                 bs_minvalues.poll(); // Eject the largest value.
             }
-            i++;
         }
-        if (bs_minvalues.size() == numToEject && !bs_minvalues.isEmpty()) {
-            tstar = bs_minvalues.peek(); // The largest value in the set of smallest values.
-        } else {
+        if (bs_minvalues.size() != numToEject || bs_minvalues.isEmpty()) {
             throw new RuntimeException("Error in ejecting records from aSH");
         }
-        i = 0;
-        Iterator<List<Long>> iterator1 = sketch.keySet().iterator();
-        while (iterator1.hasNext()) {
-            List<Long> key = iterator1.next();
+        double tstar = bs_minvalues.peek(); // The largest value in the set of smallest values.
+
+        for (int i = 0; i < entries.size(); i++) {
+            List<Long> key = entries.get(i).getKey();
+
             if (Tis[i] <= tstar) { // tstar is threshold for ejection.
-                iterator1.remove();
+                sketch.remove(key);
                 size--;
             } else { // Update the records that are not ejected.
-                double[] sample = sketch.get(key);
+                double[] sample = entries.get(i).getValue();
                 if (sample[1] <= tstar) {
                     if (tstar * sample[2] > sample[1]) {
                         //sketch.get(key)[0] += tstar * sample[3];
@@ -152,10 +146,8 @@ public class aSH extends SynopsisRefactor{
                         }
                     }
                     sample[1] = tstar;
-                    sketch.put(key, sample);
                 }
             }
-            i++;
         }
 //        for (Object key : keys_array) {
 //            if (Tis[i] == tstar) {
