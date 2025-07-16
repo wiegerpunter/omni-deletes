@@ -30,6 +30,7 @@ public class runQueries {
     double[] jaccardEstimates2LHS;
     int[] witness2LHS;
     double[] unionEstimates2LHS;
+    int[] unionExact;
     int[] numberOfKmins;
     int[] numberOfKminsExceedingBounds;
     boolean[] case1;
@@ -64,6 +65,7 @@ public class runQueries {
         usedMaxSizes = new int[cd.pointQueries.length];
         jaccardEstimates2LHS = new double[cd.pointQueries.length];
         unionEstimates2LHS = new double[cd.pointQueries.length];
+        unionExact = new int[cd.pointQueries.length];
         witness2LHS = new int[cd.pointQueries.length];
         queryExecutionTime = new long[cd.pointQueries.length];
         intersectionOfR = new int[cd.pointQueries.length];
@@ -121,7 +123,7 @@ public class runQueries {
 //                writeLoggedSetSizes(expSettings);
 //            }
             writeResultsToFilePointQuery(repetition, s, d, ingestionTime, collisions, estimatedAnswersPointQuery,
-                    SCap, NMax, usedMaxSizes, jaccardEstimates2LHS, unionEstimates2LHS, witness2LHS, queryExecutionTime, totalQueryExecutionTime,
+                    SCap, NMax, usedMaxSizes, jaccardEstimates2LHS, unionEstimates2LHS, unionExact, witness2LHS, queryExecutionTime, totalQueryExecutionTime,
                     numberOfKmins, numberOfKminsExceedingBounds, case1, bound);
         }
         System.out.println("Total queries: " + d.pointQueries.length);
@@ -204,6 +206,7 @@ public class runQueries {
         usedMaxSizes[queryId] = copy.maxSize;
         jaccardEstimates2LHS[queryId] = copy.jaccardEstimate;
         unionEstimates2LHS[queryId] = copy.unionEstimate;
+        unionExact[queryId] = unionSize;
         witness2LHS[queryId] = copy.witness2LHS;
         numberOfKmins[queryId] = copy.numberOfKmins;
         numberOfKminsExceedingBounds[queryId] = copy.numberOfKminsExceedingBound;
@@ -242,7 +245,7 @@ public class runQueries {
     private void writeResultsToFilePointQuery(int repetition, SynopsisRefactor s, CleanDataset d,
                                              long timePassed, int collisions, int[] estimatedAnswersPointQuery,
                                              int[] SCap, int[] NMax, int[] usedMaxSizes, double[] jaccardEstimates2LHS,
-                                             double[] unionEstimates2LHS, int[] witness2LHS, long[] queryExecutionTime,
+                                             double[] unionEstimates2LHS, int[] unionExact, int[] witness2LHS, long[] queryExecutionTime,
                                              long totalQueryExecutionTime,
                                              int[] numberOfKmins, int[] numberOfKminsExceedingBounds, boolean[] case1, double[] bound) throws IOException {
         // write string[] result to csvOutputFile using BufferedWriter
@@ -263,7 +266,7 @@ public class runQueries {
                     "queryID", "numPredicates","numZipfianPredicates","binNumber",
                     "exactAnswer", "estimate", "absError",
                     "relError", "epsError", "withinThreshold",
-                    "estTime",  "queryText", "SCap", "NMax","usedMaxSize","jacEstimate2LHS", "unionEstimate2LHS","witness2LHS",
+                    "estTime",  "queryText", "SCap", "NMax","usedMaxSize","jacEstimate2LHS", "unionEstimate2LHS","unionExact","witness2LHS",
                     "intersectionSizeOfR","unionSizeOfR",
                     "meanQueryTime","BetaKmin","numKSamples","KminDeletes","exactInDeletes","exactUnionDeletes","uniqueSamples",
                     "numKmins","numKminsExceedingBounds","measuredSignatureCollisions","zipfAlpha", "case1", "bound","bufferDeletesMinwise","domain"};
@@ -273,7 +276,7 @@ public class runQueries {
 
         String memUsageSyn = String.valueOf(s.getMemoryUsage());
         for (int i = 0; i < d.pointQueries.length; i++) {
-            String[] result = new String[48];
+            String[] result = new String[49];
             // Dataset specific info;
             result[0] = String.valueOf(repetition);
             result[1] = String.valueOf(d.getDatasetSize());
@@ -312,34 +315,35 @@ public class runQueries {
             result[27] = String.valueOf(usedMaxSizes[i]);
             result[28] = String.valueOf(jaccardEstimates2LHS[i]);
             result[29] = String.valueOf(unionEstimates2LHS[i]);
-            result[30] = String.valueOf(witness2LHS[i]);
+            result[30] = String.valueOf(unionExact[i]);
+            result[31] = String.valueOf(witness2LHS[i]);
             if (config.checkConditions) {
-                result[31] = String.valueOf(intersectionOfR[i]);
-                result[32] = String.valueOf(unionOfR[i]);
+                result[32] = String.valueOf(intersectionOfR[i]);
+                result[33] = String.valueOf(unionOfR[i]);
             };
-            result[33] = String.valueOf(totalQueryExecutionTime);
-            result[34] = String.valueOf(s.useBetaKmin);
-            result[35] = String.valueOf(0);
-            result[36] = String.valueOf(Main.kminDeletes);
-            result[37] = String.valueOf(d.pointQueryAnswersDeletes[i]);
-            result[38] = String.valueOf(d.pointQueryUnionDeletes[i]);
+            result[34] = String.valueOf(totalQueryExecutionTime);
+            result[35] = String.valueOf(s.useBetaKmin);
+            result[36] = String.valueOf(0);
+            result[37] = String.valueOf(Main.kminDeletes);
+            result[38] = String.valueOf(d.pointQueryAnswersDeletes[i]);
+            result[39] = String.valueOf(d.pointQueryUnionDeletes[i]);
             if (!Main.countUniqueSamples) {
-                result[39] = "0";
+                result[40] = "0";
             } else {
                 if (s.setting.contains("OmniSketch")) {
-                    result[39] = String.valueOf(Main.uniqueSamples.keySet().size());
+                    result[40] = String.valueOf(Main.uniqueSamples.keySet().size());
                 } else {
-                    result[39] = String.valueOf(Main.uniqueSamplesReservoir.size());
+                    result[40] = String.valueOf(Main.uniqueSamplesReservoir.size());
                 }
             }
-            result[40] = String.valueOf(numberOfKmins[i]);
-            result[41] = String.valueOf(numberOfKminsExceedingBounds[i]);
-            result[42] = String.valueOf(collisions);
-            result[43] = String.valueOf(d.zipfAlpha);
-            result[44] = String.valueOf(case1[i]);
-            result[45] = String.valueOf(bound[i]);
-            result[46] = String.valueOf(config.bufferDeletesMinwise);
-            result[47] = String.valueOf(config.domain); // Assuming domain_sizes is an array of integers, and we want the first element.
+            result[41] = String.valueOf(numberOfKmins[i]);
+            result[42] = String.valueOf(numberOfKminsExceedingBounds[i]);
+            result[43] = String.valueOf(collisions);
+            result[44] = String.valueOf(d.zipfAlpha);
+            result[45] = String.valueOf(case1[i]);
+            result[46] = String.valueOf(bound[i]);
+            result[47] = String.valueOf(config.bufferDeletesMinwise);
+            result[48] = String.valueOf(config.domain); // Assuming domain_sizes is an array of integers, and we want the first element.
             writer.writeNext(result);
         }
 

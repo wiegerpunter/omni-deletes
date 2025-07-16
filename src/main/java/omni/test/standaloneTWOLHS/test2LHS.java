@@ -61,7 +61,7 @@ public class test2LHS {
     public static void simpleTest(){
         int[] data = new int[]{1,2,3,4,5,6};
         int[] set2 = new int[]{1,2,3,4,7,8};
-        int numReps = 30;
+        int numReps = 33;
         TWOLHS[] sketch1 = new TWOLHS[numReps];
         TWOLHS[] sketch2 = new TWOLHS[numReps];
         for (int i = 0; i < numReps; i++) {

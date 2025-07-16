@@ -2,8 +2,6 @@ package omni.Experiments.utils;
 
 import omni.Experiments.ExpSetting;
 
-import java.util.ArrayList;
-
 public class QueryInfo {
     public int CMRow = 0;
     public int Scap;
@@ -93,4 +91,13 @@ public class QueryInfo {
         return case1;
     }
 
+    public int getTWOLHSWitnesses() {
+        return witness2LHS;
+    }
+    public double getUnionEstimate() {
+        return unionEstimate;
+    }
+    public double getJaccardEstimate() {
+        return jaccardEstimate;
+    }
 }

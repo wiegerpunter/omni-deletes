@@ -5,15 +5,19 @@ import omni.synopses.omniFactory.SampleTypes.Sample;
 import omni.synopses.omniFactory.SampleTypes.TWOLHS;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 import static java.lang.Math.*;
 
 public class TWOLHSUtils {
 
+    // UNION ESTIMATOR
     public static double setUnionEstimator(Sample[][] samples, double eps, int numTWOLHSRepetitions, boolean useFastTWOLHS) {
         // estimate union used in 2lhs estimator.
 
-        double f = (1 + eps) * numTWOLHSRepetitions / 8; // from paper.
+        double f = (1.0 + eps) * numTWOLHSRepetitions / 8; // from paper.
 
         int index = 0;
         int count = 0;
@@ -32,13 +36,13 @@ public class TWOLHSUtils {
                     count++;
                 }
             }
-            if (count < f) {
+            if (count <= f) {
                 break;
             } else {
                 index++;
             }
         }
-        double phat = (double) (count + 1) / (numTWOLHSRepetitions + 1);
+        double phat = (double) (count) / (numTWOLHSRepetitions);
         double R = pow(2, index + 1);
         double S = (log(1-phat)/log(2))/(log(1-1/R)/log(2));
         if (useFastTWOLHS) {
@@ -48,20 +52,22 @@ public class TWOLHSUtils {
         }
     }
 
+    // SET INTERSECTION ESTIMATOR
     public static double setIntersectEstimator(Sample[][] samples, double unionEstimate, boolean useFastTWOLHS,
                                                QueryInfo queryInfo) {
         if (useFastTWOLHS) {
             return setIntersectEstimatorFastTWOLHS(samples, unionEstimate, queryInfo);
         } else {
-            return setIntersectEstimatorInverseDist(samples, unionEstimate, queryInfo);
+            return setIntersectEstimatorAllBuckets(samples, unionEstimate, queryInfo);
         }
     }
 
+    // Fast TWOLHS Intersection Estimator
     private static double setIntersectEstimatorFastTWOLHS(Sample[][] samples, double unionEstimate, QueryInfo queryInfo) {
         int sum = 0;
         int count = 0;
         for (int i = 0; i <samples[0].length; i++) {
-            int[] bde = bucketDiffEstimatorFastTWOLHS(samples, i); // atomicDiffEstimator if section 3 of paper.
+            int[] bde = bucketDiffEstimatorFastTWOLHSAllBuckets(samples, i);//, unionEstimate); // atomicDiffEstimator if section 3 of paper.
             sum += bde[0];
             count+=bde[1];
         }
@@ -75,7 +81,8 @@ public class TWOLHSUtils {
         return result;
     }
 
-    private static int[] bucketDiffEstimatorFastTWOLHS(Sample[][] samples, int repetition) {
+    // bucket diff estimator, going over all buckets.
+    private static int[] bucketDiffEstimatorFastTWOLHSAllBuckets(Sample[][] samples, int repetition) {
         //int index;
         int sum=0;// witness count
         int count =0; // total count
@@ -101,6 +108,34 @@ public class TWOLHSUtils {
         return new int[]{sum, count};
     }
 
+    // bucket diff estimator, going over one bucket.
+    private static int[] bucketDiffEstimatorFastTWOLHS(Sample[][] samples, int repetition, double unionEstimate) {
+        //int index;
+        int sum=0;// witness count
+        int count =0; // total count
+        // Instead of doing it for one index, we want to check every index.
+        int countSignaturesLength = ((TWOLHS) samples[0][repetition]).countSignatures.length;
+//        if (repetition == 0) {
+//            System.out.println("CountSignaturesLength: " + countSignaturesLength);
+//        }
+        int i = (int) Math.ceil(Math.log(2*unionEstimate / (countSignaturesLength * Math.pow((1 - 0.01), 2))));
+        if (singletonUnionBucket(samples, repetition, i)) {
+            boolean witnessFound = true;
+            for (Sample[] sample : samples) {
+                if (!((TWOLHS) sample[repetition]).singletonBucket(i)) {
+                    witnessFound = false;
+                }
+            }
+            if (witnessFound) {
+                sum++;
+            }
+            count++;
+        }
+        return new int[]{sum, count};
+    }
+
+
+    // TWOLHS Intersection Estimator with slow ingestion
     private static double setIntersectEstimatorTWOLHS(Sample[][] samples, double unionEstimate, double eps,
                                                       QueryInfo queryInfo) {
         int sum = 0;
@@ -120,11 +155,11 @@ public class TWOLHSUtils {
         
     }
 
-    private static int setIntersectEstimatorInverseDist(Sample[][] samples, double unionEstimate, QueryInfo queryInfo) {
+    private static int setIntersectEstimatorAllBuckets(Sample[][] samples, double unionEstimate, QueryInfo queryInfo) {
         int sum = 0;
         int count = 0;
         for (int i = 0; i < samples[0].length; i++) {
-            int[] bde = bucketDiffEstimatorInverseDist(samples, i); // atomicDiffEstimator if section 3 of paper.
+            int[] bde = bucketDiffEstimatorAllBuckets(samples, i); // atomicDiffEstimator if section 3 of paper.
             sum += bde[0];
             count+=bde[1];
         }
@@ -134,8 +169,8 @@ public class TWOLHSUtils {
         return result;
     }
 
-
-    private static int[] bucketDiffEstimatorInverseDist(Sample[][] samples, int repetition) {
+    // bucket diff estimator, going over all buckets.
+    private static int[] bucketDiffEstimatorAllBuckets(Sample[][] samples, int repetition) {
         //int index;
         int sum=0;// witness count
         int count =0; // total count
@@ -161,6 +196,7 @@ public class TWOLHSUtils {
         return new int[]{sum, count};
     }
 
+    // check one bucket
     private static int bucketDiffEstimator(Sample[][] samples, double unionEstimate,
                                            double eps, int repetition, int numTWOLHSRepetitions) {
         int index;
@@ -180,6 +216,7 @@ public class TWOLHSUtils {
         return 1; // witness found
     }
 
+    // check if union of buckets is singleton.
     private static boolean singletonUnionBucket(Sample[][] samples, int repetition, int lsb) {
         // check if union of buckets is singleton.
         // either one is empty and the other is singleton, or they are identical singleton buckets.
@@ -207,6 +244,7 @@ public class TWOLHSUtils {
         }
     }
 
+    // check if all samples have the same singleton bucket.
     private static boolean identicalSingletonBucket(TWOLHS[] samples, int lsb) {
         for (TWOLHS sample : samples) {
             if (!sample.singletonBucket(lsb)) {
@@ -228,6 +266,33 @@ public class TWOLHSUtils {
             j++;
         }
         return true;
+    }
+
+    public static int exactSolution(Sample[][] samples, QueryInfo queryInfo) {
+        Sample[] sets = new Sample[samples.length];
+        for (int i = 0; i < samples.length; i++) {
+            sets[i] = samples[i][0]; // Assuming we want the first repetition for exact solution.
+        }
+
+        if (sets == null || sets.length == 0) {
+            throw new IllegalArgumentException("kminSets is null or empty");
+        }
+
+        if (Objects.equals(sets[0].getKminType(), "ExactSolution")) {
+            Set<Integer> intersectionSet = new HashSet<>((Set<Integer>) sets[0].query());
+            Set<Integer> unionSet = new HashSet<>((Set<Integer>) sets[0].query());
+            for (int i = 1; i < sets.length; i++) {
+                intersectionSet.retainAll((Set<Integer>) sets[i].query());
+                unionSet.addAll((Set<Integer>) sets[i].query());
+            }
+
+            int intersectionSize = intersectionSet.size();
+            int unionSize = unionSet.size();
+            queryInfo.setEstimate(unionSize, 0, (double) intersectionSize /unionSize, intersectionSize);
+            return intersectionSize;
+        } else {
+            throw new IllegalArgumentException("Unsupported kmin type: " + sets[0].getKminType());
+        }
     }
 
 }

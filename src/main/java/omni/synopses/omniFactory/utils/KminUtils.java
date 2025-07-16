@@ -169,6 +169,10 @@ public class KminUtils {
     private static int intersectionArray(int[][] arrays) {
         if (arrays == null || arrays.length == 0) return 0;
 
+        if (arrays.length == 1) {
+            return arrays[0].length; // If there's only one array, return its length
+        }
+
         // Find the index of the shortest array
         int minIndex = 0;
         for (int i = 1; i < arrays.length; i++) {
