@@ -205,6 +205,7 @@ public class RunExperiments {
                                 }
                             }
                         } else if (experimentName.contains("aSH")) {
+                            //todo: make sure we don't run aSH ram^2 times. now, we loop over ram vals twice.
                             ArrayList<Long> sizes = new ArrayList<Long>((ArrayList<Long>) config.ramVals);
                             for (double ramMultiplyer: ramMultiplyers) {
                                 sizes.add((long) (ram * ramMultiplyer));
