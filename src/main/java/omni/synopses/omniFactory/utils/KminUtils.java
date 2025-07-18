@@ -182,12 +182,6 @@ public class KminUtils {
         }
 
         int[] base = arrays[minIndex];
-        int count = getCount(arrays, base, minIndex);
-
-        return count;
-    }
-
-    private static int getCount(int[][] arrays, int[] base, int minIndex) {
         int count = 0;
         int prev = Integer.MIN_VALUE;
 
@@ -211,6 +205,7 @@ public class KminUtils {
                 count++;
             }
         }
+
         return count;
     }
 

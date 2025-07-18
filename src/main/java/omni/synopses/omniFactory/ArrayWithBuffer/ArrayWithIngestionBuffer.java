@@ -368,7 +368,19 @@ public class ArrayWithIngestionBuffer {
                     bufferIndex = bufferSize - 1;
                 }
 
-                int insertIndex = getInsertIndex(bufferIndex);
+                int insertIndex = Arrays.binarySearch(arr, 0, Math.min(curSampleSize + 1, K), ingestionBuffer[bufferIndex]);
+                if (insertIndex >= 0) {
+                    while (insertIndex > 0 && arr[insertIndex] == arr[insertIndex - 1]) {
+                        insertIndex--; // Find the first occurrence of the value
+                    }
+                } else {
+                    insertIndex = -insertIndex - 1;
+                }
+                if (insertIndex >= Math.min(curSampleSize + 1, K) & Math.min(curSampleSize + 1, K) == 1) {
+                    insertIndex = 0;
+                } else if (insertIndex >= Math.min(curSampleSize + 1, K)) {
+                    insertIndex = Math.min(curSampleSize + 1, K) - 1;
+                }
                 insertFromBufferToDeleteSlot(bufferIndex, deleteIndex, insertIndex);
             } else {
                 System.arraycopy(arr, deleteIndex + 1, arr, deleteIndex, Math.min(curSampleSize + 1, K) - deleteIndex -1);
@@ -388,23 +400,6 @@ public class ArrayWithIngestionBuffer {
         } else {
             curTreeRoot = Integer.MAX_VALUE; // Reset if the sample is empty
         }
-    }
-
-    private int getInsertIndex(int bufferIndex) {
-        int insertIndex = Arrays.binarySearch(arr, 0, Math.min(curSampleSize + 1, K), ingestionBuffer[bufferIndex]);
-        if (insertIndex >= 0) {
-            while (insertIndex > 0 && arr[insertIndex] == arr[insertIndex - 1]) {
-                insertIndex--; // Find the first occurrence of the value
-            }
-        } else {
-            insertIndex = -insertIndex - 1;
-        }
-        if (insertIndex >= Math.min(curSampleSize + 1, K) & Math.min(curSampleSize + 1, K) == 1) {
-            insertIndex = 0;
-        } else if (insertIndex >= Math.min(curSampleSize + 1, K)) {
-            insertIndex = Math.min(curSampleSize + 1, K) - 1;
-        }
-        return insertIndex;
     }
 
 

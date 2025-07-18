@@ -1,12 +1,12 @@
 {
-  "setting": "Create Dataset",
+  "setting": "Compare Synopses",
   "datasetName": "synthFromDisk",
   "numRepetitions": 1,
   "runOnODC": true,
   "readFolder": "/app/data/",
   "withDeletes": true,
   "spreadOutDeletes": true,
-  "ramVals": [500,1000],
+  "ramVals": [10,100,1000],
   "noiseUpdateFractions": [0],
   "ingestBuffers": [0.1],
   "dGridSearch": [3],
@@ -16,9 +16,9 @@
   "parFactorGridSearch": [100],
   "numBins": 3,
   "numPredicates": 9,
-  "sizeFactorOptions": [23],
+  "sizeFactorOptions": [16],
   "sizeNoise": [0],
-  "experimentName": "Deletes v0.1",
+  "experimentName": "Deletes",
   "useMultNumAttributes": false,
   "numSynthAttributes": 9,
   "numZipfAttributes": 9,
@@ -33,7 +33,7 @@
   "expOmniSketchVLDB": false,
   "expOmniSketchVLDBArray": false,
   "expOmniSketchVLDBArrayRegBuffer": false,
-  "expOmniSketchVLDBArrayWithBuffer": false,
+  "expOmniSketchVLDBArrayWithBuffer": true,
   "expOmniSketchVLDBArrayWithBufferPerRow": false,
 
   "expOmniSketchVLDBArrayWithBufferPessDeleteCount": false,
@@ -49,7 +49,7 @@
   "expOmniSketchSFQLSampleSizePerRow": false,
   "expOmniSketchSFQLSampleSizeTestHashSet": false,
   "expSlowTWOLHS": false,
-  "expFastTWOLHS": false,
+  "expFastTWOLHS": true,
   "expFastTWOLHSOneBucket": false,
   "expNMaxTWOLHS": false,
 
@@ -60,7 +60,7 @@
   "expFastTWOLHSOneBucketPerRow": false,
   "expNMaxTWOLHSPerRow": false,
 
-  "expASH": false,
+  "expASH": true,
   "expHydra": false,
   "expResSample": false,
   "expCM": false,
@@ -71,5 +71,5 @@
   "getUniqueRecords": false,
   "domain_sizes": [10000],
   "readFromDisk": true,
-  "percs": [0.0,0.33,1.0,3.0,9.0]
+  "percs": [99.0,999.0,0.0,0.33,1.0,3.0,9.0]
 }

@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: omnisketch2lhs
+spec:
+  template:
+    metadata:
+        name: omnisketch2lhs
+    spec:
+      containers:
+        - name: omnisketch2lhs
+          image: wpunter/omnisketch2lhs:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - mountPath: /app/data
+              name: wieger-01
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: false
+            runAsGroup: 70
+            runAsNonRoot: true
+            runAsUser: 70
+          resources:
+            limits:
+              cpu: 500m
+              memory: 300Gi
+            requests:
+              cpu: 500m
+              memory: 300Gi
+      restartPolicy: Never
+      volumes:
+        - name: wieger-01
+          persistentVolumeClaim:
+            claimName: wieger-01
+      imagePullSecrets:
+      - name: dockerhub-secret
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+  backoffLimit: 4

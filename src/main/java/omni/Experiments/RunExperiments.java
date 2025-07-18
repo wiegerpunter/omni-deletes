@@ -105,9 +105,17 @@ public class RunExperiments {
     private void runAllExperiments(int repetition) throws IOException {
         double[] ramMultiplyers;
         if (config.readFromDisk) {
-            ramMultiplyers = new double[config.percs.length];
+            if (config.expOmniSketchVLDBArrayWithBuffer) {
+                ramMultiplyers = new double[config.percs.length];
+            } else {
+                ramMultiplyers= new double[0];
+            }
         } else {
-            ramMultiplyers = new double[config.noiseUpdateFractions.size()];
+            if (config.expOmniSketchVLDBArrayWithBuffer) {
+                ramMultiplyers = new double[config.noiseUpdateFractions.size()];
+            } else {
+                ramMultiplyers= new double[0];
+            }
         }
         int ramMultiplyers_count = 0;
         RamToPar rtp = new RamToPar(config.numStoredAttributes, config.ramVals);
@@ -197,10 +205,10 @@ public class RunExperiments {
                                 sizes.add((long) (ram * ramMultiplyer));
                             }
                             rtp = new RamToPar(config.numStoredAttributes, sizes);
-                            for (double ramMultiplyer: ramMultiplyers) {
+                            for (long size: sizes) {
                                 for (double bufferASH : config.ingestBuffers) {
                                     config.bufferASH = bufferASH;
-                                    experiment.run((long) (ram * ramMultiplyer), rtp, repetition, config);
+                                    experiment.run(size, rtp, repetition, config);
                                 }
                             }
                         } else {

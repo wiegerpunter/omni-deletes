@@ -26,7 +26,8 @@ spec:
           memory: 30Gi
       volumeMounts:
         - name: wieger-01
-          mountPath: "/app/data/"
+          mountPath: "/app/data"
+          readOnly: true
   volumes:
     - name: wieger-01
       persistentVolumeClaim:

@@ -80,7 +80,6 @@ public class RamToPar {
             double[] parsKmin = compParamsSingleKmin(ram);
             ramToKminParams.put(ram , parsKmin);
         }
-        System.out.println("Done with reservoir sampling");
     }
 
     public void computeOmniSketchParametersFromRAM(int d, int b, double parFactor) {

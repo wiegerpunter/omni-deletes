@@ -1,0 +1,16 @@
+FROM openjdk:21-jdk-slim
+
+COPY /out/artifacts/DSCM_jar /app/DSCM_jar/
+
+
+COPY Configurations/Synth2LHSODC.json /app/config/config.json
+WORKDIR /app/data
+ENTRYPOINT ["java", "-jar", "/app/DSCM_jar/DSCM.jar"]
+
+# default arguments
+CMD bash -c "\
+java -Xmx20G -jar /app/DSCM_jar/DSCM.jar /app/config/config.json\"
+
+LABEL authors="wieger"
+
+# "Test_two_LHS" "synthEquiDepthBins" "4"

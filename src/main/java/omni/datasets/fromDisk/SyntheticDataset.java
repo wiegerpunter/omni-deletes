@@ -43,7 +43,7 @@ public class SyntheticDataset {
     }
 
     public void synthDevQueryGenerator(double perc, double sizeFactor,
-                                  double zipfAlpha) {
+                                  double zipfAlpha) throws IOException {
         setupDataset(perc, sizeFactor, zipfAlpha);
         generateSynthQueries();
     }
@@ -163,7 +163,7 @@ public class SyntheticDataset {
 
 
 
-    private void generateSynthQueries(){
+    private void generateSynthQueries() throws IOException {
         int numAttrs = 9;
         int numZipfianAttrs = config.numZipfAttributes;
 

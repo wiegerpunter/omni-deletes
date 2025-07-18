@@ -113,6 +113,9 @@ public class CleanDataset {
         }
     }
 
+    private void getRangeQueries() {
+    }
+
     private int splitDeletes(double percToDelete) {
         if (!config.withDeletes) {
             datasetResidu = dataset;
