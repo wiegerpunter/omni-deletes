@@ -51,7 +51,7 @@ public class RunExperiments {
                                         config.noiseUpdateFractions.add(0.0);
                                         for (double perc : percs) {
                                             prepareDataset(i, zipfAlpha, n, perc); // prepare dataset
-                                            runAllExperiments(repetition); // run all experiments in factory
+                                            runAllExperiments(repetition, perc); // run all experiments in factory
                                         }
                                     } else {
                                         double perc = 0;
@@ -59,7 +59,7 @@ public class RunExperiments {
                                             perc = 0.901;
                                         }
                                         prepareDataset(i, zipfAlpha, n, perc); // prepare dataset
-                                        runAllExperiments(repetition); // run all experiments in factory
+                                        runAllExperiments(repetition, perc); // run all experiments in factory
                                     }
                                 }
                             } else {
@@ -70,7 +70,7 @@ public class RunExperiments {
                                     config.noiseUpdateFractions.add(0.0);
                                     for (double perc : percs) {
                                         prepareDataset(i, zipfAlpha, n, perc); // prepare dataset
-                                        runAllExperiments(repetition); // run all experiments in factory
+                                        runAllExperiments(repetition, perc); // run all experiments in factory
                                     }
                                 } else {
                                     double perc = 0;
@@ -78,7 +78,7 @@ public class RunExperiments {
                                         perc = 0.901;
                                     }
                                     prepareDataset(i, zipfAlpha, n, perc); // prepare dataset
-                                    runAllExperiments(repetition); // run all experiments in factory
+                                    runAllExperiments(repetition, perc); // run all experiments in factory
                                 }
                             }
                         }
@@ -102,7 +102,7 @@ public class RunExperiments {
         readDataset(perc, sizeFactor, noiseSize, zipfAlpha);
     }
     //double[] betas = new double[]{1,1.35,2.1,4.2,11};
-    private void runAllExperiments(int repetition) throws IOException {
+    private void runAllExperiments(int repetition, double noisePerc) throws IOException {
         double[] ramMultiplyers;
         if (config.readFromDisk) {
             if (config.expOmniSketchVLDBArrayWithBuffer) {
@@ -161,6 +161,9 @@ public class RunExperiments {
                                                             config.bufferDeletesMinwise = getBeta(Main.inputFolder +
                                                                     "/paramTable/bufferMinwiseTable.csv", perc,
                                                                     ram, config.numStoredAttributes, config.d, 1);
+                                                            if (config.setOmniVLDBBufferAsZero && config.bufferDeletesMinwise > 1) {
+                                                                continue;
+                                                            }
                                                             experiment.run(ram, rtp, repetition, config);
                                                             if (ramMultiplyers_count < config.percs.length) {
                                                                 ramMultiplyers[ramMultiplyers_count] = config.bufferDeletesMinwise;
@@ -181,6 +184,8 @@ public class RunExperiments {
                                                         }
                                                     }
                                                 } else if (experimentName.contains("TWOLHS")) {
+                                                    if (noisePerc > 0) {continue;}; // TWOLHS is impervious to deletes.
+
                                                     config.B = (int) ((ram / (config.d * config.w * config.numStoredAttributes) - 32) / (31 * 32 *32));
                                                     System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
                                                     if (config.B < 1) {

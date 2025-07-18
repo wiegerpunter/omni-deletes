@@ -88,6 +88,7 @@ public class Config {
     public boolean expNMaxTWOLHSPerRow;
     public boolean expTWOLHSPerRowExact;
     public boolean expTWOLHSExact;
+    public boolean setOmniVLDBBufferAsZero;
     // Old parameters, might use them in the future
 //    public List<Double> bufferValuesOmni;
 //    public boolean expOmniSet;

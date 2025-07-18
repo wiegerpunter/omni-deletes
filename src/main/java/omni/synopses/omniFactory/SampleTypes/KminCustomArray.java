@@ -98,20 +98,24 @@ public class KminCustomArray implements Sample {
             } else if (pessimisticDeleteCounter){
                 return (int) Math.min(sample.getCurSampleSize(), Math.max(B / beta, B - sample.getTotalDeletes()));
             } else {
-                // get sample count before minRejectedValue
-                int minRejectedValue = sample.getMinRejectedValue();
-                if (minRejectedValue == Integer.MAX_VALUE) {
-                    return sample.getCurSampleSize();
-                }
-                int[] k = sample.getK();
-                int index = Arrays.binarySearch(k, minRejectedValue);
-                if (index < 0) {
-                    index = -index - 1; // Convert to insertion point
-                }
-                return index;
+                return getIndexOfMinRejectedValue();
             }
         }
         return sample.getCurSampleSize();
+    }
+
+    private int getIndexOfMinRejectedValue() {
+        // get sample count before minRejectedValue
+        int minRejectedValue = sample.getMinRejectedValue();
+        if (minRejectedValue == Integer.MAX_VALUE) {
+            return sample.getCurSampleSize();
+        }
+        int[] k = sample.getK();
+        int index = Arrays.binarySearch(k, minRejectedValue);
+        if (index < 0) {
+            index = -index - 1; // Convert to insertion point
+        }
+        return index;
     }
 
     public int getBufferSize() {
