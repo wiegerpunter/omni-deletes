@@ -17,12 +17,12 @@ public class createDatasetAndQueries {
         Config config = mapper.readValue(new File(jsonFilePath), Config.class);
 
         SyntheticDataset residu = new SyntheticDataset(config);
-        double[] perc = {0,99};
+        double[] perc = {0,9.0,99.0,999.0};
         for (double p : perc) {
             System.out.printf("\rGenerating dataset with %.1f%% noise", p * 100);
-            residu.synthDevDataGenerator(p, 23, 1.3);
+            residu.synthDevDataGenerator(p, 16, 1.3);
             if (p == 0) {
-                residu.synthDevQueryGenerator(p, 23, 1.3);
+                residu.synthDevQueryGenerator(p, 16, 1.3);
             }
         }
 

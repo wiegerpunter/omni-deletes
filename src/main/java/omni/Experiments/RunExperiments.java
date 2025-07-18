@@ -261,6 +261,8 @@ public class RunExperiments {
             if (config.expOmniSketchVLDBArrayRegBuffer) enabledExperiments.add("OmniSketchVLDBArrayRegBufferCustom");
 
             if (config.expOmniSketchVLDBArrayWithBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithBufferCustom");
+            if (config.expOmniSketchVLDBArrayWithBufferPerRow) enabledExperiments.add("OmniSketchVLDBArrayWithBufferPerRowCustom");
+
             if (config.expOmniSketchVLDBArrayWithBufferPessDeleteCount) enabledExperiments.add("OmniSketchVLDBArrayWithBufferPessDeleteCountCustom");
 
             if (config.expOmniSketchVLDBArrayWithBufferOnlyValid) enabledExperiments.add("OmniSketchVLDBArrayWithBufferOnlyValidCustom");
@@ -283,6 +285,7 @@ public class RunExperiments {
             if (config.expFastTWOLHSOneBucketPerRow) enabledExperiments.add("OmniSketchFastTWOLHSOneBucketPerRowCustom");
             if (config.expNMaxTWOLHSPerRow) enabledExperiments.add("OmniSketchNMaxTWOLHSPerRowCustom");
 
+            if (config.expTWOLHSExact) enabledExperiments.add("OmniSketchTWOLHSExactCustom");
             if (config.expTWOLHSPerRowExact) enabledExperiments.add("OmniSketchTWOLHSPerRowExactCustom");
 
 

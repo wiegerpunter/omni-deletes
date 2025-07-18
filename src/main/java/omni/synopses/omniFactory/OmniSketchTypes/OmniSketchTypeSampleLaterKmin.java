@@ -102,11 +102,19 @@ public class OmniSketchTypeSampleLaterKmin extends OmniSketchType {
 
             for (int j = 0; j < depth; j++) {
                 queryInfos.add(new QueryInfo());
-                queryInfos.get(j).setEstimate(KminUtils.intersectAndScale(cellsToIntersect[j], queryInfos.get(j), lastTermInBoundPerRow, numPreds));
+                if (cellsToIntersect[j].length == 1) {
+                    // If only one predicate, we can directly use the estimate from the sample
+                    queryInfos.get(j).setEstimate(cellsToIntersect[j][0].getN());
+                } else {
+                    // If multiple predicates, we need to intersect and scale
+                    queryInfos.get(j).setEstimate(KminUtils.intersectAndScale(cellsToIntersect[j], queryInfos.get(j), lastTermInBoundPerRow, numPreds));
+                }
+//                queryInfos.get(j).setEstimate(KminUtils.intersectAndScale(cellsToIntersect[j], queryInfos.get(j), lastTermInBoundPerRow, numPreds));
             }
             // sort queryInfos on estimates
             QueryInfoSorter.sortByEstimateSize(queryInfos);
-            queryInfo = queryInfos.get(queryInfos.size()/2);
+//            queryInfo = queryInfos.get(queryInfos.size()/2);
+            queryInfo = queryInfos.get(0);
             return queryInfo.getEstimate();
         }
     }

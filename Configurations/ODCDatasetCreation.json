@@ -1,12 +1,12 @@
 {
-  "setting": "Compare Synopses",
+  "setting": "Create Dataset",
   "datasetName": "synthFromDisk",
   "numRepetitions": 1,
-  "runOnODC": false,
-  "readFolder": "/home/wieger/omni-deletes/",
+  "runOnODC": true,
+  "readFolder": "/app/data/",
   "withDeletes": true,
   "spreadOutDeletes": true,
-  "ramVals": [100,500,1000,2000],
+  "ramVals": [500,1000],
   "noiseUpdateFractions": [0],
   "ingestBuffers": [0.1],
   "dGridSearch": [3],
@@ -33,7 +33,7 @@
   "expOmniSketchVLDB": false,
   "expOmniSketchVLDBArray": false,
   "expOmniSketchVLDBArrayRegBuffer": false,
-  "expOmniSketchVLDBArrayWithBuffer": true,
+  "expOmniSketchVLDBArrayWithBuffer": false,
   "expOmniSketchVLDBArrayWithBufferPerRow": false,
 
   "expOmniSketchVLDBArrayWithBufferPessDeleteCount": false,
@@ -49,7 +49,7 @@
   "expOmniSketchSFQLSampleSizePerRow": false,
   "expOmniSketchSFQLSampleSizeTestHashSet": false,
   "expSlowTWOLHS": false,
-  "expFastTWOLHS": true,
+  "expFastTWOLHS": false,
   "expFastTWOLHSOneBucket": false,
   "expNMaxTWOLHS": false,
 
@@ -60,7 +60,7 @@
   "expFastTWOLHSOneBucketPerRow": false,
   "expNMaxTWOLHSPerRow": false,
 
-  "expASH": true,
+  "expASH": false,
   "expHydra": false,
   "expResSample": false,
   "expCM": false,

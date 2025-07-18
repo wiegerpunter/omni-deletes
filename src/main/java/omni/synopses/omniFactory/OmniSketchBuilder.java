@@ -161,6 +161,13 @@ public class OmniSketchBuilder {
                 .setSketchType("SampleLaterArrayWithBuffer");
     }
 
+    public static OmniSketchBuilder QFirstSampleLaterArrayWithBufferPerRow() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(false)
+                .setUseNMax(true)
+                .setSketchType("SampleLaterArrayWithBuffer");
+    }
+
     public static OmniSketchBuilder QFirstSampleLaterArrayWithBufferPessDeleteCount() {
         return new OmniSketchBuilder()
                 .setUseAcrossRows(true)
@@ -228,6 +235,16 @@ public class OmniSketchBuilder {
                 .setUseFastTWOLHS(true)
                 .setEps(0.1)
                 .setSketchType("FastTWOLHS");
+    }
+
+
+    public static OmniSketchBuilder TWOLHSExact() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(true)
+                .setUseNMax(true)
+                .setUseFastTWOLHS(false)
+                .setEps(0.1)
+                .setSketchType("TWOLHSExact");
     }
 
 

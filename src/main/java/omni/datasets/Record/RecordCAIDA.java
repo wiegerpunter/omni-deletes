@@ -55,46 +55,6 @@ public class RecordCAIDA extends Record implements Externalizable {
         }
         return Integer.parseInt(String.valueOf(s));
     }
-//
-//    @Override public void add(String[] a) {
-//        //TODO: get rid of replaceAll or make it more memory efficient.
-//        // String frameNumberString = a[0].replaceAll("\"", "");
-//        frameNumber = convStringToInt(a[0]);
-//        timestamp = convertFrameTime(a[1], a[2]);
-//
-//        //timestamp = convertFrameTime(a[1].replaceAll("\"", ""), a[2].replaceAll("\"", ""));
-//        if (a.length < 4) {
-//            return;
-//        }
-//        if (a[3].equals("")) {
-//            ethSrc = ph;
-//        } else {
-//            ethSrc = convStringToInt(a[3]);
-//        }
-//        if (a[4].equals("")) {
-//            ethDst = ph;
-//        } else {
-//            ethDst = convStringToInt(a[4]);
-//        }
-//        ipSrc = a[5];//.replaceAll("\"", "");
-//        //int secDot = (ipSrc.substring(ipSrc.indexOf("."))).indexOf(".");
-//        if (ipSrc != "") {
-//
-//            int firstDot = ipSrc.indexOf(".");
-//            int secondDot = ipSrc.indexOf(".", firstDot + 1);
-//            ipSrcNet = Integer.parseInt(ipSrc.substring(0, secondDot).replaceAll("\\.", ""));
-//            ipSrcHost = Integer.parseInt(ipSrc.substring(secondDot).replaceAll("\\.", ""));
-//        }
-//        ipDst = a[6];//.replaceAll("\"", "");
-//        if (ipDst != "") {
-//            int firstDot = ipDst.indexOf(".");
-//            int secondDot = ipDst.indexOf(".", firstDot + 1);
-//            ipDstNet = Integer.parseInt(ipDst.substring(0, secondDot).replaceAll("\\.", ""));
-//            ipDstHost = Integer.parseInt(ipDst.substring(secondDot).replaceAll("\\.", ""));
-//        }
-//        ipProto = convStringToInt(a[7]);
-//    }
-
 
     public String replaceDot(String s) {
         Matcher m = dot.matcher(s);

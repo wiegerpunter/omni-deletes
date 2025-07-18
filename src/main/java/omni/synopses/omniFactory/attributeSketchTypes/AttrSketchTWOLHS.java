@@ -4,6 +4,7 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import omni.synopses.omniFactory.OmniSketchBuilder;
 import omni.synopses.omniFactory.OmniSketchConfig;
+import omni.synopses.omniFactory.SampleTypes.ExactSolution;
 import omni.synopses.omniFactory.SampleTypes.Sample;
 import omni.synopses.omniFactory.SampleTypes.SampleFactory;
 import omni.synopses.omniFactory.utils.HashUtils;
@@ -15,9 +16,9 @@ public class AttrSketchTWOLHS {
     final int depth;
     final int width;
     final int numTWOLHSRepetitions;
+    final String sampleType;
     int[] reusableHashes;
     OmniSketchConfig omniSketchConfig;
-    HashFunction hashFunction;
     HashFunction hashFunctionG;
 
 
@@ -31,30 +32,38 @@ public class AttrSketchTWOLHS {
         this.width = width;
         this.numTWOLHSRepetitions = numTWOLHSRepetitions;
         this.omniSketchConfig = config;
-        if (sampleType.equals("SlowTWOLHS") && omniSketchConfig.getUseFastTWOLHS()) {
-            throw new IllegalArgumentException("Cannot use SlowTWOLHS with FastTWOLHS configuration");
-        } else if ((sampleType.equals("FastTWOLHS") ||
-                sampleType.equals("NMaxTWOLHS") ||
-                sampleType.equals("FastTWOLHSOneBucket"))
-                        && !omniSketchConfig.getUseFastTWOLHS()) {
-            throw new IllegalArgumentException("Cannot use FastTWOLHS with SlowTWOLHS configuration");
-        }
-
-        hashFunction = Hashing.murmur3_32_fixed(omniSketchConfig.getSeed());
+        this.sampleType = sampleType;
+        checkSampleType(sampleType, omniSketchConfig);
         hashFunctionG = Hashing.murmur3_32_fixed(omniSketchConfig.getSeed() + OmniSketchBuilder.G_HASH_OFFSET);
+
+        reusableHashes = new int[depth];
+        this.attrHashFunctions = new HashFunction[depth];
+        for (int i = 0; i < depth; i++) {
+            attrHashFunctions[i] = Hashing.murmur3_32_fixed(i + config.getSeed());
+        }
 
         this.sketch = new Sample[depth][width][numTWOLHSRepetitions];
         for (int j = 0; j < depth; j++) {
             for (int i = 0; i < width; i++) {
+                if (sampleType.equals("TWOLHSExact")) { // Only one exact solution needed.
+                    sketch[j][i][0] = new ExactSolution();
+                    continue;
+                }
                 for (int k = 0; k < numTWOLHSRepetitions; k++) {
                     sketch[j][i][k] = SampleFactory.createSample(sampleType, k, 0, config);
                 }
             }
         }
-        reusableHashes = new int[depth];
-        this.attrHashFunctions = new HashFunction[depth];
-        for (int i = 0; i < depth; i++) {
-            attrHashFunctions[i] = Hashing.murmur3_32_fixed(i + config.getSeed());
+    }
+
+    private void checkSampleType(String sampleType, OmniSketchConfig omniSketchConfig) {
+        if (sampleType.equals("SlowTWOLHS") && omniSketchConfig.getUseFastTWOLHS()) {
+            throw new IllegalArgumentException("Cannot use SlowTWOLHS with FastTWOLHS configuration");
+        } else if ((sampleType.equals("FastTWOLHS") ||
+                sampleType.equals("NMaxTWOLHS") ||
+                sampleType.equals("FastTWOLHSOneBucket"))
+                && !omniSketchConfig.getUseFastTWOLHS()) {
+            throw new IllegalArgumentException("Cannot use FastTWOLHS with SlowTWOLHS configuration");
         }
     }
 
@@ -70,6 +79,10 @@ public class AttrSketchTWOLHS {
                 int g = hashG(id);
                 sketch[j][i][g].ingest(id, sign);
             } else {
+                if (sampleType.equals("TWOLHSExact")) { // insert only once.
+                    sketch[j][i][0].ingest(id, sign);
+                    continue;
+                }
                 for (int k = 0; k < numTWOLHSRepetitions; k++) {
                     sketch[j][i][k].ingest(id, sign);
                 }

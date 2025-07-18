@@ -83,18 +83,12 @@ public class RecordCAIDAComplicated extends Record implements Externalizable {
     }
 
     @Override public void add(String[] a) {
-        //TODO: get rid of replaceAll or make it more memory efficient.
-        // String frameNumberString = a[0].replaceAll("\"", "");
-//        frameNumber = convStringToInt(a[0]);
-//        timestamp = convertFrameTime(String.valueOf(a[1]), String.valueOf(a[2]));
 
 
         frameNumber = convStringToInt(a[0]);
         frameTimeEpoch = String.valueOf(a[1]);
         frameLen = convStringToInt(a[2]);
         frameProtocols = String.valueOf(a[3]);
-//      timestamp = convertFrameTime(a[1], a[2]);
-        //timestamp = convertFrameTime(a[1].replaceAll("\"", ""), a[2].replaceAll("\"", ""));
         if (a.length < 4) {
             return;
         }

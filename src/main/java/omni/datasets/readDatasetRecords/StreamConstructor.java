@@ -168,7 +168,6 @@ public class StreamConstructor {
 	}
 
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
 		StreamConstructor sc = new StreamConstructor(1234,1000);
 		Stream s = sc.constructUniformStream(10);
 		System.err.println("Uniform " + s);

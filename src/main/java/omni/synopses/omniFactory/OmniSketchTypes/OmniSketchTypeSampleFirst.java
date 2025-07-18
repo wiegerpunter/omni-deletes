@@ -122,7 +122,6 @@ public class OmniSketchTypeSampleFirst extends OmniSketchType {
                     break;
                 }
             }
-            // TODO: when we're doing per row, we need to add to temp.
             if (inIntersection) {
                 intersectionCount++;
             }

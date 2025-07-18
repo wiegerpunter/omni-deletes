@@ -13,18 +13,13 @@ public class AttrSketchKmin {
     Sample[][] sketch;
     final int depth;
     final int width;
-    final int B;
-    final int b;
     final double beta;
     int[] reusableHashes;
 
     public AttrSketchKmin(OmniSketchConfig config, int depth, int width, int B, int b, String SampleType) {
         this.depth = depth;
         this.width = width;
-        this.B = B;
-        this.b = b;
         this.beta = config.getBufferBeta();
-
 
         this.reusableHashes = new int[depth];
         this.attrHashFunctions = new HashFunction[depth];

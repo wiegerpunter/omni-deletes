@@ -551,7 +551,7 @@ public class CleanDataset {
             computeExactRange();
             throw new UnsupportedOperationException("Need to write queries to file");
         } else {
-            generatePointQueriesAlt(datasetResidu);// todo: queryGenProb based on ratio numToKeep / dataset.length
+            generatePointQueriesAlt(datasetResidu);
             System.out.println("Generated queries, computing exact answers.");
             computeExactPoint(datasetResidu);
             // recompute exact answers based on neverDeleted
@@ -732,7 +732,6 @@ public class CleanDataset {
 
     private void generateRangeQueries() {
         throw new RuntimeException("Not implemented");
-        //TODO: implement
     }
 
     private void generatePointQueriesAlt(long[][] dataset) {
@@ -1019,7 +1018,6 @@ public class CleanDataset {
                 int queryId = Integer.parseInt(nextLine[1]);
                 String query = nextLine[2];
                 // Method that fills query with "-1" for difference numStoredAttributes - Main.numStoredAttributes
-                //query = fillQuery(query, numStoredAttributesInFile); //TODO: fill query with -1 for missing attributes
                 int numPreds = Integer.parseInt(nextLine[3]);
                 int exactAnswer = Integer.parseInt(nextLine[5]);
                 pointQueries[queryId] = parseStringToPointQuery(query);

@@ -314,7 +314,6 @@ public class SyntheticDataset {
 
     private void computeQueryStats(int numAttrs, int numZipfianAttrs) {
         for (int i = 0; i < pointQueries.length; i++) {
-            // todo: fix error bc point queries ends early.
             for (int j = 0; j < numAttrs; j++) {
                 if (pointQueries[i][j] != -1) {
                     pointQueriesNumAttrs[i]++;

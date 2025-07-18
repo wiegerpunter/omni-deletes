@@ -4,7 +4,7 @@
 
 
 # Root folder where synthFromDisk resides
-ROOT_FOLDER="/home/wieger/omni-deletes/input/data/synthFromDisk/16.0"
+ROOT_FOLDER="/app/data/input/data/synthFromDisk/23.0"
 
 set -e
 

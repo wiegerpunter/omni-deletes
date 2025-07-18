@@ -18,6 +18,7 @@ public class ExperimentFactory {
         experiments.put("OmniSketchVLDB", new OmniVLDBExperiment());
         experiments.put("OmniSketchVLDBArray", new OmniVLDBArrayExperiment());
         experiments.put("OmniSketchVLDBArrayWithBuffer", new OmniVLDBArrayWithBufferExperiment());
+
         experiments.put("OmniSketchVLDBArrayWithoutBuffer", new OmniVLDBArrayWithoutBufferExperiment());
         experiments.put("OmniSketchVLDBTreeSet", new OmniVLDBTreeSetExperiment());
         experiments.put("OmniSketchVLDBTreeSetWithoutBuffer", new OmniVLDBTreeSetWithoutBufferExperiment());
@@ -40,6 +41,9 @@ public class ExperimentFactory {
         experiments.put("OmniSketchVLDBArrayWithBufferCustom", new OmniVLDBArrayWithBufferCustomExperiment());
         experiments.put("OmniSketchVLDBArrayWithBufferPessDeleteCountCustom", new OmniVLDBArrayWithBufferPessDeleteCountCustomExperiment());
 
+        experiments.put("OmniSketchVLDBArrayWithBufferPerRowCustom", new OmniVLDBArrayWithBufferPerRowCustomExperiment());
+
+
         experiments.put("OmniSketchVLDBArrayWithBufferOnlyValidCustom", new OmniVLDBArrayWithBufferOnlyValidCustomExperiment());
 
         experiments.put("OmniSketchVLDBArrayWithoutBufferCustom", new OmniVLDBArrayWithoutBufferCustomExperiment());
@@ -51,6 +55,7 @@ public class ExperimentFactory {
         experiments.put("OmniSketchFastTWOLHSCustom", new OmniFastTWOLHSCustomExperiment());
         experiments.put("OmniSketchFastTWOLHSOneBucketCustom", new OmniFastTWOLHSOneBucketCustomExperiment());
         experiments.put("OmniSketchNMaxTWOLHSCustom", new OmniNMaxTWOLHSCustomExperiment());
+        experiments.put("OmniSketchTWOLHSExactCustom", new OmniTWOLHSExactCustomExperiment());
 
         experiments.put("OmniSketchSlowTWOLHSPerRowCustom", new OmniTWOLHSPerRowCustomExperiment());
         experiments.put("OmniSketchTWOLHSPerRowExactCustom", new OmniTWOLHSPerRowExactCustomExperiment());

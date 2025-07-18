@@ -161,7 +161,7 @@ public class Query extends Record {
                 long max = Long.parseLong(values[1]);
                 addRange(attrIndex, min, max);
             }
-            case "!=" -> //TODO: check if we want to support this query operator;
+            case "!=" ->
                 //addRange(attrIndex, Long.MIN_VALUE, Long.parseLong(value) - 1);
                 //addRange(attrIndex, Long.parseLong(value) + 1, Long.MAX_VALUE);
                     throw new UnsupportedOperationException("Not supported yet.");

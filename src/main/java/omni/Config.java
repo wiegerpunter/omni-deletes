@@ -32,6 +32,8 @@ public class Config {
     public boolean expOmniSketchVLDBArray;
     public boolean expOmniSketchVLDBArrayRegBuffer;
     public boolean expOmniSketchVLDBArrayWithBuffer;
+    public boolean expOmniSketchVLDBArrayWithBufferPerRow;
+
     public boolean expOmniSketchVLDBArrayWithBufferPessDeleteCount;
     public boolean expOmniSketchVLDBArrayWithBufferOnlyValid;
     public boolean expOmniSketchVLDBArrayWithoutBuffer;
@@ -85,6 +87,7 @@ public class Config {
     public boolean expNMaxTWOLHS;
     public boolean expNMaxTWOLHSPerRow;
     public boolean expTWOLHSPerRowExact;
+    public boolean expTWOLHSExact;
     // Old parameters, might use them in the future
 //    public List<Double> bufferValuesOmni;
 //    public boolean expOmniSet;

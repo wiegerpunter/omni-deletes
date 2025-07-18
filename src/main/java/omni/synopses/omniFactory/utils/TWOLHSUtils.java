@@ -324,7 +324,7 @@ public class TWOLHSUtils {
             sets[i] = samples[i][0]; // Assuming we want the first repetition for exact solution.
         }
 
-        if (sets == null || sets.length == 0) {
+        if (sets.length == 0) {
             throw new IllegalArgumentException("Sets is null or empty");
         }
 
