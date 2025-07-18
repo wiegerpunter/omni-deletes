@@ -58,7 +58,7 @@ public abstract class Record implements Externalizable {
     }
 
     public int nullHandler(String a) {
-        if (a.equals(""))
+        if (a.isEmpty())
             return ph;
         else
             return parseInt(a);

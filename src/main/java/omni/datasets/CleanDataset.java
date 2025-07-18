@@ -517,20 +517,12 @@ public class CleanDataset {
         }
     }
 
-    private void getRangeQueries() {
-    }
-
-
     private void clean() {
         for (int i = 0; i <original.dataset.size(); i++) {
             long[] newRecord = cleanRecord(original.dataset.get(i));
             dataset[i] = newRecord;
         }
     }
-
-    private void shuffleAttributes(int repetition) {
-    }
-
 
     private long[] cleanRecord(Record r) {
 
@@ -899,10 +891,10 @@ public class CleanDataset {
         }
 
         // Count unique values for each attribute
-        for (int i = 0; i < dataset.length; i++) {
+        for (long[] longs : dataset) {
             for (int j = 0; j < config.numStoredAttributes; j++) {
-                if (dataset[i][j + 1] != -1) {
-                    unique[j].add(dataset[i][j + 1]);
+                if (longs[j + 1] != -1) {
+                    unique[j].add(longs[j + 1]);
                 }
             }
         }

@@ -173,7 +173,7 @@ public class SyntheticDataset {
             populatePointQueries(reader, numAttrs, selectedIndices);
         } catch (IOException e) {
             System.err.println("Error opening file for queries: " + datasetFileName);
-            System.out.println(e);
+            throw e;
         }
 
         pointQueryAnswers = new int[pointQueries.length];

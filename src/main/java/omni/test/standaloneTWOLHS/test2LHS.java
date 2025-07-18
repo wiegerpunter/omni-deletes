@@ -68,14 +68,14 @@ public class test2LHS {
             sketch1[i] = new TWOLHS(i, 0);
             sketch2[i] = new TWOLHS(i, 0);
         }
-        for (int i = 0; i < data.length; i++) {
+        for (int datum : data) {
             for (int j = 0; j < numReps; j++) {
-                sketch1[j].ingest(data[i], 1);
+                sketch1[j].ingest(datum, 1);
             }
         }
-        for (int i = 0; i < set2.length; i++) {
+        for (int k : set2) {
             for (int j = 0; j < numReps; j++) {
-                sketch2[j].ingest(set2[i], 1);
+                sketch2[j].ingest(k, 1);
             }
         }
         // Create samples from sketches

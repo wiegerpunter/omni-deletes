@@ -147,25 +147,29 @@ public class testAcc2LHS {
         ingest_data(setting, samples, data, x, x_g);
 
         // compute intersection of results
-        if (setting.equals("FastTWOLHS")) {
-            double u = TWOLHSUtils.setUnionEstimator(samples, 0.1, B, true);
-            double estimate = TWOLHSUtils.setIntersectEstimatorAllBuckets(samples, u, true, queryInfo);
-            queryInfo.setEstimate(queryInfo, (int) estimate);
-            return (int) estimate;
-        } else if (setting.equals("NMaxTWOLHS")) {
-            double u = data.getIntersectionSize() + data.getNoiseSize();
-            double estimate = TWOLHSUtils.setIntersectEstimatorAllBuckets(samples, u, true, queryInfo);
-            queryInfo.setEstimate(queryInfo, (int) estimate);
-            return (int) estimate;
-        }
-        else if (setting.equals("SlowTWOLHS")) {
-            double u = TWOLHSUtils.setUnionEstimator(samples, 0.1, B, false);
-            double estimate = TWOLHSUtils.setIntersectEstimatorAllBuckets(samples, u, false, queryInfo);
-            queryInfo.setEstimate(queryInfo, (int) estimate);
-            return (int) estimate;
-        } else {
-            // For ExactSolution, we can directly compute the intersection size
-            return TWOLHSUtils.exactSolution(samples, queryInfo);
+        switch (setting) {
+            case "FastTWOLHS" -> {
+                double u = TWOLHSUtils.setUnionEstimator(samples, 0.1, B, true);
+                double estimate = TWOLHSUtils.setIntersectEstimatorAllBuckets(samples, u, true, queryInfo);
+                queryInfo.setEstimate(queryInfo, (int) estimate);
+                return (int) estimate;
+            }
+            case "NMaxTWOLHS" -> {
+                double u = data.getIntersectionSize() + data.getNoiseSize();
+                double estimate = TWOLHSUtils.setIntersectEstimatorAllBuckets(samples, u, true, queryInfo);
+                queryInfo.setEstimate(queryInfo, (int) estimate);
+                return (int) estimate;
+            }
+            case "SlowTWOLHS" -> {
+                double u = TWOLHSUtils.setUnionEstimator(samples, 0.1, B, false);
+                double estimate = TWOLHSUtils.setIntersectEstimatorAllBuckets(samples, u, false, queryInfo);
+                queryInfo.setEstimate(queryInfo, (int) estimate);
+                return (int) estimate;
+            }
+            default -> {
+                // For ExactSolution, we can directly compute the intersection size
+                return TWOLHSUtils.exactSolution(samples, queryInfo);
+            }
         }
 
     }

@@ -114,8 +114,4 @@ public class Config {
     public void setCurrentDate() {
         currentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
     }
-
-    public void setCurrentBufferDeletesMinwise(double noiseUpdateFraction) {
-
-    }
 }

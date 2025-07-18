@@ -191,10 +191,6 @@ public class ProcessedStreamLoaderGeneric {
 
 	}
 
-	public void readHeader() {
-
-	}
-
 	public void close() {
 		try {
 			bis.close();

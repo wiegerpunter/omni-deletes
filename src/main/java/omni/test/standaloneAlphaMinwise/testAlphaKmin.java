@@ -180,15 +180,13 @@ public class testAlphaKmin {
         Sample[] results = new Sample[data.numberOfSets];
         System.arraycopy(samples, 0, results, 0, data.numberOfSets);
         // compute intersection of results
-        if (setting.equals("KminCustomArray") || setting.equals("KminArrayWithoutBuffer")) {
-            return KminUtils.estimateArray(results, queryInfo, 0, data.numberOfSets);
-        } else if (setting.equals("KminTreeSet")) {
-            return KminUtils.estimateTreeSet(results, queryInfo, 0, data.numberOfSets);
-        } else if (setting.equals("KminSimpleBuffer")) {
-            return KminUtils.estimateArray(results, queryInfo, 0, data.numberOfSets);
-        } else {
-            return KminUtils.estimateSetExact(results, queryInfo);
-        }
+        return switch (setting) {
+            case "KminCustomArray", "KminArrayWithoutBuffer" ->
+                    KminUtils.estimateArray(results, queryInfo, 0, data.numberOfSets);
+            case "KminTreeSet" -> KminUtils.estimateTreeSet(results, queryInfo, 0, data.numberOfSets);
+            case "KminSimpleBuffer" -> KminUtils.estimateArray(results, queryInfo, 0, data.numberOfSets);
+            default -> KminUtils.estimateSetExact(results, queryInfo);
+        };
     }
 
     private static Data data_generation(int intersectionSize, int numberOfSets, int noiseSize, int domainSize) {
