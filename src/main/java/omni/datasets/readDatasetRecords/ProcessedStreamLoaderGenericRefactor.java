@@ -24,7 +24,7 @@ public class ProcessedStreamLoaderGenericRefactor {
 	BufferedReader bis;
 
 	int recSkippedBecauseEarlyStart=0;
-	String filename = null;
+	String filename;
 	public void reset() {
 		try {
 			if (compression) {
@@ -151,7 +151,6 @@ public class ProcessedStreamLoaderGenericRefactor {
 					if ('s' == a[0].charAt(0)) {
 						if (r.assembled) {
 							Record r2 = (Record) r;
-							r = null;
 							d.add(r2);
 						} else {
 							skip++;
@@ -294,9 +293,9 @@ public class ProcessedStreamLoaderGenericRefactor {
 
 	public static void convert(String path) throws Exception {
 		long checksum=0;
-		int start,stop = 0;
+		int start,stop;
 		String outfile;
-		DataOutputStream dos = null;
+		DataOutputStream dos;
 		if (path.endsWith("sc.txt.gz")) {
 			start=0;
 			stop=10367966;

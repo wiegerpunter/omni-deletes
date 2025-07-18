@@ -55,8 +55,8 @@ public class KminUtils {
     }
 
     public static int estimateTreeSet(Sample[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
-        int S_cap = 0;
-        int[] n_max = new int[2];
+        int S_cap;
+        int[] n_max;
         TreeSet<Integer>[] flatSamples = new TreeSet[kminArray.length];
         for (int i = 0; i < kminArray.length; i++) {
             flatSamples[i] = (TreeSet<Integer>) kminArray[i].query();
@@ -86,7 +86,8 @@ public class KminUtils {
                         iter = null;
                         break;
                     } // not contained
-                    else if (otherElement.equals(i)) continue; // is contained
+                    else if (otherElement.equals(i)) {
+                    } // is contained
                     else {
                         iter = samples[0].tailSet(otherElement).iterator(); // fast forward iter0
                         found = false;
@@ -101,7 +102,7 @@ public class KminUtils {
 
     private static int estimatePriorityQueue(Sample[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
         // Implement the logic to intersect and scale PriorityQueue kminArray
-        int S_cap = 0;
+        int S_cap;
         //queryInfo.expSetting.setNumSets(kminArray.length);
         PriorityQueue[] flatSamples = new PriorityQueue[kminArray.length];
         for (int i = 0; i < kminArray.length; i++) {
@@ -125,7 +126,7 @@ public class KminUtils {
 
     public static int estimateArray(Sample[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
         // Implement the logic to intersect and scale kminArray
-        int S_cap = 0;
+        int S_cap;
         int[] n_max;
 
         int[][] flatSamples = new int[kminArray.length][];
@@ -144,13 +145,13 @@ public class KminUtils {
         return (int) ((long) S_cap * n_max[0] / n_max[1]);
     }
 
-    public static int estimateSetExact(Sample[] kminSets, QueryInfo queryInfo, double bound, int numPreds) {
+    public static int estimateSetExact(Sample[] kminSets, QueryInfo queryInfo) {
         if (kminSets == null || kminSets.length == 0) {
             throw new IllegalArgumentException("kminSets is null or empty");
         }
 
         if (Objects.equals(kminSets[0].getKminType(), "ExactSolution")) {
-            int intersection = 0;
+            int intersection;
             Set<Integer> intersectionSet = new HashSet<>((Set<Integer>) kminSets[0].query());
 
             for (int i = 1; i < kminSets.length; i++) {
@@ -159,7 +160,6 @@ public class KminUtils {
 
             intersection = intersectionSet.size();
             queryInfo.setScap(intersection, kminSets[0].getN(), kminSets[0].getCurSampleSize(), false);
-            bound = 0;
             return intersection;
         } else {
             throw new IllegalArgumentException("Unsupported kmin type: " + kminSets[0].getKminType());
@@ -212,7 +212,7 @@ public class KminUtils {
 
     private static int estimatePriorityQueueOptimized(Sample[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
         // Implement the logic to intersect and scale PriorityQueue kminArray
-        int S_cap = 0;
+        int S_cap;
         int[] n_max = new int[4];
         PriorityQueue[] flatSamples = new PriorityQueue[kminArray.length];
         for (int i = 0; i < kminArray.length; i++) {
@@ -239,7 +239,7 @@ public class KminUtils {
 
     private static int estimatePriorityQueueOptimizedOnlyNew(Sample[] kminArray, QueryInfo queryInfo, double bound, int numPreds) {
         // Implement the logic to intersect and scale PriorityQueue kminArray
-        int S_cap = 0;
+        int S_cap;
         int[] n_max = new int[4];
         PriorityQueue[] flatSamples = new PriorityQueue[kminArray.length];
         for (int i = 0; i < kminArray.length; i++) {

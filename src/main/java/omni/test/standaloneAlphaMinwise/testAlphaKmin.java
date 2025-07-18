@@ -7,6 +7,7 @@ import omni.synopses.omniFactory.SampleTypes.*;
 import omni.synopses.omniFactory.utils.KminUtils;
 import omni.test.standaloneAlphaMinwise.Data;
 import omni.test.standaloneAlphaMinwise.Event;
+import omni.test.standaloneTWOLHS.test2LHS;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -185,36 +186,13 @@ public class testAlphaKmin {
             return KminUtils.estimateTreeSet(results, queryInfo, 0, data.numberOfSets);
         } else if (setting.equals("KminSimpleBuffer")) {
             return KminUtils.estimateArray(results, queryInfo, 0, data.numberOfSets);
-        } else if (setting.equals("ExactSolution")) {
-            return KminUtils.estimateSetExact(results, queryInfo, 0, data.numberOfSets);
         } else {
-            throw new IllegalArgumentException("Unknown setting: " + setting);
+            return KminUtils.estimateSetExact(results, queryInfo);
         }
     }
 
     private static Data data_generation(int intersectionSize, int numberOfSets, int noiseSize, int domainSize) {
-        int[] domainValues = new int[numberOfSets + 2];
-        domainValues[0] = 1;
-        for (int i = 1; i < domainValues.length; i++) {
-            domainValues[i] = domainValues[i - 1] + domainSize; // Fill with values from 1 to numberOfSets
-        }
-
-        int[] intersection = new int[intersectionSize];
-        Random random = new Random(0);
-        for (int i = 0; i < intersectionSize; i++) {
-            // Fill intersection with values from the domain, not necessarily unique
-            intersection[i] = random.nextInt(domainValues[0], domainValues[1]);
-        }
-
-        int[][] noiseSets = new int[numberOfSets][noiseSize];
-        for (int setIndex = 0; setIndex < numberOfSets; setIndex++) {
-            Random setRandom = new Random(setIndex + 1); // Different seed for each set
-            for (int i = 0; i < noiseSize; i++) {
-                // Ensures values are outside the intersection and non-overlapping
-                noiseSets[setIndex][i] = setRandom.nextInt(domainValues[setIndex + 1], domainValues[setIndex + 2]);
-            }
-        }
-        return new Data(intersection, noiseSets);
+        return test2LHS.data_generation(intersectionSize, numberOfSets, noiseSize, domainSize);
         // Here you can return or store the generated data as needed
     }
 

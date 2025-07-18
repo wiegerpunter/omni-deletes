@@ -161,16 +161,6 @@ public class ArrayWithIngestionBuffer {
             return;
         }
 
-//        // check if present in buffer
-//        int bufferIndex = Arrays.binarySearch(buffer, 0, bufferSize, hx);
-//        if (bufferIndex >= 0) {
-//            // Element found in buffer, remove it
-//            System.arraycopy(buffer, bufferIndex + 1, buffer, bufferIndex, bufferSize - bufferIndex - 1);
-//            bufferSize--;
-//            deletesFromBuffer++;
-//            return;
-//        }
-////
         for (int i = 0; i < bufferSize; i++) {
             if (ingestionBuffer[i] == hx) {
                 // delete buffer[i]
@@ -392,32 +382,6 @@ public class ArrayWithIngestionBuffer {
                     insertIndex = Math.min(curSampleSize + 1, K) - 1;
                 }
                 insertFromBufferToDeleteSlot(bufferIndex, deleteIndex, insertIndex);
-
-//                    int tries = 4;
-//                    boolean deleted = false;
-//                    int arrIndexCloseToDelete = index;
-//                    while (tries > 0) {
-//                        if (arrIndexCloseToDelete == 0 || arr[arrIndexCloseToDelete - 1] <= ingestionBuffer[bufferIndex]) {
-//                            if (arrIndexCloseToDelete == arr.length - 1 || arr[arrIndexCloseToDelete + 1] >= ingestionBuffer[bufferIndex]) {
-//                                insertFromBufferToDeleteSlot(bufferIndex, index, arrIndexCloseToDelete);
-//                                deleted = true;
-//                                break;
-//                            } else {
-//                                arrIndexCloseToDelete++;
-//                                tries--;
-//                            }
-//                        } else {
-//                            arrIndexCloseToDelete--;
-//                            tries--;
-//                        }
-//                    }
-//                    if (!deleted) {
-//                        arrIndexCloseToDelete = Arrays.binarySearch(arr, 0, bufferSize, ingestionBuffer[bufferIndex]);
-//                        if (arrIndexCloseToDelete >= 0) {
-//                            insertFromBufferToDeleteSlot(bufferIndex, index, arrIndexCloseToDelete);
-//                        }
-//
-//                    }
             } else {
                 System.arraycopy(arr, deleteIndex + 1, arr, deleteIndex, Math.min(curSampleSize + 1, K) - deleteIndex -1);
                 arr[Math.min(curSampleSize, K - 1)] = Integer.MAX_VALUE; // Set the last element to a large value

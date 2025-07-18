@@ -26,8 +26,6 @@ public class CleanDataset {
     public long[][] datasetNegUpdates;
     public long[][] datasetResidu;
     public long[][] noiseUpdates;
-//    long[][] ingestionDataset;
-//    long[][] warmupDataset;
 
     public long[][][] rangeQueries;
     public long[][] pointQueries;
@@ -57,51 +55,12 @@ public class CleanDataset {
     private final int numBins;
     public double zipfAlpha;
 
-    //int[] attributesToChoose;
-//    private void getAttrsToChoose(int repetition) {
-//        // Repetition is used to get the same attributes for each repetition, but different for each repetition.
-//        if (Objects.equals(name, "SNMP")) {
-//            attributesToChoose = new int[]{9,3,2,8,10,1,5,6,7,0,4};
-//        } else if (Objects.equals(name, "CAIDA")) {
-//            attributesToChoose = new int[]{0,1,2,3,4};
-//        } else {
-//            attributesToChoose = new int[dataset[0].length];
-//            for (int i = 0; i < dataset[0].length; i++) {
-//                attributesToChoose[i] = i;
-//            }
-//        }
-//        // shuffle attributesToChoose based on repetition.
-//        Random rng = new Random(repetition);
-//        for (int i = 0; i < attributesToChoose.length; i++) {
-//            int randomPosition = rng.nextInt(attributesToChoose.length);
-//            int temp = attributesToChoose[i];
-//            attributesToChoose[i] = attributesToChoose[randomPosition];
-//            attributesToChoose[randomPosition] = temp;
-//        }
-//        System.out.println("Attributes to choose: " + Arrays.toString(attributesToChoose) + " for repetition " + repetition);
-//    }
 
     public CleanDataset(Config config) {
         this.config = config;
         this.name = config.datasetName;
         this.numBins = config.numBins;
         this.numPredicates = config.numPredicates;
-//        if (Objects.equals(name, "SNMP")) {
-//            cleanIds = new int[]{12, 14, 11, 1, 5, 13, 9, 8, 10, 21, 15};//{0, 1, 2, 3, 4, 5, 6, 7, 8, 16, 17};
-//            //int[] order = {12, 14, 11, 1, 5, 13, 9, 8, 10, 21, 15};//21, 19, 18, 1, 16, 12, 15, 5, 20,11, 17, 8, 13, 10};
-//        } else if (Objects.equals(name, "CAIDA")) {
-//            cleanIds = new int[]{5, 6, 8, 9, 10}; // 4 & 7 are also ok but correlate with 5 6 8 9.
-//            // print names of vars used:
-//            for (int i = 0; i < cleanIds.length; i++) {
-//                System.out.println(Parser.getAttributeName(cleanIds[i]));
-//            }
-//        } else if (Objects.equals(name, "wc98")) {
-//            throw new RuntimeException("Not implemented");
-//        } else if (name.contains("synth")) {
-//            cleanIds = new int[]{0, 1, 2, 3, 4, 5, 6, 7,8,9}; //,5,6,7,8,9,10,11};
-//        }else {
-//            throw new RuntimeException("Unknown dataset name");
-//        }
     }
 
     public void initToNull(){
@@ -155,15 +114,13 @@ public class CleanDataset {
     }
 
     private int splitDeletes(double percToDelete) {
-//        warmupDataset = Arrays.copyOfRange(dataset, 0, Math.min(Main.warmupNumber, dataset.length));
-//        ingestionDataset = Arrays.copyOfRange(dataset, Math.min(Main.warmupNumber, dataset.length), dataset.length);
         if (!config.withDeletes) {
             datasetResidu = dataset;
             datasetNegUpdates = new long[0][];
             Main.streamSize = dataset.length;
             return dataset.length;
         }
-        int numToKeep=0;
+        int numToKeep;
         long time_start = System.currentTimeMillis();
 //        if (Main.spreadOutDeletes) {
 //            neverDeleted = new boolean[dataset.length];
@@ -768,8 +725,6 @@ public class CleanDataset {
 
             if (!alreadyInList) {
                 potQueries.put(query, 1);
-                //potentialQueries.add(query);
-                //potentialQueriesExactAnswer.add(1);
                 generatedQueries++;
             }
 
@@ -807,8 +762,6 @@ public class CleanDataset {
             indices[i] = i;
         }
         Arrays.sort(indices, Comparator.comparingInt(i -> potPointQueryAnswers[i]));
-        //List<long[]> selectedQueries = new ArrayList<>();
-        //List<Integer> selectedAnswers = new ArrayList<>();
         int minDomain = potPointQueryAnswers[indices[0]];
         int maxDomain = potPointQueryAnswers[indices[indices.length - 1]];
         int domain = maxDomain - minDomain;
@@ -844,7 +797,7 @@ public class CleanDataset {
 
         config.numQueries = 0;
         for (int i = 0; i < numBins; i++) {
-            int binSize = 0;
+            int binSize;
             if (i == 0) {
                 binSize = splitIndices[i];
             } else {
@@ -897,7 +850,7 @@ public class CleanDataset {
             randomIndices = new int[numQueriesPerBin];
             for (int j = 0; j < numQueriesPerBin; j++) {
                 int toAdd = startPos + random.nextInt(binSize);
-                boolean alreadyIn = false;
+                boolean alreadyIn;
                 alreadyIn = Arrays.stream(randomIndices).anyMatch(x -> x == toAdd);
                 if (alreadyIn) {
                     j--;
@@ -958,31 +911,6 @@ public class CleanDataset {
         for (int i = 0; i < config.numStoredAttributes; i++) {
             System.out.println("Attribute with index " + i + " ," + parseIndex(i + 1) + " has " + unique[i].size() + " unique values.");
         }
-
-//
-//        // For each attribute, print count for each unique value
-//        for (int i = 0; i < Main.numStoredAttributes; i++) {
-//            HashMap<Long, Integer> count = new HashMap<>();
-//            for (int j = 0; j < dataset.length; j++) {
-//                if (dataset[j][i + 1] != -1) {
-//                    count.put(dataset[j][i + 1], count.getOrDefault(dataset[j][i + 1], 0) + 1);
-//                }
-//            }
-//            System.out.println("Attribute with index " + i + " ," + parseIndex(i + 1) + " has the following distribution:");
-//            // sort on count, descending
-//            count = count.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-//            //count = count.entrySet().stream().sorted(Map.Entry.comparingByValue()).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-//            // make sure we don't print more than 10 values, values sorted on count
-//            int numPrinted = 0;
-//            for (Map.Entry<Long, Integer> entry : count.entrySet()) {
-//                System.out.println("Value: " + entry.getKey() + " has count: " + entry.getValue());
-//                numPrinted++;
-//                if (numPrinted == 10) {
-//                    break;
-//                }
-//            }
-//        }
-
         System.out.println("Dataset has " + dataset.length + " records.");
     }
 
@@ -1012,9 +940,6 @@ public class CleanDataset {
         try {
             while ((nextLine = reader.readNext()) != null) {
                 int numStoredAttributesInFile = Integer.parseInt(nextLine[0]);
-//                if (numStoredAttributesInFile != Main.numStoredAttributes) {
-//                    throw new RuntimeException("numStoredAttributes in workload file does not match numStoredAttributes in Main");
-//                }
                 int queryId = Integer.parseInt(nextLine[1]);
                 String query = nextLine[2];
                 // Method that fills query with "-1" for difference numStoredAttributes - Main.numStoredAttributes
@@ -1132,9 +1057,6 @@ public class CleanDataset {
         isDelete = new boolean[datasetResidu.length + 2 * noiseUpdates.length];
         Arrays.fill(isDelete, false);
         if (config.spreadOutDeletes) {
-            //ArrayList<long[]> deleteQueue = new ArrayList<>();
-            //ArrayList<long[]> deleteQueue = new ArrayList<>();
-            //HashMap<Integer, Integer> indicesToRemove = new HashMap<>();
             int c = 0;
             Random r = new Random(0);
             for (long[] record : datasetInsertsSpreadOut) {
@@ -1339,36 +1261,6 @@ public class CleanDataset {
         pointQueries = newPointQueries;
         pointQueryAnswers = newPointQueryAnswers;
         pointQueriesNumAttrs = newPointQueriesNumAttrs;
-
-//
-//        if (uniqueCount > Main.numQueries) {
-//            // Downsample
-//            Set<Integer> uniqueIndices = new HashSet<>();
-//            Random random = new Random(0);
-//            while (uniqueIndices.size() < Main.numQueries) {
-//                uniqueIndices.add(random.nextInt(uniqueCount));
-//            }
-//            long[][] newPointQueries = new long[Main.numQueries][];
-//            int[] newPointQueryAnswers = new int[Main.numQueries];
-//            int[] newPointQueriesNumAttrs = new int[Main.numQueries];
-//            Iterator<Integer> unqIterator = uniqueIndices.iterator();
-//            for (int new_i=0; new_i < Main.numQueries; new_i++) {
-//                int i = unqIterator.next();
-//                newPointQueries[new_i] = pointQueries[i];
-//                newPointQueryAnswers[new_i] = pointQueryAnswers[i];
-//                newPointQueriesNumAttrs[new_i] = pointQueriesNumAttrs[i];
-//            }
-//            pointQueries = newPointQueries;
-//            pointQueryAnswers = newPointQueryAnswers;
-//            pointQueriesNumAttrs = newPointQueriesNumAttrs;
-//
-//        } else {
-//
-//            // Resize the pointQueries array to contain only unique entries
-//            pointQueries = Arrays.copyOf(pointQueries, uniqueCount);
-//            pointQueryAnswers = Arrays.copyOf(pointQueryAnswers, uniqueCount);
-//            pointQueriesNumAttrs = Arrays.copyOf(pointQueriesNumAttrs, uniqueCount);
-//        }
         splitDeletes(percToDelete);
         pointQueryAnswersDeletes = new int[pointQueries.length];
         pointQueryUnion = new int[pointQueries.length];
@@ -1379,37 +1271,11 @@ public class CleanDataset {
 
         pointQueryBinNumber = new int[pointQueries.length];
         pointQueriesNumZipfian = new int[pointQueries.length];
-
-//        for (int i = 0; i < pointQueries.length; i++) {
-//            for (int j = 0; j < numAttrs; j++) {
-//                if (pointQueries[i] == null) {
-//                    continue;
-//                }
-//                if (pointQueries[i][j] != -1) {
-//                    pointQueriesNumAttrs[i]++;
-//                    if (pointQueriesNumAttrs[i] > numPredicates) {
-//                        throw new RuntimeException("More than numPredicates attributes in query.");
-//                    }
-//                    if (j < numZipfianAttrs) {
-//                        pointQueriesNumZipfian[i]++;
-//                    }
-//                }
-//            }
-//            pointQueryBinNumber[i] = i;
-//        }
-
-
-
-
     }
     private void generateSynthQueries(int numAttrs, double percToDelete, int numZipfianAttrs) {
         // draw 1000 records from dataset
         Random random = new Random(repetition);
         pointQueries = new long[config.numQueries * numPredicates][];
-
-//        long[] recordOutOfDomain = new long[numAttrs];
-//        Arrays.fill(recordOutOfDomain, -1000);
-
 
         for (int p = 0; p < numPredicates; p++) {
             for (int i = p * config.numQueries; i < (p + 1) * config.numQueries; i++) {
@@ -1550,13 +1416,8 @@ public class CleanDataset {
                 }
             }
         }
-//        int numRepeatedRecord = (int) (totalRecords * 0.8);
-//        long[] repeatedRecord = new long[numAttrs];
-//        Arrays.fill(repeatedRecord, 555);
-
 
         this.dataset = new long[totalRecords][];
-//        long[][] tempDataset = new long[totalRecords][];
         for (int i=0; i <totalRecords; i++ ) {
             dataset[i] = new long[numAttrs + 1]; // +1 for id
             this.dataset[i][0] = i; // id
@@ -1566,9 +1427,6 @@ public class CleanDataset {
                     1 + numZipfianAttrs, numUniformAttrs);
             if (numMixtureAttrs > 0) System.arraycopy(mixtureData[i], 0, dataset[i],
                     1 + numZipfianAttrs + numUniformAttrs, numMixtureAttrs);
-//            if (Main.numAttributes - numZipfianAttrs > 0) {
-//                System.arraycopy(unifData[i], 0, tempDataset[i], numZipfianAttrs, numAttrs - numZipfianAttrs);
-//            }
         }
 
         int[] indices = new int[totalRecords];

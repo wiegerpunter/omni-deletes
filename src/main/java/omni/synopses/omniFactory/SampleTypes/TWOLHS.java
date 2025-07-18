@@ -56,7 +56,7 @@ public class TWOLHS implements Sample {
         boolean[] bits = new boolean[bitSize];
 
         int lsb = bitSize - 1;
-        long bit =0;
+        long bit;
         while (h > 0) {
             bit = h % 2;
             h/= 2;

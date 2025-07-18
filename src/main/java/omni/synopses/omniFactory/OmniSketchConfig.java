@@ -16,7 +16,6 @@ public class OmniSketchConfig {
     private int sampleBufferSize;
     private int numStoredAttributes;
     private int[] params;
-    private boolean useNMax;
     private String setting;
     private boolean useFastTWOLHS;
     private double beta;
@@ -147,7 +146,6 @@ public class OmniSketchConfig {
     }
 
     public void setUseNMax(boolean useNMax) {
-        this.useNMax = useNMax;
     }
 
     public boolean getUseFastTWOLHS() {

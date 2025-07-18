@@ -163,14 +163,11 @@ public class testAcc2LHS {
             double estimate = TWOLHSUtils.setIntersectEstimatorAllBuckets(samples, u, false, queryInfo);
             queryInfo.setEstimate(queryInfo, (int) estimate);
             return (int) estimate;
-        } else if (setting.equals("ExactSolution")) {
+        } else {
             // For ExactSolution, we can directly compute the intersection size
             return TWOLHSUtils.exactSolution(samples, queryInfo);
         }
 
-        else {
-            throw new IllegalArgumentException("Unknown setting: " + setting);
-        }
     }
 
     private static Data data_generation(int intersectionSize, int numberOfSets, int noiseSize, int domainSize) {
@@ -191,7 +188,7 @@ public class testAcc2LHS {
 
         int[][] noiseSets = new int[numberOfSets][noiseSize];
         for (int setIndex = 0; setIndex < numberOfSets; setIndex++) {
-            if (noiseSize <= 0) { break;};
+            if (noiseSize == 0) { break;};
             int domainPerSet = (domainValues[setIndex + 2] - domainValues[setIndex + 1]) / noiseSize;
             Random setRandom = new Random(setIndex + 1); // Different seed for each set
             for (int i = 0; i < noiseSize; i++) {

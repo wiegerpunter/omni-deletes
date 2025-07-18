@@ -149,20 +149,6 @@ public class aSH extends SynopsisRefactor {
                 }
             }
         }
-//        for (Object key : keys_array) {
-//            if (Tis[i] == tstar) {
-//                sketch.remove((long[]) key);
-//                size--;
-//            } else {
-//                if (sketch.get((long[]) key)[1] <= tstar) {
-//                    if (tstar * us[i] > sketch.get((long[]) key)[1]) {
-//                        sketch.get((long[]) key)[0] += tstar * Math.log(zs[i]); // check if cost is actually updated.
-//                    }
-//                    sketch.get((long[]) key)[1] = tstar;
-//                }
-//            }
-//            i++;
-//        }
     }
 
     @Override

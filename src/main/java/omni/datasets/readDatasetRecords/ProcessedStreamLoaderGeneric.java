@@ -25,7 +25,7 @@ public class ProcessedStreamLoaderGeneric {
 		return stop;
 	}
 	int recSkippedBecauseEarlyStart=0;
-	String filename = null;
+	String filename;
 	public void reset() {
 		try {
 			if (compression) {
@@ -166,7 +166,7 @@ public class ProcessedStreamLoaderGeneric {
 		long stopTime= System.currentTimeMillis();
 		System.err.println("Write took "+ (stopTime-startTime)/1000);
 		
-		String outfile=null;
+		String outfile;
 		if (compression) {
 			if (args[0].contains("wc-part")) {
 				outfile = "wc-part.binary.gz";
@@ -207,9 +207,9 @@ public class ProcessedStreamLoaderGeneric {
 
 	public static void convert(String path) throws Exception {
 		long checksum=0;
-		int start,stop = 0;
+		int start,stop;
 		String outfile;
-		DataOutputStream dos = null;
+		DataOutputStream dos;
 		if (path.endsWith("sc.txt.gz")) {
 			start=0;
 			stop=10367966;

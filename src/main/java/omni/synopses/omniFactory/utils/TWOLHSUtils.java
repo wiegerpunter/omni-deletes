@@ -70,10 +70,10 @@ public class TWOLHSUtils {
         double f = (1.0 + eps) * numTWOLHSRepetitions / 8; // from paper.
 
         int index = 0;
-        int count = 0;
+        int count;
         while (true) {
             count = 0;
-            boolean incrCount = false;
+            boolean incrCount;
             for (int i = 0; i < numTWOLHSRepetitions; i++) {
                 incrCount = false;
                 for (Sample[] sample : samples) {

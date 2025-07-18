@@ -29,7 +29,7 @@ public class DatasetRefactor {
                 boolean writeSNMP = true;
                 if (!f.exists()) {
                     SNMPDataset();
-                    writeSNMP = false;
+                    writeSNMP;
                 } else {
                     System.out.println("Loading dataset from file, name: " + CSV_FILE_NAME);
                     throw new RuntimeException("implement read in datasetRefactor");

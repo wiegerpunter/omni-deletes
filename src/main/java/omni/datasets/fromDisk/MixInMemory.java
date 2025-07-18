@@ -78,10 +78,10 @@ public class MixInMemory {
     private void mixFiles(String residuFile, String insertFile, String finalStreamFile) throws IOException {
         // Estimate initial size to reduce resizing (arbitrary reasonable defaults)
         this.allRecords = new ArrayList<>(100_000);
-        List<long[]> inserts = new ArrayList<>();
+        ArrayList<long[]> inserts = new ArrayList<>();
 
         if (insertFile != null) {
-            readDataset(insertFile, (ArrayList<long[]>) inserts, true);
+            readDataset(insertFile, inserts, true);
             seen = new HashSet<>(inserts.size()); // Load factor consideration
             allRecords.addAll(inserts);
             allRecords.addAll(inserts); // Add noise twice

@@ -3,7 +3,7 @@ package omni.Experiments.utils;
 import omni.Experiments.ExpSetting;
 
 public class QueryInfo {
-    public int CMRow = 0;
+    public int CMRow;
     public int Scap;
     public int nmax;
     public int maxSize;

@@ -331,7 +331,7 @@ public class runQueries {
                 result[40] = "0";
             } else {
                 if (s.setting.contains("OmniSketch")) {
-                    result[40] = String.valueOf(Main.uniqueSamples.keySet().size());
+                    result[40] = String.valueOf(Main.uniqueSamples.size());
                 } else {
                     result[40] = String.valueOf(Main.uniqueSamplesReservoir.size());
                 }

@@ -248,7 +248,7 @@ public class RamToPar {
         if (B <= 1) {
             return B;
         }
-        if (B >= Integer.MAX_VALUE) {
+        if (B == Integer.MAX_VALUE) {
             throw new RuntimeException("B is too large");
         }
 
@@ -278,7 +278,7 @@ public class RamToPar {
         if (B <= 1) {
             return B;
         }
-        if (B >= Integer.MAX_VALUE) {
+        if (B == Integer.MAX_VALUE) {
             throw new RuntimeException("B is too large");
         }
 
@@ -447,7 +447,6 @@ public class RamToPar {
         double[] currentInfo = new double[3];
         double[] info = getSizeKmin(ram);
         if (info[0] > maxSize) {
-            maxSize = (int) info[0];
             currentInfo = info;
         }
         return currentInfo;
