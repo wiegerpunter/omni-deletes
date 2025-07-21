@@ -1,6 +1,7 @@
 package omni.synopses.omniFactory.OmniSketchTypes;
 
 import omni.Experiments.utils.QueryInfo;
+import omni.datasets.Record.Record;
 import omni.synopses.omniFactory.OmniSketchConfig;
 import omni.synopses.omniFactory.attributeSketchTypes.AttrSketchHashSet;
 
@@ -64,6 +65,11 @@ public class OmniSketchTypeSampleFirst extends OmniSketchType {
     }
 
     @Override
+    public void ingest(Record record, int i) {
+throw new UnsupportedOperationException("Ingesting Record is not supported in OmniSketchTypeSampleFirst");
+    }
+
+    @Override
     public void reset() {
         // Reset the sketch state
     }
@@ -71,6 +77,11 @@ public class OmniSketchTypeSampleFirst extends OmniSketchType {
     @Override
     public int query(long[] query, int numPreds, QueryInfo queryInfo) {
         return queryHashSets(hashSetsInQuery(query, numPreds), queryInfo, numPreds);
+    }
+
+    @Override
+    public int query(Record query, int numPreds, QueryInfo queryInfo) {
+        throw new UnsupportedOperationException("Querying Record is not supported in OmniSketchTypeSampleFirst");
     }
 
     @Override

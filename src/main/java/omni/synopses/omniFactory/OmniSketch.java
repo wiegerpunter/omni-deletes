@@ -22,17 +22,13 @@ public class OmniSketch extends SynopsisRefactor {
 
     @Override
     public void add(Record record) {
-
-    }
-
-    public void add(long[] record) {
-        // Add logic to insert a record into the sketch
         ingest(record, 1);
     }
 
     @Override
-    public void ingest(Record record, int i) {
-
+    public void add(long[] record) {
+        // Add logic to insert a record into the sketch
+        ingest(record, 1);
     }
 
     public void delete(long[] record) {
@@ -42,14 +38,24 @@ public class OmniSketch extends SynopsisRefactor {
 
     @Override
     public void delete(Record r) {
-
+        ingest(r, -1);
     }
 
     private void ingest(long[] record, int i) {
         sketch.ingest(record, i);
     }
 
+    public void ingest(Record record, int i) {
+        sketch.ingest(record, i);
+    }
+
+
     public int query(long[] query, int numPreds, QueryInfo queryInfo) {
+        // Query logic to retrieve results based on the query, union size, and additional info
+        return sketch.query(query, numPreds, queryInfo);
+    }
+
+    public int query(Record query, int numPreds, QueryInfo queryInfo) {
         // Query logic to retrieve results based on the query, union size, and additional info
         return sketch.query(query, numPreds, queryInfo);
     }
@@ -83,11 +89,6 @@ public class OmniSketch extends SynopsisRefactor {
     public int query(long[] query, int numPreds) {
         // Query logic to retrieve results based on the query
         throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public int query(Record query, int numPreds, QueryInfo queryInfo) {
-        return 0;
     }
 
     @Deprecated

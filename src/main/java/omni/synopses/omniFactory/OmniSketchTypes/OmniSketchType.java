@@ -1,6 +1,7 @@
 package omni.synopses.omniFactory.OmniSketchTypes;
 
 import omni.Experiments.utils.QueryInfo;
+import omni.datasets.Record.Record;
 import omni.synopses.omniFactory.OmniSketchConfig;
 
 public abstract class OmniSketchType {
@@ -12,9 +13,11 @@ public abstract class OmniSketchType {
     public abstract void initialize();
 
     public abstract void ingest(long[] record, int i);
+    public abstract void ingest(Record record, int i);
 
     public abstract void reset();
     public abstract int query(long[] query, int numPreds, QueryInfo queryInfo);
+    public abstract int query(Record query, int numPreds, QueryInfo queryInfo);
 
     public abstract String getSketchType();
 

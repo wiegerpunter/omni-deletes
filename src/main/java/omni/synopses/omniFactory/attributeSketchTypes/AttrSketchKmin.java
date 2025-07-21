@@ -37,6 +37,9 @@ public class AttrSketchKmin {
     private void attrHash(long attrValue) {
         HashUtils.computeHashes(attrHashFunctions, attrValue, depth, width, reusableHashes);
     }
+    private void attrHash(Object attrValue) {
+        HashUtils.computeHashes(attrHashFunctions, attrValue, depth, width, reusableHashes);
+    }
 
     public void ingest(long attrValue, int[] hx, int sign) {
         attrHash(attrValue);
@@ -46,7 +49,25 @@ public class AttrSketchKmin {
         }
     }
 
+    public void ingest(Object attrValue, int[] hx, int sign) {
+        attrHash(attrValue);
+        for (int j = 0; j < depth; j++) {
+            int i = reusableHashes[j];
+            sketch[j][i].ingest(hx[j], sign);
+        }
+    }
+
     public Sample[] query(long attrValue) {
+        attrHash(attrValue);
+        Sample[] result = new Sample[depth];
+        for (int j = 0; j < depth; j++) {
+            int i = reusableHashes[j];
+            result[j] = sketch[j][i];//.query();
+        }
+        return result;
+
+    }
+    public Sample[] query(Object attrValue) {
         attrHash(attrValue);
         Sample[] result = new Sample[depth];
         for (int j = 0; j < depth; j++) {

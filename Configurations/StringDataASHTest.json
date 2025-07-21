@@ -6,7 +6,7 @@
   "readFolder": "/home/wieger/omni-deletes/",
   "withDeletes": true,
   "spreadOutDeletes": true,
-  "ramVals": [10],
+  "ramVals": [1000],
   "noiseUpdateFractions": [0],
   "ingestBuffers": [0.1],
   "dGridSearch": [3],
@@ -49,7 +49,7 @@
   "expOmniSketchSFQLSampleSizePerRow": false,
   "expOmniSketchSFQLSampleSizeTestHashSet": false,
   "expSlowTWOLHS": false,
-  "expFastTWOLHS": false,
+  "expFastTWOLHS": true,
   "expFastTWOLHSOneBucket": false,
   "expNMaxTWOLHS": false,
 
@@ -60,7 +60,7 @@
   "expFastTWOLHSOneBucketPerRow": false,
   "expNMaxTWOLHSPerRow": false,
 
-  "expASH": true,
+  "expASH": false,
   "expHydra": false,
   "expResSample": false,
   "expCM": false,

@@ -55,7 +55,8 @@ public class SyntheticDataset {
     public void synthDevLoader(double perc, double sizeFactor, double zipfAlpha) {
         setupDataset(perc, sizeFactor, zipfAlpha);
         loadQueries(perc);
-        loadQueriesLong(perc);
+//        loadQueriesLong(perc);
+        loadQueriesString(perc);
     }
 
     private void setupDataset(double perc, double sizeFactor, double zipfAlpha) {

@@ -2,6 +2,8 @@ package omni.synopses.omniFactory.OmniSketchTypes;
 
 import com.google.common.hash.HashFunction;
 import omni.Experiments.utils.QueryInfo;
+import omni.datasets.Record.Record;
+import omni.datasets.Record.RecordUtils;
 import omni.synopses.omniFactory.OmniSketchConfig;
 import omni.synopses.omniFactory.SampleTypes.Sample;
 import omni.synopses.omniFactory.attributeSketchTypes.AttrSketchTWOLHS;
@@ -48,6 +50,23 @@ public class OmniSketchTypeSampleLaterTWOLHS extends OmniSketchType {
     }
 
     @Override
+    public void ingest(Record record, int sign) {
+        Object obj_id = record.getValue(0);
+        long id;
+        if (obj_id instanceof Long) {
+            id = (Long) obj_id;
+        } else if (obj_id instanceof String) {
+            id = Long.parseLong((String) obj_id);
+        } else {
+            throw new IllegalArgumentException("ID must be a Long or String");
+        }
+
+        for (int i = 0; i < numStoredAttributes; i++) {
+            attributeSketches[i].ingest(record.getValue(i + 1), (int) id, sign);
+        }
+    }
+
+    @Override
     public void reset() {
         // Reset the sketch state
         for (AttrSketchTWOLHS attributeSketch : attributeSketches) {
@@ -59,6 +78,31 @@ public class OmniSketchTypeSampleLaterTWOLHS extends OmniSketchType {
 
     @Override
     public int query(long[] query, int numPreds, QueryInfo queryInfo) {
+        if (sketchConfig.isUseAcrossRows()) {
+            Sample[][] samples = getCellsToIntersectAcrossRows(query, numPreds);
+            double estimate = TWOLHSUtils.estimate(sampleType, samples, epsilon,
+                    numTWOLHSRepetitions, queryInfo);
+            queryInfo.setEstimate(queryInfo, (int) estimate);
+            return (int) estimate;
+        } else {
+            ArrayList<QueryInfo> queryInfos = new ArrayList<>(depth);
+            Sample[][][] cellsToIntersect = getCellsToIntersectPerRow(query, numPreds);
+            for (int j = 0; j < depth; j++) {
+                queryInfos.add(new QueryInfo());
+                TWOLHSUtils.estimate(sampleType, cellsToIntersect[j], epsilon,
+                        numTWOLHSRepetitions, queryInfos.get(j));
+
+            }
+            // sort queryInfos on estimates
+            QueryInfoSorter.sortByEstimateSize(queryInfos);
+            QueryInfo medianQueryInfo = queryInfos.get(queryInfos.size() / 2);
+            queryInfo.setEstimate(medianQueryInfo, medianQueryInfo.getEstimate());
+            return queryInfo.getEstimate();
+        }
+    }
+
+    @Override
+    public int query(Record query, int numPreds, QueryInfo queryInfo) {
         if (sketchConfig.isUseAcrossRows()) {
             Sample[][] samples = getCellsToIntersectAcrossRows(query, numPreds);
             double estimate = TWOLHSUtils.estimate(sampleType, samples, epsilon,
@@ -104,12 +148,43 @@ public class OmniSketchTypeSampleLaterTWOLHS extends OmniSketchType {
         return cellsToIntersect;
     }
 
+    private Sample[][] getCellsToIntersectAcrossRows(Record query, int numPreds) {
+        Sample[][] cellsToIntersect = new Sample[depth * numPreds][numTWOLHSRepetitions];
+        int attrWithoutPred = 0;
+        for (int i = 0; i < query.length(); i++) {
+            if (!RecordUtils.flexibleEquals(query.getValue(i),-1)) { // Find way to not take the -1s into account in query.
+                Sample[][] temp = attributeSketches[i].query(query.getValue(i));
+                if (depth >= 0) {
+                    System.arraycopy(temp, 0, cellsToIntersect, (i - attrWithoutPred) * depth, depth);
+                }
+            } else {
+                attrWithoutPred++;
+            }
+        }
+        return cellsToIntersect;
+    }
+
     private Sample[][][] getCellsToIntersectPerRow(long[] query, int numPreds) {
         Sample[][][] cellsToIntersect = new Sample[depth][numPreds][numTWOLHSRepetitions];
         int numPredsFound = 0;
         for (int i = 0; i < query.length; i++) {
             if (query[i] != -1) {
                 Sample[][] temp = attributeSketches[i].query(query[i]);
+                for (int j = 0; j < depth; j++) {
+                    cellsToIntersect[j][numPredsFound] = temp[j];
+                }
+                numPredsFound++;
+            }
+        }
+        return cellsToIntersect;
+    }
+
+    private Sample[][][] getCellsToIntersectPerRow(Record query, int numPreds) {
+        Sample[][][] cellsToIntersect = new Sample[depth][numPreds][numTWOLHSRepetitions];
+        int numPredsFound = 0;
+        for (int i = 0; i < query.length(); i++) {
+            if (!RecordUtils.flexibleEquals(query.getValue(i),-1)) {
+                Sample[][] temp = attributeSketches[i].query(query.getValue(i));
                 for (int j = 0; j < depth; j++) {
                     cellsToIntersect[j][numPredsFound] = temp[j];
                 }

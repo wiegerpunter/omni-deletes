@@ -71,6 +71,10 @@ public class AttrSketchTWOLHS {
         HashUtils.computeHashes(attrHashFunctions, attrValue, depth, width, reusableHashes);
     }
 
+    private void attrHash(Object attrValue) {
+        HashUtils.computeHashes(attrHashFunctions, attrValue, depth, width, reusableHashes);
+    }
+
     public void ingest(long attrValue, int id, int sign) {
         attrHash(attrValue);
         for (int j = 0; j < depth; j++) {
@@ -90,7 +94,38 @@ public class AttrSketchTWOLHS {
         }
     }
 
+
+    public void ingest(Object attrValue, int id, int sign) {
+        attrHash(attrValue);
+        for (int j = 0; j < depth; j++) {
+            int i = reusableHashes[j];
+            if (omniSketchConfig.getUseFastTWOLHS()) {
+                int g = hashG(id);
+                sketch[j][i][g].ingest(id, sign);
+            } else {
+                if (sampleType.equals("TWOLHSExact")) { // insert only once.
+                    sketch[j][i][0].ingest(id, sign);
+                    continue;
+                }
+                for (int k = 0; k < numTWOLHSRepetitions; k++) {
+                    sketch[j][i][k].ingest(id, sign);
+                }
+            }
+        }
+    }
+
     public Sample[][] query(long attrValue) {
+        attrHash(attrValue);
+        Sample[][] result = new Sample[depth][numTWOLHSRepetitions];
+        for (int j = 0; j < depth; j++) {
+            int i = reusableHashes[j];
+            result[j] = sketch[j][i];//.query();
+        }
+        return result;
+
+    }
+
+    public Sample[][] query(Object attrValue) {
         attrHash(attrValue);
         Sample[][] result = new Sample[depth][numTWOLHSRepetitions];
         for (int j = 0; j < depth; j++) {
