@@ -9,6 +9,7 @@ import omni.Config;
 import omni.Main;
 import omni.datasets.ReadRecord.ReadRecord;
 import omni.datasets.Record.Record;
+import omni.datasets.Record.RecordUtils;
 import omni.datasets.fromDisk.SyntheticDataset;
 import omni.datasets.stringData.StringDataset;
 
@@ -82,6 +83,12 @@ public class CleanDataset {
             cleanIds = new int[]{5, 6, 8, 9, 10}; // 4 & 7 are also ok but correlate with 5 6 8 9.
         } else if (Objects.equals(name, "wc98")) {
             throw new RuntimeException("Not implemented");
+        } else if (name.equals("StringTest")) {
+            cleanIds = new int[config.numAttributes];
+            for (int i = 0; i < config.numAttributes; i++) {
+                cleanIds[i] = i;
+            }
+            return;
         } else if (name.contains("synth") || name.contains("Test")) {
             // cleanIds based on number of attributes:
             cleanIds = new int[config.numAttributes];
@@ -1014,6 +1021,17 @@ public class CleanDataset {
         return result.toString();
     }
 
+    public String parsePointQueryToString(Record pointQuery) {
+        // Convert point query to string with attribute name + value if val != -1.
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < config.numStoredAttributes; i++) {
+            if (!RecordUtils.flexibleEquals(pointQuery.getValue(i),-1)) {
+                result.append(parseIndex(i + 1)).append("=").append(pointQuery.getValue(i)).append(", ");
+            }
+        }
+        return result.toString();
+    }
+
     public long[] parseStringToPointQuery(String query) {
         // Convert string to point query.
         String[] predicates = query.split(", ");
@@ -1614,26 +1632,25 @@ public class CleanDataset {
         // Compute answers for deletes
         pointQueryAnswersDeletes = new int[pointQueries.length];
         pointQueryUnionDeletes = new int[pointQueries.length];
-
+        System.out.println(matchedFile);
         datasetReaderName = matchedFile;
         datasetResiduSize = (int) (Math.pow(2, sizeFactor));
         noiseSize = (int) (Math.pow(2, sizeFactor) * perc);
     }
 
-    public void testStringData(double perc, double sizeFactor, int noiseSize) {
+    public void testStringData() {
         StringDataset dataset = new StringDataset(config);
-        dataset.loader(perc, sizeFactor, noiseSize);
-//        pointQueries = dataset.getPointQueries();
-//        pointQueryAnswers = dataset.getPointQueryAnswers();
-//        pointQueriesNumAttrs = dataset.getPointQueriesNumAttrs();
-//        pointQueryBinNumber = dataset.getPointQueryBinNumber();
-//        pointQueryUnion = dataset.getPointQueryUnion();
-//        // Compute answers for deletes
-//        pointQueryAnswersDeletes = new int[pointQueries.length];
-//        pointQueryUnionDeletes = new int[pointQueries.length];
-//        datasetReaderName = dataset.getDatasetReaderName();
-//        datasetResiduSize = dataset.getDatasetResiduSize();
-//        noiseSize = dataset.getNoiseSize();
+        dataset.loader();
+        pointQueriesObj = dataset.getPointQueriesObj();
+        pointQueryAnswers = dataset.getPointQueryAnswers();
+        pointQueriesNumAttrs = dataset.getPointQueriesNumAttrs();
+        pointQueryBinNumber = dataset.getPointQueryBinNumber();
+        pointQueryUnion = dataset.getPointQueryUnion();
+        // Compute answers for deletes
+        pointQueryAnswersDeletes = new int[pointQueriesObj.length];
+        pointQueryUnionDeletes = new int[pointQueriesObj.length];
+        datasetReaderName = dataset.getDatasetReaderName();
+        datasetResiduSize = dataset.getDatasetResiduSize();
 
     }
 }

@@ -521,11 +521,6 @@ public class SyntheticDataset {
         ArrayList<long[]> pointQueriesList = new ArrayList<>();
         ArrayList<Integer> pointQueryAnswersList = new ArrayList<>();
         ArrayList<Integer> pointQueryUnionList = new ArrayList<>();
-        pointQueryAnswers = new int[pointQueries.length];
-        pointQueryUnion = new int[pointQueries.length];
-        pointQueriesNumAttrs = new int[pointQueries.length];
-        pointQueryBinNumber = new int[pointQueries.length];
-        pointQueriesNumZipfian = new int[pointQueries.length];
         queryFileName = setQueryFileName(datasetFileName, perc);
         int numAttrs = config.numStoredAttributes;
         // load queries and pointQueryAnswers from file

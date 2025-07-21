@@ -59,23 +59,23 @@ public class runQueries {
         this.ingestionTime = timepassed;
         this.collisions = collisions;
         this.repetition = repetition;
-        estimatedAnswersPointQuery = new int[cd.pointQueries.length];
-        estimatedAnswersRangeQuery = new int[cd.pointQueries.length];
-        SCap = new int[cd.pointQueries.length];
-        NMax = new int[cd.pointQueries.length];
-        usedMaxSizes = new int[cd.pointQueries.length];
-        jaccardEstimates2LHS = new double[cd.pointQueries.length];
-        unionEstimates2LHS = new double[cd.pointQueries.length];
-        unionExact = new int[cd.pointQueries.length];
-        witness2LHS = new int[cd.pointQueries.length];
-        queryExecutionTime = new long[cd.pointQueries.length];
-        intersectionOfR = new int[cd.pointQueries.length];
-        unionOfR = new int[cd.pointQueries.length];
-        expSettings = new ExpSetting[cd.pointQueries.length];
-        numberOfKmins = new int[cd.pointQueries.length];
-        numberOfKminsExceedingBounds = new int[cd.pointQueries.length];
-        bound = new double[cd.pointQueries.length];
-        case1 = new boolean[cd.pointQueries.length];
+        estimatedAnswersPointQuery = new int[cd.pointQueriesObj.length];
+        estimatedAnswersRangeQuery = new int[cd.pointQueriesObj.length];
+        SCap = new int[cd.pointQueriesObj.length];
+        NMax = new int[cd.pointQueriesObj.length];
+        usedMaxSizes = new int[cd.pointQueriesObj.length];
+        jaccardEstimates2LHS = new double[cd.pointQueriesObj.length];
+        unionEstimates2LHS = new double[cd.pointQueriesObj.length];
+        unionExact = new int[cd.pointQueriesObj.length];
+        witness2LHS = new int[cd.pointQueriesObj.length];
+        queryExecutionTime = new long[cd.pointQueriesObj.length];
+        intersectionOfR = new int[cd.pointQueriesObj.length];
+        unionOfR = new int[cd.pointQueriesObj.length];
+        expSettings = new ExpSetting[cd.pointQueriesObj.length];
+        numberOfKmins = new int[cd.pointQueriesObj.length];
+        numberOfKminsExceedingBounds = new int[cd.pointQueriesObj.length];
+        bound = new double[cd.pointQueriesObj.length];
+        case1 = new boolean[cd.pointQueriesObj.length];
         Arrays.fill(case1, false);
 
     }
@@ -162,7 +162,7 @@ public class runQueries {
             totalExecTime = totalExecTime + l;
         }
         System.out.println("Total execution time: " + totalExecTime + " ms, average: "
-                + (double) totalExecTime / d.pointQueries.length + " ms");
+                + (double) totalExecTime / d.pointQueriesObj.length + " ms");
 
         System.out.println("Difference between total time and execution time per query: "
                 + (totalQueryExecutionTime - totalExecTime));
@@ -179,7 +179,7 @@ public class runQueries {
                     SCap, NMax, usedMaxSizes, jaccardEstimates2LHS, unionEstimates2LHS, unionExact, witness2LHS, queryExecutionTime, totalQueryExecutionTime,
                     numberOfKmins, numberOfKminsExceedingBounds, case1, bound);
         }
-        System.out.println("Total queries: " + d.pointQueries.length);
+        System.out.println("Total queries: " + d.pointQueriesObj.length);
         System.out.println("Total queries with zero empty or singleton witnesses: " + s.countIsZero);
         System.out.println("Total queries with zero estimate: " + totalEstimatesZero);
     }
@@ -344,7 +344,7 @@ public class runQueries {
 
 
         String memUsageSyn = String.valueOf(s.getMemoryUsage());
-        for (int i = 0; i < d.pointQueries.length; i++) {
+        for (int i = 0; i < d.pointQueriesObj.length; i++) {
             String[] result = new String[49];
             // Dataset specific info;
             result[0] = String.valueOf(repetition);
@@ -378,7 +378,7 @@ public class runQueries {
             result[21] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) / d.getDatasetResiduSize());
             result[22] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) <= Main.eps * d.getDatasetResiduSize());
             result[23] = String.valueOf(queryExecutionTime[i]);
-            result[24] = d.parsePointQueryToString(d.pointQueries[i]);
+            result[24] = d.parsePointQueryToString(d.pointQueriesObj[i]);
             result[25] = String.valueOf(SCap[i]);
             result[26] = String.valueOf(NMax[i]);
             result[27] = String.valueOf(usedMaxSizes[i]);

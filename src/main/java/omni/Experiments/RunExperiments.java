@@ -350,8 +350,8 @@ public class RunExperiments {
             case "synthFromDisk" -> {
                 cd.synthFromDisk(perc, sizeFactor, zipfAlpha);
             }
-            case "testStringData" -> {
-                cd.testStringData(perc, sizeFactor, noiseSize);
+            case "StringTest" -> {
+                cd.testStringData();
             }
             case "Test" -> cd.testDataset();
             default -> cd.cleanDataset(d, perc, noiseSize);
@@ -617,6 +617,10 @@ public class RunExperiments {
             case "Test" -> {
                 this.conditions = new String[]{"0"};
                 config.numAttributes = 2;
+            }
+            case "StringTest" -> {
+                this.conditions = new String[]{"0"};
+                config.numAttributes = 3;
             }
 
             default -> {
