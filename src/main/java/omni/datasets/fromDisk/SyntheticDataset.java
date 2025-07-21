@@ -193,28 +193,7 @@ public class SyntheticDataset {
         computeQueryStats(numAttrs, numZipfianAttrs);
     }
 
-    private void generateSynthQueriesString() throws IOException {
-        int numAttrs = 9;
-        int numZipfianAttrs = config.numZipfAttributes;
 
-        Set<Integer> selectedIndices = selectRandomIndices(datasetSize, config.numQueries);
-        try (BufferedReader reader = new BufferedReader(new FileReader(datasetFileName))) {
-            populatePointQueriesString(reader, numAttrs, selectedIndices);
-        } catch (IOException e) {
-            System.err.println("Error opening file for queries: " + datasetFileName);
-            throw e;
-        }
-
-        pointQueryAnswers = new int[pointQueriesObj.length];
-        pointQueryUnion = new int[pointQueriesObj.length];
-        pointQueriesNumAttrs = new int[pointQueriesObj.length];
-        pointQueryBinNumber = new int[pointQueriesObj.length];
-        pointQueriesNumZipfian = new int[pointQueriesObj.length];
-        applyPredicatesObj(numAttrs);
-        deduplicateQueriesObj(numAttrs);
-        computeExactAnswersObj();
-        computeQueryStatsObj(numAttrs, numZipfianAttrs);
-    }
 
 
     private void applyPredicates(int numAttrs) {
@@ -234,22 +213,6 @@ public class SyntheticDataset {
         }
     }
 
-    private void applyPredicatesObj(int numAttrs) {
-        Random randomQueries = new Random(0);
-
-        for (int p = 0; p < config.numPredicates; p++) {
-            for (int i = p * config.numQueries; i < (p + 1) * config.numQueries; i++) {
-                int curNumPreds = 0;
-                while (curNumPreds < numAttrs - (p + 1)) {
-                    int index = randomQueries.nextInt(numAttrs);
-                    if (!RecordUtils.flexibleEquals(pointQueriesObj[i].getValue(index),-1)) {
-                        pointQueriesObj[i].setValue(index, -1);
-                        curNumPreds++;
-                    }
-                }
-            }
-        }
-    }
 
     private void deduplicateQueries(int numAttrs) {
         // Deduplication process
@@ -268,38 +231,11 @@ public class SyntheticDataset {
         pointQueries = Arrays.copyOf(pointQueries, uniqueCount);
     }
 
-    private void deduplicateQueriesObj(int numAttrs) {
-        // Deduplication process
-        Set<String> uniqueQueries = new HashSet<>();
-        int uniqueCount = 0;
-
-        for (Record query : pointQueriesObj) {
-            String key = buildQueryKey(query, numAttrs);
-
-            if (uniqueQueries.add(key)) {
-                pointQueriesObj[uniqueCount] = query;
-                uniqueCount++;
-            }
-        }
-        // Resize the pointQueries array to contain only unique entries
-        pointQueriesObj = Arrays.copyOf(pointQueriesObj, uniqueCount);
-    }
-
     private String buildQueryKey(long[] query, int numAttrs) {
         StringBuilder keyBuilder = new StringBuilder();
         for (int j = 0; j < numAttrs; j++) {
             if (query[j] != -1) {
                 keyBuilder.append(j).append(":").append(query[j]).append(";");
-            }
-        }
-        return keyBuilder.toString();
-    }
-
-    private String buildQueryKey(Record query, int numAttrs) {
-        StringBuilder keyBuilder = new StringBuilder();
-        for (int j = 0; j < numAttrs; j++) {
-            if (!query.getValue(j).equals(-1)) {
-                keyBuilder.append(j).append(":").append(query.getValue(j)).append(";");
             }
         }
         return keyBuilder.toString();
@@ -314,24 +250,6 @@ public class SyntheticDataset {
 
                 long[] record = readRecord(line, pointQueries[0].length);
                 updateAnswers(record);
-            }
-        } catch (IOException e) {
-            System.err.println("Error computing exact answers.");
-            e.printStackTrace();
-        }
-
-        writeQueriesToFile();
-    }
-
-    private void computeExactAnswersObj() {
-        try (BufferedReader reader = new BufferedReader(new FileReader(datasetFileName))) {
-            String line;
-
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith("id")) continue;
-
-                Record record = readRecordString(line, pointQueriesObj[0].length());
-                updateAnswersObj(record);
             }
         } catch (IOException e) {
             System.err.println("Error computing exact answers.");
@@ -364,28 +282,7 @@ public class SyntheticDataset {
         }
     }
 
-    private void updateAnswersObj(Record record) {
-        for (int i = 0; i < pointQueriesObj.length; i++) {
-            boolean match = true;
-            boolean unionMatch = false;
 
-            for (int j = 0; j < pointQueriesObj[i].length(); j++) {
-                Object queryVal = pointQueriesObj[i].getValue(j);
-                Object recordVal = record.getValue(j + 1);
-
-                if (!RecordUtils.flexibleEquals(queryVal,-1) && !queryVal.equals(recordVal)) {
-                    match = false;
-                    break;
-                }
-                if (!RecordUtils.flexibleEquals(queryVal,-1) && queryVal.equals(recordVal)) {
-                    unionMatch = true;
-                }
-            }
-
-            if (match) pointQueryAnswers[i]++;
-            if (unionMatch) pointQueryUnion[i]++;
-        }
-    }
 
     private void writeQueriesToFile() {
         queryFileName = setQueryFileName(datasetFileName, 0.0);
@@ -495,27 +392,7 @@ public class SyntheticDataset {
 
     }
 
-    private void populatePointQueriesString(BufferedReader reader, int numAttrs, Set<Integer> selectedIndices) throws IOException {
-        String line;
-        int added = 0;
-        while ((line = reader.readLine()) != null && added < pointQueriesObj.length) {
-            if (line.startsWith("id")) continue;
-            Record record = readRecordString(line, numAttrs);
-            int id = (int) record.getValue(0);
-            if (selectedIndices.contains(id)) {
-                for (int p = 0; p < config.numPredicates; p++) {
-                    String[] queryData = new String[numAttrs];
-                    System.arraycopy(record.getData(), 1, queryData, 0, numAttrs);
-                    pointQueriesObj[added] = new StringRecord(queryData);
-                    added++;
-                }
-            }
-        }
 
-        // shrink the pointQueries array to the actual number of queries added
-        pointQueriesObj = Arrays.copyOf(pointQueriesObj, added);
-
-    }
 
     private void loadQueries(double perc) {
         ArrayList<long[]> pointQueriesList = new ArrayList<>();

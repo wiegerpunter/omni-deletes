@@ -354,6 +354,9 @@ public class RunExperiments {
                 cd.testStringData();
             }
             case "Test" -> cd.testDataset();
+            case "tpc-ds_customer_N=100000", "tpc-ds_item_N=18000" -> {
+                cd.tpcDS();
+            }
             default -> cd.cleanDataset(d, perc, noiseSize);
         }
 
@@ -512,7 +515,7 @@ public class RunExperiments {
             br.readLine(); // Skip header line
             String line;
             while ((line = br.readLine()) != null) {
-                String[] values = line.split(",");
+                String[] values = line.split(";");
                 String[] record = new String[values.length - 1];
                 System.arraycopy(values, 0, record, 0, values.length - 1);
                 int sign = Integer.parseInt(values[values.length - 1]);
@@ -622,7 +625,14 @@ public class RunExperiments {
                 this.conditions = new String[]{"0"};
                 config.numAttributes = 3;
             }
-
+            case "tpc-ds_customer_N=100000"-> {
+                this.conditions = new String[]{"0"};
+                config.numAttributes = 5;
+            }
+            case "tpc-ds_customer_N=18000"-> {
+                this.conditions = new String[]{"0"};
+                config.numAttributes = 7;
+            }
             default -> {
                 if (!config.datasetName.contains("synth")) {
                     throw new RuntimeException("Unknown dataset name");

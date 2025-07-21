@@ -83,7 +83,7 @@ public class CleanDataset {
             cleanIds = new int[]{5, 6, 8, 9, 10}; // 4 & 7 are also ok but correlate with 5 6 8 9.
         } else if (Objects.equals(name, "wc98")) {
             throw new RuntimeException("Not implemented");
-        } else if (name.equals("StringTest")) {
+        } else if (name.equals("StringTest") || name.contains("tpc-ds")) {
             cleanIds = new int[config.numAttributes];
             for (int i = 0; i < config.numAttributes; i++) {
                 cleanIds[i] = i;
@@ -1641,6 +1641,26 @@ public class CleanDataset {
     public void testStringData() {
         StringDataset dataset = new StringDataset(config);
         dataset.loader();
+        pointQueriesObj = dataset.getPointQueriesObj();
+        pointQueryAnswers = dataset.getPointQueryAnswers();
+        pointQueriesNumAttrs = dataset.getPointQueriesNumAttrs();
+        pointQueryBinNumber = dataset.getPointQueryBinNumber();
+        pointQueryUnion = dataset.getPointQueryUnion();
+        // Compute answers for deletes
+        pointQueryAnswersDeletes = new int[pointQueriesObj.length];
+        pointQueryUnionDeletes = new int[pointQueriesObj.length];
+        datasetReaderName = dataset.getDatasetReaderName();
+        datasetResiduSize = dataset.getDatasetResiduSize();
+
+    }
+
+    public void tpcDS() throws IOException {
+        StringDataset dataset = new StringDataset(config);
+        if (dataset.queriesNotExist()) {
+            dataset.generateQueries();
+        } else {
+            dataset.loader();
+        }
         pointQueriesObj = dataset.getPointQueriesObj();
         pointQueryAnswers = dataset.getPointQueryAnswers();
         pointQueriesNumAttrs = dataset.getPointQueriesNumAttrs();
