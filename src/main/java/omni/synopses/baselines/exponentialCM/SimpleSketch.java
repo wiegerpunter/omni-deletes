@@ -2,7 +2,8 @@ package omni.synopses.baselines.exponentialCM;
 
 import omni.Main;
 import omni.Experiments.utils.QueryInfo;
-import omni.datasets.Record.Query;
+import omni.datasets.ReadRecord.Query;
+import omni.datasets.Record.Record;
 import omni.synopses.SynopsisRefactor;
 
 import java.util.ArrayList;
@@ -89,8 +90,18 @@ public class SimpleSketch extends SynopsisRefactor {
     }
 
     @Override
+    public void delete(Record r) {
+
+    }
+
+    @Override
     public int getFilledKSamples() {
         return 0;
+    }
+
+    @Override
+    public void add(Record record) {
+
     }
 
     @Override
@@ -101,7 +112,17 @@ public class SimpleSketch extends SynopsisRefactor {
     }
 
     @Override
+    public void ingest(Record record, int i) {
+
+    }
+
+    @Override
     public int query(long[] query, int numPreds) {
+        return 0;
+    }
+
+    @Override
+    public int query(Record query, int numPreds, QueryInfo queryInfo) {
         return 0;
     }
 

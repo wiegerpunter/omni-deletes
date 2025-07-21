@@ -4,7 +4,8 @@ package omni.synopses.baselines.hydraRefactor;
 import net.jpountz.xxhash.XXHash64;
 import net.jpountz.xxhash.XXHashFactory;
 import omni.Experiments.utils.QueryInfo;
-import omni.datasets.Record.Query;
+import omni.datasets.ReadRecord.Query;
+import omni.datasets.Record.Record;
 import omni.synopses.SynopsisRefactor;
 
 import java.io.Serializable;
@@ -470,12 +471,28 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
     }*/
 
     @Override
+    public void add(Record record) {
+
+    }
+
+    @Override
     public void add(long[] record) {
         insert(record, 1);
     }
+
+    @Override
+    public void ingest(Record record, int i) {
+
+    }
+
     @Override
     public void delete(long[] r) {
         insert(r, -1);
+    }
+
+    @Override
+    public void delete(Record r) {
+
     }
 
     public void insert(long[] record, int value) {
@@ -553,6 +570,11 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
 //        //String key = String.valueOf(value);
 //        //float[] ret = queryOneNoCheck(Integer.toString(subPop), key);
 //        return (int) ret[0];
+    }
+
+    @Override
+    public int query(Record query, int numPreds, QueryInfo queryInfo) {
+        return 0;
     }
 
     @Override

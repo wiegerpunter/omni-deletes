@@ -1,7 +1,6 @@
 package omni.synopses.baselines.exponentialCM;
 
-import omni.datasets.Record.Query;
-import omni.datasets.Record.Record;
+import omni.datasets.ReadRecord.Query;
 
 import java.util.ArrayList;
 import java.util.Random;

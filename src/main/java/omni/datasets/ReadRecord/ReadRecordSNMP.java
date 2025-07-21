@@ -1,4 +1,4 @@
-package omni.datasets.Record;
+package omni.datasets.ReadRecord;
 
 import omni.Config;
 import omni.datasets.Parser;
@@ -8,13 +8,13 @@ import java.util.Arrays;
 
 import static java.lang.Integer.parseInt;
 
-public class RecordSNMP extends Record implements Externalizable {
+public class ReadRecordSNMP extends ReadRecord implements Externalizable {
     Config config;
 
-    public RecordSNMP() {
+    public ReadRecordSNMP() {
     }
 
-    public RecordSNMP(Record r, Config config) {
+    public ReadRecordSNMP(ReadRecord r, Config config) {
         super();
         this.config = config;
     }

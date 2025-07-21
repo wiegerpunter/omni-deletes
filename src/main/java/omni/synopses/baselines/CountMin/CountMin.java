@@ -1,6 +1,7 @@
 package omni.synopses.baselines.CountMin;
 
 import omni.Experiments.utils.QueryInfo;
+import omni.datasets.Record.Record;
 import omni.synopses.SynopsisRefactor;
 
 import java.util.Arrays;
@@ -40,6 +41,11 @@ public class CountMin  extends SynopsisRefactor {
     }
 
     @Override
+    public void add(Record record) {
+
+    }
+
+    @Override
     public void add(long[] record) {
         long[] addRecord = new long[record.length - 1];
         System.arraycopy(record, 1, addRecord, 0, record.length - 1);
@@ -52,6 +58,11 @@ public class CountMin  extends SynopsisRefactor {
     }
 
     @Override
+    public void ingest(Record record, int i) {
+
+    }
+
+    @Override
     public int query(long[] query, int numPreds) {
         long value = Arrays.hashCode(query);
         int[] hashes = hash(value, depth, width);
@@ -60,6 +71,11 @@ public class CountMin  extends SynopsisRefactor {
             estimate = Math.min(estimate, CM[j][hashes[j]]);
         }
         return estimate;
+    }
+
+    @Override
+    public int query(Record query, int numPreds, QueryInfo queryInfo) {
+        return 0;
     }
 
     @Override
@@ -89,6 +105,11 @@ public class CountMin  extends SynopsisRefactor {
     @Override
     public void delete(long[] r) {
         throw new UnsupportedOperationException("Delete not implemented for CountMin");
+    }
+
+    @Override
+    public void delete(Record r) {
+
     }
 
     @Override

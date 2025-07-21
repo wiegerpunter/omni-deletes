@@ -6,6 +6,7 @@ import omni.Config;
 import omni.Experiments.utils.QueryInfo;
 import omni.Main;
 import omni.datasets.CleanDataset;
+import omni.datasets.Record.Record;
 import omni.synopses.SynopsisRefactor;
 
 import java.io.File;
@@ -131,6 +132,58 @@ public class runQueries {
         System.out.println("Total queries with zero estimate: " + totalEstimatesZero);
     }
 
+    public void runObj() throws IOException {
+        // Count number of collisions in Omnisketch.
+
+        error = new ArrayList<>();
+        long startTime = System.currentTimeMillis();
+        if (Main.rangeQueries) {
+            for (int i = 0; i< d.rangeQueries.length; i++) {
+                computeErrorRangeQuery(i, d.rangeQueries[i], d.rangeQueryAnswers[i]);
+                //h.addQueryResult(q);
+            }
+        } else {
+            for (int i = 0; i< d.pointQueriesObj.length; i++) {
+                computeErrorPointQuery(i, d.pointQueriesObj[i], d.pointQueriesNumAttrs[i], d.pointQueryAnswers[i], d.pointQueryUnion[i]);
+                //h.addQueryResult(q);
+                if (i % 1000 == 0) {
+                    System.out.println("\r" + i + " queries done");
+                }
+            }
+            System.out.println("Memory usage is " + s.getMemoryUsage());
+            // test for Synopsis if it has more memory than the computed mem usage.
+
+        }
+        long endTime = System.currentTimeMillis();
+        long totalQueryExecutionTime = endTime - startTime;
+
+        long totalExecTime = 0;
+        for (long l : queryExecutionTime) {
+            totalExecTime = totalExecTime + l;
+        }
+        System.out.println("Total execution time: " + totalExecTime + " ms, average: "
+                + (double) totalExecTime / d.pointQueries.length + " ms");
+
+        System.out.println("Difference between total time and execution time per query: "
+                + (totalQueryExecutionTime - totalExecTime));
+
+
+        // Write results to file
+        if (config.rangeQueries) {
+            throw new RuntimeException("Range queries file not implemented yet");
+        } else {
+//            if (s.setting.contains("SampleLater")) {
+//                writeLoggedSetSizes(expSettings);
+//            }
+            writeResultsToFilePointQuery(repetition + 1, s, d, ingestionTime, collisions, estimatedAnswersPointQuery,
+                    SCap, NMax, usedMaxSizes, jaccardEstimates2LHS, unionEstimates2LHS, unionExact, witness2LHS, queryExecutionTime, totalQueryExecutionTime,
+                    numberOfKmins, numberOfKminsExceedingBounds, case1, bound);
+        }
+        System.out.println("Total queries: " + d.pointQueries.length);
+        System.out.println("Total queries with zero empty or singleton witnesses: " + s.countIsZero);
+        System.out.println("Total queries with zero estimate: " + totalEstimatesZero);
+    }
+
     private void writeLoggedSetSizes(ExpSetting[] expSettings) throws IOException {
         String CSV_FILE_NAME = config.getOutputFolder() + "/pointQueries/" + config.datasetName + "/" + config.currentDate + "_" + config.experimentName + "_"
                 + config.setting + "_dataset_" + config.datasetName +
@@ -175,18 +228,8 @@ public class runQueries {
             totalQueriesZero++;
         }
         QueryInfo queryInfo = new QueryInfo();
-//        if (exactAnswer == 210102){
-//            System.out.println("Exact answer is 210102 for query: " + Arrays.toString(q));
-//        }
-//        queryInfo.expSetting.addIntersectionSize(exactAnswer);
-
         long startTime = System.currentTimeMillis();
-//        if (Main.checkConditions ) { //&& s.ram == Main.ramVals[0]
-//            estimatedAnswersPointQuery[queryId] = s.query(q, numPreds, unionSize, queryInfo);
-//            res = s.checkConditions(q, numPreds, unionSize, queryInfo);
-//        } else {
         estimatedAnswersPointQuery[queryId] = s.query(q, numPreds, queryInfo);
-//        }
         long endTime = System.currentTimeMillis();
         queryExecutionTime[queryId] = endTime - startTime;
         if (estimatedAnswersPointQuery[queryId] == 0) {
@@ -210,13 +253,39 @@ public class runQueries {
         witness2LHS[queryId] = copy.witness2LHS;
         numberOfKmins[queryId] = copy.numberOfKmins;
         numberOfKminsExceedingBounds[queryId] = copy.numberOfKminsExceedingBound;
-//        if (s.useTwoLHS) {
-//            if (estimatedAnswersPointQuery[queryId] > 0) {
-//                System.out.println("Estimated answer: " + estimatedAnswersPointQuery[queryId]);
-//                System.out.println("query info: " + queryInfo.CMRow + " union est: " + queryInfo.unionEstimate +
-//                        " witness 2lhs: " + queryInfo.witness2LHS + " Jaccard similarity" + queryInfo.jaccardEstimate);
-//            }
-//        }
+    }
+
+    public void computeErrorPointQuery (int queryId, Record q, int numPreds, int exactAnswer, int unionSize) {
+        //q.exactAnswer = d.exactSolution(q);
+        if (exactAnswer == 0) {
+            totalQueriesZero++;
+        }
+        QueryInfo queryInfo = new QueryInfo();
+        long startTime = System.currentTimeMillis();
+        estimatedAnswersPointQuery[queryId] = s.query(q, numPreds, queryInfo);
+        long endTime = System.currentTimeMillis();
+        queryExecutionTime[queryId] = endTime - startTime;
+        if (estimatedAnswersPointQuery[queryId] == 0) {
+            totalEstimatesZero++;
+        }
+
+        QueryInfo copy = new QueryInfo(queryInfo);
+        unionOfR[queryId] = copy.exactUnion;
+//        expSettings[queryId] = copy.expSetting;
+        intersectionOfR[queryId] = copy.exactIntersection;
+        totalTime = totalTime + queryExecutionTime[queryId];
+        totalExecQueries++;
+        SCap[queryId] = copy.Scap;
+        NMax[queryId] = copy.nmax;
+        case1[queryId] = copy.case1;
+        bound[queryId] = copy.bound;
+        usedMaxSizes[queryId] = copy.maxSize;
+        jaccardEstimates2LHS[queryId] = copy.jaccardEstimate;
+        unionEstimates2LHS[queryId] = copy.unionEstimate;
+        unionExact[queryId] = unionSize;
+        witness2LHS[queryId] = copy.witness2LHS;
+        numberOfKmins[queryId] = copy.numberOfKmins;
+        numberOfKminsExceedingBounds[queryId] = copy.numberOfKminsExceedingBound;
     }
 
     public void computeErrorRangeQuery (int queryId, long[][] q, int exactAnswer) {

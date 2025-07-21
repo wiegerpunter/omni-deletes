@@ -1,7 +1,7 @@
 package omni.test;
 
 import omni.datasets.DatasetRefactor;
-import omni.datasets.Record.Record;
+import omni.datasets.ReadRecord.ReadRecord;
 
 public class DatasetTest {
     DatasetRefactor d;
@@ -11,8 +11,8 @@ public class DatasetTest {
 
 
     public void testPrimaryKey() {
-        for (Record r: d.dataset) {
-            for (Record s: d.dataset) {
+        for (ReadRecord r: d.dataset) {
+            for (ReadRecord s: d.dataset) {
                 if (r.equals(s) && r.getId() != s.getId()) {
                     System.err.println("Primary key violated");
                 }

@@ -7,8 +7,10 @@ import com.opencsv.exceptions.CsvException;
 import com.opencsv.exceptions.CsvValidationException;
 import omni.Config;
 import omni.Main;
+import omni.datasets.ReadRecord.ReadRecord;
 import omni.datasets.Record.Record;
 import omni.datasets.fromDisk.SyntheticDataset;
+import omni.datasets.stringData.StringDataset;
 
 import java.io.*;
 import java.util.*;
@@ -28,7 +30,9 @@ public class CleanDataset {
     public long[][] noiseUpdates;
 
     public long[][][] rangeQueries;
+
     public long[][] pointQueries;
+    public Record[] pointQueriesObj;
     public int[] pointQueryBinNumber;
     public int[] pointQueriesNumAttrs; // number of attributes in each point query.
     public int[] pointQueriesNumZipfian; // number of zipfian predicates in each point query.
@@ -528,7 +532,7 @@ public class CleanDataset {
         }
     }
 
-    private long[] cleanRecord(Record r) {
+    private long[] cleanRecord(ReadRecord r) {
 
         long[] newRecord = new long[1 + config.numStoredAttributes];
         newRecord[0] = r.getId();
@@ -1601,6 +1605,7 @@ public class CleanDataset {
         SyntheticDataset dataset = new SyntheticDataset(config);
         dataset.synthDevLoader(perc, sizeFactor, zipfAlpha);
         pointQueries = dataset.getPointQueries();
+        pointQueriesObj = dataset.getPointQueriesObj();
         pointQueryAnswers = dataset.getPointQueryAnswers();
         pointQueriesNumAttrs = dataset.getPointQueriesNumAttrs();
         pointQueryBinNumber = dataset.getPointQueryBinNumber();
@@ -1613,5 +1618,22 @@ public class CleanDataset {
         datasetReaderName = matchedFile;
         datasetResiduSize = (int) (Math.pow(2, sizeFactor));
         noiseSize = (int) (Math.pow(2, sizeFactor) * perc);
+    }
+
+    public void testStringData(double perc, double sizeFactor, int noiseSize) {
+        StringDataset dataset = new StringDataset(config);
+        dataset.loader(perc, sizeFactor, noiseSize);
+//        pointQueries = dataset.getPointQueries();
+//        pointQueryAnswers = dataset.getPointQueryAnswers();
+//        pointQueriesNumAttrs = dataset.getPointQueriesNumAttrs();
+//        pointQueryBinNumber = dataset.getPointQueryBinNumber();
+//        pointQueryUnion = dataset.getPointQueryUnion();
+//        // Compute answers for deletes
+//        pointQueryAnswersDeletes = new int[pointQueries.length];
+//        pointQueryUnionDeletes = new int[pointQueries.length];
+//        datasetReaderName = dataset.getDatasetReaderName();
+//        datasetResiduSize = dataset.getDatasetResiduSize();
+//        noiseSize = dataset.getNoiseSize();
+
     }
 }

@@ -1,8 +1,9 @@
 package omni.synopses.baselines.SketchZero;
 
 import omni.Experiments.utils.QueryInfo;
-import omni.datasets.Record.Query;
+import omni.datasets.ReadRecord.Query;
 import omni.*;
+import omni.datasets.Record.Record;
 import omni.synopses.SynopsisRefactor;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -55,6 +56,11 @@ public class SketchZero extends SynopsisRefactor {
         }
     }
 
+    @Override
+    public void add(Record record) {
+
+    }
+
     public void add(long[] record) {
         //long start = System.currentTimeMillis();
         for (int i = 0; i < record.length; i++) {
@@ -64,6 +70,11 @@ public class SketchZero extends SynopsisRefactor {
         }
         //long end = System.currentTimeMillis();
         //System.out.println("Add time: " + (end - start));
+    }
+
+    @Override
+    public void ingest(Record record, int i) {
+
     }
 
     int minCMRow = 0;
@@ -158,12 +169,22 @@ public class SketchZero extends SynopsisRefactor {
     }
 
     @Override
+    public void delete(Record r) {
+
+    }
+
+    @Override
     public int getFilledKSamples() {
         return 0;
     }
 
     @Override
     public int query(long[] query, int numPreds) {
+        return 0;
+    }
+
+    @Override
+    public int query(Record query, int numPreds, QueryInfo queryInfo) {
         return 0;
     }
 

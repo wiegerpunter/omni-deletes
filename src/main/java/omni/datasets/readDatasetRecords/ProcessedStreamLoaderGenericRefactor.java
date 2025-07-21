@@ -1,9 +1,9 @@
 package omni.datasets.readDatasetRecords;
 
-import omni.datasets.Record.Record;
+import omni.datasets.ReadRecord.ReadRecord;
 import omni.*;
-import omni.datasets.Record.RecordCAIDA;
-import omni.datasets.Record.RecordSNMP;
+import omni.datasets.ReadRecord.ReadRecordCAIDA;
+import omni.datasets.ReadRecord.ReadRecordSNMP;
 import omni.datasets.readDatasetRecords.structure.logEventInt;
 
 import java.io.*;
@@ -112,12 +112,12 @@ public class ProcessedStreamLoaderGenericRefactor {
 	}
 
 	Pattern dot = Pattern.compile("\\.");
-	public StringBuilder readRecord(StringBuilder line, int id, ArrayList<Record> d) {
+	public StringBuilder readRecord(StringBuilder line, int id, ArrayList<ReadRecord> d) {
 		//Record r = null;
-		Record r = null;
+		ReadRecord r = null;
         r = switch (config.datasetName) {
-            case "SNMP" -> new RecordSNMP(r, config);
-            case "CAIDA" -> new RecordCAIDA(r, dot, config);
+            case "SNMP" -> new ReadRecordSNMP(r, config);
+            case "CAIDA" -> new ReadRecordCAIDA(r, dot, config);
             default -> throw new RuntimeException("Unknown dataset name");
         };
 		//Record r = new Record(); // record to be potentially added to d.
@@ -150,7 +150,7 @@ public class ProcessedStreamLoaderGenericRefactor {
 				while (true) {
 					if ('s' == a[0].charAt(0)) {
 						if (r.assembled) {
-							Record r2 = (Record) r;
+							ReadRecord r2 = (ReadRecord) r;
 							d.add(r2);
 						} else {
 							skip++;
@@ -177,8 +177,8 @@ public class ProcessedStreamLoaderGenericRefactor {
 				}
 				line = replace(b);
 				r.assemble(id);
-				Record r2;
-				r2 = new Record((RecordCAIDA) r) {
+				ReadRecord r2;
+				r2 = new ReadRecord((ReadRecordCAIDA) r) {
 						@Override
 						public void assemble(int id) {
 							assembled = true;

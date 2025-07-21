@@ -1,17 +1,17 @@
-package omni.datasets.Record;
+package omni.datasets.ReadRecord;
 
 import omni.Config;
 
 import java.io.Externalizable;
 import java.util.regex.Pattern;
 
-public class RecordCAIDAComplicated extends Record implements Externalizable {
+public class ReadRecordCAIDAComplicated extends ReadRecord implements Externalizable {
 
-    public RecordCAIDAComplicated() {
+    public ReadRecordCAIDAComplicated() {
     }
     Pattern dot;
     Config config;
-    public RecordCAIDAComplicated(Record r, Pattern dot, Config config) {
+    public ReadRecordCAIDAComplicated(ReadRecord r, Pattern dot, Config config) {
         super();
         this.dot = dot;
         this.config = config;

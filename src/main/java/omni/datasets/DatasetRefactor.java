@@ -4,8 +4,8 @@ import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
 import omni.Config;
 import omni.Main;
-import omni.datasets.Record.Record;
-import omni.datasets.Record.RecordSNMP;
+import omni.datasets.ReadRecord.ReadRecord;
+import omni.datasets.ReadRecord.ReadRecordSNMP;
 import omni.datasets.readDatasetRecords.ProcessedStreamLoaderGenericRefactor;
 
 import java.io.*;
@@ -14,7 +14,7 @@ import java.util.*;
 
 public class DatasetRefactor {
     int size;
-    public ArrayList<omni.datasets.Record.Record> dataset = new ArrayList<>();
+    public ArrayList<ReadRecord> dataset = new ArrayList<>();
     private int totalRead;
     public Config config;
 
@@ -44,7 +44,7 @@ public class DatasetRefactor {
             }
         }
         this.size = dataset.size();
-        dataset.sort(Comparator.comparingLong(Record::getTimestamp));
+        dataset.sort(Comparator.comparingLong(ReadRecord::getTimestamp));
         System.out.println("Dataset loaded with size: " + dataset.size());
     }
 
@@ -141,7 +141,7 @@ public class DatasetRefactor {
 
         //Check for whole dataset how many records have value -999 per attribute:
         int[] count = new int[config.numAttributes];
-        for (omni.datasets.Record.Record r : dataset) {
+        for (ReadRecord r : dataset) {
             for (int i = 0; i < config.numAttributes; i++) {
                 if (r.getRecord()[i] == -999) {
                     count[i]++;
@@ -153,14 +153,14 @@ public class DatasetRefactor {
         }
 
 
-        ArrayList<omni.datasets.Record.Record> validRecords = new ArrayList<>();
+        ArrayList<ReadRecord> validReadRecords = new ArrayList<>();
         boolean validRecord;
         HashSet<Integer> invalidIndices = new HashSet<>(Arrays.asList(3, 16, 17, 18, 19, 20));
 
-        for (omni.datasets.Record.Record record : dataset) {
+        for (ReadRecord readRecord : dataset) {
             validRecord = true;
 
-            long[] recordData = record.getRecord();
+            long[] recordData = readRecord.getRecord();
             for (int i = 0; i < Main.numAttributes; i++) {
                 // if i is not 3, 16, 17, 18, 19, 20.
                 if (!invalidIndices.contains(i) && recordData[i] == -999) {
@@ -169,15 +169,15 @@ public class DatasetRefactor {
                 }
             }
             if (validRecord) {
-                validRecords.add(record);
+                validReadRecords.add(readRecord);
             }
         }
-        dataset = validRecords;
+        dataset = validReadRecords;
         String CSV_FILE_NAME = config.getInputFolder() + "/data/" + config.datasetName +
                 "/SNMPDataset_" + config.datasetName + "_"+ config.fileStartCondition + ".csv";
         initSNMPDataset(this, CSV_FILE_NAME);
-        for (omni.datasets.Record.Record r : dataset) {
-            writeSNMPDataset(((RecordSNMP) r).writeRecord(), CSV_FILE_NAME);
+        for (ReadRecord r : dataset) {
+            writeSNMPDataset(((ReadRecordSNMP) r).writeRecord(), CSV_FILE_NAME);
         }
         System.out.println("Skipped " + totalSkip + " records");
         System.out.println("Read " + totalRead + " records");

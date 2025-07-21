@@ -1,4 +1,4 @@
-package omni.datasets.Record;
+package omni.datasets.ReadRecord;
 
 import omni.Config;
 
@@ -7,13 +7,13 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class RecordCAIDA extends Record implements Externalizable {
+public class ReadRecordCAIDA extends ReadRecord implements Externalizable {
 
-    public RecordCAIDA() {
+    public ReadRecordCAIDA() {
         super();
     }
 
-    public RecordCAIDA(Record r) {
+    public ReadRecordCAIDA(ReadRecord r) {
         super();
         this.id = r.id;
         this.record = r.record;
@@ -25,7 +25,7 @@ public class RecordCAIDA extends Record implements Externalizable {
 
     Pattern dot;
     Config config;
-    public RecordCAIDA(Record r, Pattern dot, Config config) {
+    public ReadRecordCAIDA(ReadRecord r, Pattern dot, Config config) {
         super();
         this.dot = dot;
         this.config = config;

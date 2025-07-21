@@ -1,4 +1,4 @@
-package omni.datasets.Record;
+package omni.datasets.ReadRecord;
 
 import omni.Main;
 
@@ -8,7 +8,7 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class Query extends Record {
+public class Query extends ReadRecord {
 
     public long exactTime;
     public String predicates;

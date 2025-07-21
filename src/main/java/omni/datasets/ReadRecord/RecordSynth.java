@@ -1,13 +1,13 @@
-package omni.datasets.Record;
+package omni.datasets.ReadRecord;
 
-public class RecordSynth extends Record{
+public class RecordSynth extends ReadRecord {
 
 
     RecordSynth(){
         super();
     }
 
-    RecordSynth(Record r){
+    RecordSynth(ReadRecord r){
         super();
     }
     public RecordSynth(int id, long[] record){

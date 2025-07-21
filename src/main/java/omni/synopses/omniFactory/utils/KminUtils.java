@@ -1,6 +1,5 @@
 package omni.synopses.omniFactory.utils;
 
-import omni.datasets.Record.Query;
 import omni.synopses.omniFactory.CustomPriorityQueue.PriorityQueue;
 import omni.Experiments.utils.QueryInfo;
 import omni.synopses.omniFactory.SampleTypes.Sample;

@@ -1,5 +1,6 @@
 package omni.synopses.baselines.resSample;
 import omni.Experiments.utils.QueryInfo;
+import omni.datasets.Record.Record;
 import omni.synopses.SynopsisRefactor;
 import java.util.Random;
 
@@ -21,6 +22,11 @@ public class ReservoirSample extends SynopsisRefactor {
     }
 
     @Override
+    public void add(Record record) {
+
+    }
+
+    @Override
     public void add(long[] record) {
         long[] attr;
         if (count < size) {
@@ -36,6 +42,11 @@ public class ReservoirSample extends SynopsisRefactor {
             }
         }
         count++;
+    }
+
+    @Override
+    public void ingest(Record record, int i) {
+
     }
 
     @Override
@@ -62,6 +73,11 @@ public class ReservoirSample extends SynopsisRefactor {
         count--;
     }
 
+    @Override
+    public void delete(Record r) {
+
+    }
+
     private boolean delete(long[] r, long[] attr, int i) {
         boolean match = true;
         for (int j = 0; j < reservoir[i].length; j++) {
@@ -81,6 +97,11 @@ public class ReservoirSample extends SynopsisRefactor {
     @Override
     public int query(long[] query, int numPreds) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int query(Record query, int numPreds, QueryInfo queryInfo) {
+        return 0;
     }
 
     @Override

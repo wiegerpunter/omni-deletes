@@ -1,8 +1,7 @@
 package omni.datasets;
 
 import omni.Config;
-import omni.Main;
-import omni.datasets.Record.Query;
+import omni.datasets.ReadRecord.Query;
 
 import java.util.ArrayList;
 import java.util.Arrays;

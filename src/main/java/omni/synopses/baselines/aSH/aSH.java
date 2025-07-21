@@ -1,6 +1,8 @@
 package omni.synopses.baselines.aSH;
 
 import omni.Experiments.utils.QueryInfo;
+import omni.datasets.Record.Record;
+import omni.datasets.Record.RecordUtils;
 import omni.synopses.SynopsisRefactor;
 
 import java.util.*;
@@ -9,10 +11,15 @@ public class aSH extends SynopsisRefactor {
     // Adaptive Sample and Hold. Sketch for estimating count of elements in a stream.
     int numAttrs;
     HashMap<List<Long>, double[]> sketch; // Double[] is of form c_i, tau_i, u_i, z_i
+    HashMap<List<Object>, double[]> sketchObj; // For Record objects, Double[] is of form c_i, tau_i, u_i, z_i
     //HashMap<long[], Double[]> buffer; // Double[] is of form c_i, tau_i, u_i, z_i
     int count;
 
+    int countObj;
+
     int size; // The number of records seen so far.
+    int sizeObj; // The number of records seen so far.
+
     final int maxSize; // The maximum size of the sketch.
     int sketchSize; // The size of the sketch.
     //    int bufferSize; // The size of the buffer.
@@ -37,6 +44,7 @@ public class aSH extends SynopsisRefactor {
         this.parameters = parameters;
         this.ram = ram;
         this.sketch = new HashMap<>(parameters[0] + parameters[1]);
+        this.sketchObj = new HashMap<>(parameters[0] + parameters[1]);
         //this.buffer = new HashMap<long[], Double[]>(parameters[1]);
         this.bufferFactor = ingestBuffer;
         this.seed = repetition;
@@ -55,21 +63,19 @@ public class aSH extends SynopsisRefactor {
         count++;
     }
 
+    @Override
+    public void add(Record record) {
+        ingest(record, 1);
+        countObj++;
+    }
+
 
     public void ingest(long[] record, int sign) {
-        // check if the record is already in the sketch
-//        Long[] recordKey = new Long[record.length];
-//        for (int i = 0; i < record.length; i++) {
-//            recordKey[i] = record[i];
-//        }
-        // Ignore the RID in aSH.
-        //long[] sampleRecord = new long[record.length - 1];
         List<Long> sampleRecord = new ArrayList<>();
         for (int i = 1; i < record.length; i++) {
             //sampleRecord[i - 1] = record[i];
-            sampleRecord.add(record[i]);
-        }
-        //System.arraycopy(record, 1, sampleRecord, 0, record.length - 1);
+            sampleRecord.add(record[i]); //todo: check if equality works or need to change hashcode
+        };
 
         if (sketch.containsKey(sampleRecord)) { //add  && sketch.get(sampleRecord) != null if broken
             sameRecCounter++;
@@ -88,15 +94,45 @@ public class aSH extends SynopsisRefactor {
                 double[] recordValue = new double[4];
                 recordValue[0] = sign; // c_i
                 recordValue[1] = 0; // tau_i
-
-//                recordValue[2] = rn.nextDouble(); // u_i see page 347, u is rv uniformly distributed in (0, 1].
-//                recordValue[3] = Math.log(rn1.nextDouble()); // z_i. z is rv uniformly distributed in (0, 1].
-                //recordValue[4] = Math.max(recordValue[1] / recordValue[2], recordValue[0] / (-recordValue[3]));
                 // u_i and z_i are not set here, but in EjectOne(S)
                 sketch.put(sampleRecord, recordValue);
                 size++;
                 if (size >= maxSize) {
                     eject();
+                }
+            }
+        }
+    }
+
+    public void ingest(Record record, int sign) {
+        List<Object> sampleRecord = new ArrayList<>();
+        for (int i = 1; i < record.length(); i++) {
+            //sampleRecord[i - 1] = record[i];
+            sampleRecord.add(record.getValue(i));
+        };
+
+        if (sketchObj.containsKey(sampleRecord)) { //add  && sketch.get(sampleRecord) != null if broken
+            sameRecCounter++;
+            // increment the count of the record
+            double[] recordValue = sketchObj.get(sampleRecord);
+            recordValue[0] += sign;
+            if (recordValue[0] <= 0) {
+                sketchObj.remove(sampleRecord);
+                sizeObj--;
+                numRemovals++;
+            }
+            // no need to re-put recordValue
+        } else {
+            if (sign > 0) {
+                // add the record to the sketch
+                double[] recordValue = new double[4];
+                recordValue[0] = sign; // c_i
+                recordValue[1] = 0; // tau_i
+                // u_i and z_i are not set here, but in EjectOne(S)
+                sketchObj.put(sampleRecord, recordValue);
+                sizeObj++;
+                if (sizeObj >= maxSize) {
+                    ejectObj();
                 }
             }
         }
@@ -151,6 +187,52 @@ public class aSH extends SynopsisRefactor {
         }
     }
 
+    private void ejectObj() {
+        List<Map.Entry<List<Object>, double[]>> entries = new ArrayList<>(sketchObj.entrySet());
+
+
+        double[] Tis = new double[entries.size()];
+        int numToEject = sizeObj - sketchSize;
+
+        PriorityQueue<Double> bs_minvalues = new PriorityQueue<>(Comparator.reverseOrder());//Ascending: we want the min values to eject. Comparator.reverseOrder());
+
+        for (int i = 0; i < entries.size(); i++) {
+            double[] sample = entries.get(i).getValue();
+            sample[2] = rn.nextDouble(0, 1);
+            sample[3] = Math.log(rn1.nextDouble(0, 1));
+            Tis[i] = Math.max(sample[1] / sample[2], sample[0] / (-sample[3]));
+            bs_minvalues.add(Tis[i]);
+            if (bs_minvalues.size() > numToEject) { // We only want to eject numToEject records with the smallest values. If we have more, we eject the largest ones.
+                bs_minvalues.poll(); // Eject the largest value.
+            }
+        }
+        if (bs_minvalues.size() != numToEject || bs_minvalues.isEmpty()) {
+            throw new RuntimeException("Error in ejecting records from aSH");
+        }
+        double tstar = bs_minvalues.peek(); // The largest value in the set of smallest values.
+
+        for (int i = 0; i < entries.size(); i++) {
+            List<Object> key = entries.get(i).getKey();
+
+            if (Tis[i] <= tstar) { // tstar is threshold for ejection.
+                sketchObj.remove(key);
+                sizeObj--;
+            } else { // Update the records that are not ejected.
+                double[] sample = entries.get(i).getValue();
+                if (sample[1] <= tstar) {
+                    if (tstar * sample[2] > sample[1]) {
+                        //sketch.get(key)[0] += tstar * sample[3];
+                        sample[0] += tstar * sample[3];
+                        if (tstar * sample[3] > 0) {
+                            System.out.println("Error in aSH eject");
+                        }
+                    }
+                    sample[1] = tstar;
+                }
+            }
+        }
+    }
+
     @Override
     public int query(long[] query, int numPreds) {
         throw new UnsupportedOperationException();
@@ -189,6 +271,38 @@ public class aSH extends SynopsisRefactor {
     }
 
     @Override
+    public int query(Record query, int numPreds, QueryInfo queryInfo) {
+        // go over all records in the reservoir and check if they match the query
+        if (!useBufferInQuery && size > sketchSize) {
+            eject();
+        }
+
+        double queryResultCount = 0;
+        Set<List<Object>> keys = sketchObj.keySet();
+        for (List<Object> key : keys) {
+            boolean match = true;
+            for (int j = 0; j < query.length(); j++) {
+                if (!RecordUtils.flexibleEquals(query.getValue(j),-1) && !RecordUtils.flexibleEquals(query.getValue(j),key.get(j))) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) {
+                // check if queryResultCount is not overflow of max int.
+                if (Integer.MAX_VALUE - queryResultCount < (int) (sketchObj.get(key)[0]) + sketchObj.get(key)[1]) {
+                    queryResultCount = Integer.MAX_VALUE;
+                    System.out.println("OVERFLOW IN ASH");
+                    break;
+                }
+                queryResultCount+= sketchObj.get(key)[0] + sketchObj.get(key)[1];
+                // sketch.get(key)[0] is c_i and sketch.get(key)[1] is tau_i
+            }
+        }
+        // scale result by the size of the reservoir
+        return (int) queryResultCount; //* (Math.max((double) count /size, 1)));
+    }
+
+    @Override
     public int query(long[] query, int numPreds, int unionSize, QueryInfo CMRow) {
         throw new UnsupportedOperationException();
     }
@@ -203,12 +317,21 @@ public class aSH extends SynopsisRefactor {
         sketch = new HashMap<>(parameters[0] + parameters[1]);
         size = 0;
         count = 0;
+        sketchObj = new HashMap<>(parameters[0] + parameters[1]);
+        sizeObj = 0;
+        countObj = 0;
     }
 
     @Override
     public void delete(long[] r) {
         ingest(r, -1);
         count--;
+    }
+
+    @Override
+    public void delete(Record r) {
+        ingest(r, -1);
+        countObj--;
     }
 
     @Override
