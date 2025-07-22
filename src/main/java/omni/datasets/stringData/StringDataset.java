@@ -78,7 +78,7 @@ public class StringDataset {
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("id")) continue; // Skip header line
 
-                String[] parts = line.split(";");
+                String[] parts = line.split(",");
                 if (parts.length != numAttrs + 3) { // +2 for answer and union
                     throw new RuntimeException("Record does not match expected number of attributes: " + line);
                 }
@@ -157,7 +157,7 @@ public class StringDataset {
     }
 
     private omni.datasets.Record.Record readRecordString(String line, int numAttrs) {
-        String[] parts = line.split(";");
+        String[] parts = line.split(",");
         if (parts.length != numAttrs + 2) {
             throw new IllegalArgumentException("Record does not match expected number of attributes: " + line);
         }
@@ -202,7 +202,7 @@ public class StringDataset {
         StringBuilder keyBuilder = new StringBuilder();
         for (int j = 0; j < numAttrs; j++) {
             if (!query.getValue(j).equals(-1)) {
-                keyBuilder.append(j).append(":").append(query.getValue(j)).append(";");
+                keyBuilder.append(j).append(":").append(query.getValue(j)).append(",");
             }
         }
         return keyBuilder.toString();
@@ -259,10 +259,10 @@ public class StringDataset {
                 line.append(i);
 
                 for (int j = 0; j < pointQueriesObj[i].length(); j++) {
-                    line.append(";").append(pointQueriesObj[i].getValue(j));
+                    line.append(",").append(pointQueriesObj[i].getValue(j));
                 }
-                line.append(";").append(pointQueryAnswers[i])
-                        .append(";").append(pointQueryUnion[i]);
+                line.append(",").append(pointQueryAnswers[i])
+                        .append(",").append(pointQueryUnion[i]);
 
                 writer.write(line.toString());
                 writer.newLine();
@@ -292,7 +292,7 @@ public class StringDataset {
     }
 
     private void writeLine(BufferedWriter writer, String... values) throws IOException {
-        writer.write(String.join(";", values));
+        writer.write(String.join(",", values));
         writer.newLine();
     }
 

@@ -1,14 +1,15 @@
 FROM openjdk:21-jdk-slim
 
-COPY /out/artifacts/DSCM_jar /app/DSCM_jar/
+COPY target/DSCM-1.0-SNAPSHOT.jar app.jar
 
 COPY Configurations/Synth2LHSODC.json /app/config/config.json
-WORKDIR /app/data
-ENTRYPOINT ["java", "-jar", "/app/DSCM_jar/DSCM.jar"]
+WORKDIR /
 
 # default arguments
 CMD bash -c "\
-java -Xmx200G -jar /app/DSCM_jar/DSCM.jar /app/config/config.json\"
+echo 'Starting' && \
+java -Xmx200G -jar app.jar /app/config/config.json && \
+echo 'Done!'"
 
 LABEL authors="wieger"
 

@@ -1,12 +1,12 @@
 {
   "setting": "Compare Synopses",
-  "datasetName": "tpc-ds_customer_N=100000",
+  "datasetName": "tpc-ds_customer_N=500000",
   "numRepetitions": 1,
   "runOnODC": false,
   "readFolder": "/home/wieger/omni-deletes/",
   "withDeletes": true,
   "spreadOutDeletes": true,
-  "ramVals": [10],
+  "ramVals": [10,50],
   "noiseUpdateFractions": [0],
   "ingestBuffers": [0.1],
   "dGridSearch": [3],
@@ -60,7 +60,7 @@
   "expFastTWOLHSOneBucketPerRow": false,
   "expNMaxTWOLHSPerRow": false,
 
-  "expASH": false,
+  "expASH": true,
   "expHydra": false,
   "expResSample": false,
   "expCM": false,

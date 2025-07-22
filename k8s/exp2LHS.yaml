@@ -9,7 +9,7 @@ spec:
     spec:
       containers:
         - name: omnisketch2lhs
-          image: wpunter/omnisketch2lhs:latest
+          image: wpunter/2lhs_99:latest
           imagePullPolicy: Always
           volumeMounts:
             - mountPath: /app/data

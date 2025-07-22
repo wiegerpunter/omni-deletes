@@ -235,7 +235,7 @@ public class SyntheticDataset {
         StringBuilder keyBuilder = new StringBuilder();
         for (int j = 0; j < numAttrs; j++) {
             if (query[j] != -1) {
-                keyBuilder.append(j).append(":").append(query[j]).append(";");
+                keyBuilder.append(j).append(":").append(query[j]).append(",");
             }
         }
         return keyBuilder.toString();

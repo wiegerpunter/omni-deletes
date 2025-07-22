@@ -24,10 +24,13 @@ public class KminCustomArray implements Sample {
         this.beta = beta;
         this.onlyUseValidSamples = onlyUseValidSamples;
         this.pessimisticDeleteCounter = pessimisticDeleteCounter; // Default to false, can be set via constructor if needed
-        ingestionBufferSize = (int) Math.max(1, (B*beta) / 80); // todo: optimize buffer size of ingestion.
+        ingestionBufferSize = (int) Math.min(150,Math.max(1, (B*beta) / 80)); // todo: optimize buffer size of ingestion.
         if (beta == 0) {
             this.B = B - ingestionBufferSize;
         } else if (beta >= 0) {
+            if (B <= ingestionBufferSize) {
+                throw new IllegalArgumentException("B must be greater than ingestionBufferSize");
+            }
             this.B = (int) ((B - ingestionBufferSize) * beta);
         } else {
             throw new IllegalArgumentException("Beta should be >= 0");

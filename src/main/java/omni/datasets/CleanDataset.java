@@ -1210,7 +1210,7 @@ public class CleanDataset {
                 StringBuilder queryKey = new StringBuilder();
                 for (int k = 0; k < numAttrs; k++) {
                     if (query[k] != -1) {
-                        queryKey.append(k).append(":").append(query[k]).append(";");
+                        queryKey.append(k).append(":").append(query[k]).append(",");
                     }
                 }
                 String normalizedQuery = queryKey.toString();
@@ -1339,7 +1339,7 @@ public class CleanDataset {
             StringBuilder queryKey = new StringBuilder();
             for (int j = 0; j < numAttrs; j++) {
                 if (pointQueries[i][j] != -1) {
-                    queryKey.append(j).append(":").append(pointQueries[i][j]).append(";");
+                    queryKey.append(j).append(":").append(pointQueries[i][j]).append(",");
                 }
             }
             String normalizedQuery = queryKey.toString();
