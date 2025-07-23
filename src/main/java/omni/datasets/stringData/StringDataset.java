@@ -325,7 +325,7 @@ public class StringDataset {
     }
 
     public int getDatasetResiduSize() {
-        return 3;
+        return datasetSize;
     }
 
     public boolean queriesNotExist() {
@@ -333,5 +333,9 @@ public class StringDataset {
         String queryFileName = setQueryFileName(datasetFileName);
         File queryFile = new File(queryFileName);
         return !queryFile.exists() || queryFile.length() == 0;
+    }
+
+    public int getDatasetNoiseSize() {
+        return 0;
     }
 }

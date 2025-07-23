@@ -1672,5 +1672,7 @@ public class CleanDataset {
         datasetReaderName = dataset.getDatasetReaderName();
         datasetResiduSize = dataset.getDatasetResiduSize();
 
+        noiseSize = dataset.getDatasetNoiseSize();
+
     }
 }

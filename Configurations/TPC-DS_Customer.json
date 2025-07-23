@@ -1,6 +1,6 @@
 {
   "setting": "Compare Synopses",
-  "datasetName": "tpc-ds_customer_N=500000",
+  "datasetName": "tpc-ds_customer_N=11894806",
   "numRepetitions": 1,
   "runOnODC": false,
   "readFolder": "/home/wieger/omni-deletes/",

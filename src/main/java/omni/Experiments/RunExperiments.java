@@ -6,7 +6,6 @@ import omni.Experiments.parameterSetting.BufferedParamMinwiseSettings;
 import omni.datasets.CleanDataset;
 import omni.datasets.DatasetRefactor;
 import omni.datasets.Record.LongRecord;
-import omni.datasets.Record.Record;
 import omni.datasets.Record.StringRecord;
 import omni.synopses.SynopsisRefactor;
 import omni.synopses.omniFactory.OmniSketch;
@@ -106,12 +105,13 @@ public class RunExperiments {
     }
     //double[] betas = new double[]{1,1.35,2.1,4.2,11};
     private void runAllExperiments(int repetition, double noisePerc) throws IOException {
-        double[] ramMultiplyers;
+        double[] ramMultiplyers = new double[config.percs.length];
+
+        int ramMultiplyers_count = 0;
         if (config.readFromDisk) {
+            // first value is always 1.0, no buffer
             if (config.expOmniSketchVLDBArrayWithBuffer) {
                 ramMultiplyers = new double[config.percs.length];
-            } else {
-                ramMultiplyers= new double[0];
             }
         } else {
             if (config.expOmniSketchVLDBArrayWithBuffer) {
@@ -120,7 +120,6 @@ public class RunExperiments {
                 ramMultiplyers= new double[0];
             }
         }
-        int ramMultiplyers_count = 0;
         RamToPar rtp = new RamToPar(config.numStoredAttributes, config.ramVals);
         for (double noiseUpdateFraction : config.noiseUpdateFractions) {
             int numNoiseUpdates = (int) (cd.getDatasetSize());
@@ -164,7 +163,7 @@ public class RunExperiments {
                                                             config.bufferDeletesMinwise = getBeta(Main.inputFolder +
                                                                     "/paramTable/bufferMinwiseTable.csv", perc,
                                                                     ram, config.numStoredAttributes, config.d, 1);
-                                                            if (config.setOmniVLDBBufferAsZero && config.bufferDeletesMinwise > 1) {
+                                                            if (config.useNoBufferOmniVLDB && config.bufferDeletesMinwise > 1) {
                                                                 continue;
                                                             }
                                                             experiment.run(ram, rtp, repetition, config);
@@ -208,8 +207,7 @@ public class RunExperiments {
                                 }
                             }
                         } else if (experimentName.contains("aSH")) {
-                            //todo: make sure we don't run aSH ram^2 times. now, we loop over ram vals twice.
-                            ArrayList<Long> sizes = new ArrayList<Long>((ArrayList<Long>) config.ramVals);
+                            ArrayList<Long> sizes = new ArrayList<Long>();
                             for (double ramMultiplyer: ramMultiplyers) {
                                 sizes.add((long) (ram * ramMultiplyer));
                             }
@@ -354,7 +352,7 @@ public class RunExperiments {
                 cd.testStringData();
             }
             case "Test" -> cd.testDataset();
-            case "tpc-ds_customer_N=100000","tpc-ds_customer_N=500000", "tpc-ds_item_N=18000" -> {
+            case "tpc-ds_customer_N=99145","tpc-ds_customer_N=11894806","tpc-ds_customer_N=500000", "tpc-ds_item_N=18000" -> {
                 cd.tpcDS();
             }
             default -> cd.cleanDataset(d, perc, noiseSize);
@@ -625,13 +623,13 @@ public class RunExperiments {
                 this.conditions = new String[]{"0"};
                 config.numAttributes = 3;
             }
-            case "tpc-ds_customer_N=100000"-> {
+            case "tpc-ds_customer_N=11894806"-> {
                 this.conditions = new String[]{"0"};
-                config.numAttributes = 5;
+                config.numAttributes = 6;
             }
-            case "tpc-ds_customer_N=500000"-> {
+            case "tpc-ds_customer_N=99145"-> {
                 this.conditions = new String[]{"0"};
-                config.numAttributes = 5;
+                config.numAttributes = 6;
             }
             case "tpc-ds_customer_N=18000"-> {
                 this.conditions = new String[]{"0"};

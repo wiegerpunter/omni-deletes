@@ -6,7 +6,7 @@
   "readFolder": "/home/wieger/omni-deletes/",
   "withDeletes": true,
   "spreadOutDeletes": true,
-  "ramVals": [10,100],
+  "ramVals": [10],
   "noiseUpdateFractions": [0],
   "ingestBuffers": [0.1],
   "dGridSearch": [3],
@@ -16,7 +16,7 @@
   "parFactorGridSearch": [100],
   "numBins": 3,
   "numPredicates": 9,
-  "sizeFactorOptions": [16],
+  "sizeFactorOptions": [23],
   "sizeNoise": [0],
   "experimentName": "Deletes v0.1",
   "useMultNumAttributes": false,
@@ -60,7 +60,7 @@
   "expFastTWOLHSOneBucketPerRow": false,
   "expNMaxTWOLHSPerRow": false,
 
-  "expASH": false,
+  "expASH": true,
   "expHydra": false,
   "expResSample": false,
   "expCM": false,
@@ -71,6 +71,6 @@
   "getUniqueRecords": false,
   "domain_sizes": [10000],
   "readFromDisk": true,
-  "setOmniVLDBBufferAsZero": true,
-  "percs": [0.0,9.0]
+  "useNoBufferOmniVLDB": false,
+  "percs": [0.0,99.0]
 }
