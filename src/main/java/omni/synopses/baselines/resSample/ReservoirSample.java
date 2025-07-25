@@ -2,6 +2,8 @@ package omni.synopses.baselines.resSample;
 import omni.Experiments.utils.QueryInfo;
 import omni.datasets.Record.Record;
 import omni.synopses.SynopsisRefactor;
+
+import java.util.Arrays;
 import java.util.Random;
 
 public class ReservoirSample extends SynopsisRefactor {
@@ -30,15 +32,15 @@ public class ReservoirSample extends SynopsisRefactor {
     public void add(long[] record) {
         long[] attr;
         if (count < size) {
-            attr = new long[record.length - 1];
-            System.arraycopy(record, 1, attr, 0, record.length - 1); // ignore RID
-            reservoir[count] = attr;
+//            attr = new long[record.length - 1];
+//            System.arraycopy(record, 1, attr, 0, record.length - 1); // ignore RID
+//            reservoir[count] = attr;
+            System.arraycopy(record, 1, reservoir[count], 0, record.length - 1);
+
         } else {
             int replace = rn.nextInt(count + 1);
             if (replace < size) {
-                attr = new long[record.length - 1];
-                System.arraycopy(record, 1, attr, 0, record.length - 1); // ignore RID
-                reservoir[replace] = attr;
+                System.arraycopy(record, 1, reservoir[replace], 0, record.length - 1);  // Reuse existing row
             }
         }
         count++;
@@ -87,9 +89,10 @@ public class ReservoirSample extends SynopsisRefactor {
             }
         }
         if (match) {
-            reservoir[i] = new long[r.length - 1];
+            Arrays.fill(reservoir[i], Long.MIN_VALUE);  // Or any "tombstone" value you recognize
             return true;
         }
+
         return false;
     }
 

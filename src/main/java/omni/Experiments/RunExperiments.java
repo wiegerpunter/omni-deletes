@@ -214,11 +214,12 @@ public class RunExperiments {
                             for (double ramMultiplyer: ramMultiplyers) {
                                 sizes.add((long) (ram * ramMultiplyer));
                             }
-                            rtp = new RamToPar(config.numStoredAttributes, sizes);
+                            RamToPar rtp_ash = new RamToPar(config.numStoredAttributes, sizes);
                             for (long size: sizes) {
                                 for (double bufferASH : config.ingestBuffers) {
                                     config.bufferASH = bufferASH;
-                                    experiment.run(size, rtp, repetition, config);
+
+                                    experiment.run(size, rtp_ash, repetition, config);
                                 }
                             }
                         } else {
@@ -263,6 +264,7 @@ public class RunExperiments {
 
     private List<String> getEnabledExperiments() {
         List<String> enabledExperiments = new ArrayList<>();
+        enabledExperiments.add("readFile"); //always measure readFile time.
         if (config.expHydra) enabledExperiments.add("Hydra");
         if (config.expCM) enabledExperiments.add("CountMin");
 

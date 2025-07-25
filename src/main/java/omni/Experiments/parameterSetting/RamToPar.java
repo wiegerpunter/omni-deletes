@@ -132,7 +132,9 @@ public class RamToPar {
 
     private double[] getParamsReservoir(long ram) {
         // memory usage of reservoir sampling is sample size * 32 * numAttrs
-        double sampleSize = (double) ram / (32 * numAttrs);
+        double sampleSize = (double) ram / (64L * numAttrs + 32L); // 32 for the size of the Double array
+
+        // ram = sampleSize * 32 * numAttrs + sampleSize * 32
         return new double[]{sampleSize};
     }
     private double[] getParamsASH(long ram) {
