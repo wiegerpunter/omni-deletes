@@ -171,11 +171,6 @@ public class ArrayWithIngestionBuffer {
             }
         }
 
-        if (!isSorted) {
-            Arrays.sort(arr, 0, Math.min(curSampleSize + 1, K)); // Sort the array if not sorted
-            isSorted = true;
-        }
-
         int index = Arrays.binarySearch(arr, 0, Math.min(curSampleSize + 1, K), hx);
         if (index >= 0) {
             // Element found, shift elements to the left
@@ -439,15 +434,6 @@ public class ArrayWithIngestionBuffer {
                 flushBuffer();
             }
         }
-    }
-
-    private boolean isSorted (int[] array, int length) {
-        for (int i = 1; i < length; i++) {
-            if (array[i] < array[i - 1]) {
-                return false; // Found an element that is smaller than the previous one
-            }
-        }
-        return true; // The array is sorted
     }
 }
 

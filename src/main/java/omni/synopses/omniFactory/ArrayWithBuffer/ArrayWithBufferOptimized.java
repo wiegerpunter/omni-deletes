@@ -45,7 +45,7 @@ public class ArrayWithBufferOptimized {
     }
 
     public void insert(int val) {
-        if (bufferSize == ingestionBuffer.length && val < curTreeRoot) {
+        if (bufferSize == ingestionBuffer.length && val <= curTreeRoot) {
             mergeInPlaceOptimal();
             curSampleSize = Math.min(curSampleSize+bufferSize, K);
             bufferSize = 0;
@@ -55,22 +55,18 @@ public class ArrayWithBufferOptimized {
             if (val < minRejectedValue) {
                 minRejectedValue = val; // Update the minimum rejected value
             }
-        } else if (val < curTreeRoot)
+        } else if (val <= curTreeRoot)
             insertSorted(val);
     }
 
     private void insertSorted(int val) {
-        int pos = Arrays.binarySearch(ingestionBuffer, 0, bufferSize, val);
-        if (pos < 0) {
-            pos = -pos - 1; // Find correct insertion point
-        }
+        int pos = binarySearch(ingestionBuffer, 0, bufferSize, val);
 
         // Shift elements to make room for new value
         System.arraycopy(ingestionBuffer, pos, ingestionBuffer, pos + 1, bufferSize - pos);
         ingestionBuffer[pos] = val;
         bufferSize++;
     }
-
 
     public void mergeInPlaceOptimal() {
         // Process ingestionBuffer from largest to smallest
@@ -83,6 +79,7 @@ public class ArrayWithBufferOptimized {
             if (insertPosition + bufferElementsToProcess > arr.length) {
                 bufferPos--;
                 bufferElementsToProcess--;
+                minRejectedValue = Math.min(minRejectedValue, val);
                 // TODO: I am now skipping an element, do i need to update minRejectedValue? Probably not because this element is already in buffer.
                 continue;
             }
@@ -96,81 +93,22 @@ public class ArrayWithBufferOptimized {
         }
     }
 
+
     int binarySearch(int[] arr, int from, int to, int key) {
         int pos = binarySearch1(arr, from, to, key);
-        if (pos < 0) return -(pos + 1);
-        else return pos;
+        if (pos > 0) {
+            while (pos > 0 && arr[pos] == arr[pos - 1]) {
+                pos--; // Find the first occurrence of the value
+            }
+        }
+        if (pos < 0) {
+            pos = -pos - 1; // If not found, convert to insertion point
+        }
+        return pos; // Return the position of the first occurrence or insertion point
     }
 
     int binarySearch1(int[] arr, int from, int to, int key) {
         return Arrays.binarySearch(arr, from, to, key);
-    }
-
-
-    public void removeAlt(int hx) {
-        if (curSampleSize == 0) {
-            return; // Nothing to remove
-        }
-
-        if (hx > curTreeRoot) {
-            // Element is larger than the largest in the sample, ignore
-            return;
-        }
-
-        for (int i = 0; i < bufferSize; i++) {
-            if (ingestionBuffer[i] == hx) {
-                // delete buffer[i]
-                System.arraycopy(ingestionBuffer, i + 1,ingestionBuffer, i, bufferSize - i - 1);
-                bufferSize--;
-                deletesFromBuffer++;
-                return;
-            }
-        }
-
-        if (!isSorted) {
-            Arrays.sort(arr, 0, Math.min(curSampleSize + 1, K)); // Sort the array if not sorted
-            isSorted = true;
-        }
-
-        int index = Arrays.binarySearch(arr, 0, Math.min(curSampleSize + 1, K), hx);
-        if (index >= 0) {
-            // Element found, shift elements to the left
-            System.arraycopy(arr, index + 1, arr, index, Math.min(curSampleSize + 1, K) - index -1);
-            arr[Math.min(curSampleSize, K - 1)] = Integer.MAX_VALUE; // Set the last element to a large value
-            curSampleSize--;
-            deletesFromSample++;
-        } else {
-            // Element not found in neither buffer or sample, do nothing
-            return;
-        }
-
-        // If buffer is not empty, we can try to fill the gap
-        if (bufferSize > 0) {
-            int insertIndex = Arrays.binarySearch(arr, 0, Math.min(curSampleSize + 1, K), ingestionBuffer[0]);
-            if (insertIndex >= 0) {
-                while (insertIndex > 0 && arr[insertIndex] == arr[insertIndex -1]) {
-                    insertIndex--; // Find the first occurrence of the value
-                }
-            } else {
-                insertIndex = -insertIndex - 1;
-            }
-
-            // Shift elements to the right to make space for the buffer element
-            System.arraycopy(arr, insertIndex, arr, insertIndex + 1, Math.min(curSampleSize + 1, K) - insertIndex - 1);
-            // Insert the last element from the buffer into the sample
-            arr[insertIndex] = ingestionBuffer[0];
-            bufferSize--;
-            curSampleSize++;
-            // Shift the remaining buffer elements to the left
-            System.arraycopy(ingestionBuffer, 1, ingestionBuffer, 0, bufferSize);
-        }
-
-        // Update the current tree root if necessary
-        if (curSampleSize > 0) {
-            curTreeRoot = arr[Math.min(curSampleSize, K-1)];
-        } else {
-            curTreeRoot = Integer.MAX_VALUE; // Reset if the sample is empty
-        }
     }
 
     public void removeSimple(int hx) {
@@ -390,16 +328,10 @@ public class ArrayWithBufferOptimized {
     private void flushBeforeQuery() {
         if (bufferSize > 0) {
             mergeInPlaceOptimal();
+            curSampleSize = Math.min(curSampleSize+bufferSize, K);
+            bufferSize = 0;
+            curTreeRoot = arr[curSampleSize-1];
         }
-    }
-
-    private boolean isSorted (int[] array, int length) {
-        for (int i = 1; i < length; i++) {
-            if (array[i] < array[i - 1]) {
-                return false; // Found an element that is smaller than the previous one
-            }
-        }
-        return true; // The array is sorted
     }
 }
 
