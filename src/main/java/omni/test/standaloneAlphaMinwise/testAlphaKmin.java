@@ -51,6 +51,8 @@ public class testAlphaKmin {
 
                                     // Run tests with different beta and alpha values
                                     runTest("KminCustomArray", intersectionSize, numSet, noiseSize, seed, B, beta, alpha, domain);
+                                    runTest("KminCustomArrayOpt", intersectionSize, numSet, noiseSize, seed, B, beta, alpha, domain);
+
                                     runTest("KminCustomArray", intersectionSize, numSet, noiseSize, seed, B, 0, alpha, domain);
                                     runTest("KminSimpleBuffer", intersectionSize, numSet, noiseSize, seed, B, beta, alpha, domain);
                                     runTest("KminSimpleBuffer", intersectionSize, numSet, noiseSize, seed, B, 0, alpha, domain);
@@ -144,6 +146,13 @@ public class testAlphaKmin {
                     samples[i] = new KminCustomArray(B, 31, beta, "alpha", true, false);
                 }
             }
+            case "KminCustomArrayOpt" -> {
+                samples = new KminCustomArrayOpt[data.numberOfSets];
+
+                for (int i = 0; i < data.numberOfSets; i++) {
+                    samples[i] = new KminCustomArrayOpt(B, 31, beta, "alpha", true, false);
+                }
+            }
             case "KminArrayWithoutBuffer" -> {
                 samples = new KminCustomArray[data.numberOfSets];
 
@@ -181,7 +190,7 @@ public class testAlphaKmin {
         System.arraycopy(samples, 0, results, 0, data.numberOfSets);
         // compute intersection of results
         return switch (setting) {
-            case "KminCustomArray", "KminArrayWithoutBuffer" ->
+            case "KminCustomArray", "KminCustomArrayOpt","KminArrayWithoutBuffer" ->
                     KminUtils.estimateArray(results, queryInfo, 0, data.numberOfSets);
             case "KminTreeSet" -> KminUtils.estimateTreeSet(results, queryInfo, 0, data.numberOfSets);
             case "KminSimpleBuffer" -> KminUtils.estimateArray(results, queryInfo, 0, data.numberOfSets);

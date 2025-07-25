@@ -13,6 +13,11 @@ public class Formulas {
         return (long) B * smallb + 32;
     }
 
+    public static long ramASH(int maxSize, int numAttrs) {
+        // size * (size of record + size of Double array + Tis array)
+        return (long) maxSize * (32L * numAttrs + 5 * 64L + 2 *32L); // 5 * 64L for the size of Double array and Tis array, 2*32L for HashMap pointers.
+    }
+
     static int smallb(int B, double delta, int depth) {
         return 31;////(Math.ceil(Math.log(4*Math.pow(B, (double) 5/2)/delta)));
     }

@@ -39,6 +39,8 @@ public class ExperimentFactory {
         experiments.put("OmniSketchVLDBArrayCustom", new OmniVLDBArrayCustomExperiment());
         experiments.put("OmniSketchVLDBArrayRegBufferCustom", new OmniVLDBArrayRegBufferCustomExperiment());
         experiments.put("OmniSketchVLDBArrayWithBufferCustom", new OmniVLDBArrayWithBufferCustomExperiment());
+        experiments.put("OmniSketchVLDBArrayWithBufferOptCustom", new OmniVLDBArrayWithBufferOptCustomExperiment());
+
         experiments.put("OmniSketchVLDBArrayWithBufferPessDeleteCountCustom", new OmniVLDBArrayWithBufferPessDeleteCountCustomExperiment());
 
         experiments.put("OmniSketchVLDBArrayWithBufferPerRowCustom", new OmniVLDBArrayWithBufferPerRowCustomExperiment());

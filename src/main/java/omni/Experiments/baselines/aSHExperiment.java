@@ -16,7 +16,7 @@ public class aSHExperiment implements Experiment {
 
         int[] params = rtp.getParamsAdapSampling(ram, config.bufferASH);
         System.out.println("Running Adaptive S+H with parameters: " + Arrays.toString(params));
-        aSH ash = new aSH(ram, config.numStoredAttributes, params, repetition, config.withDeletes, config.bufferASH);
+        aSH ash = new aSH(ram, config.useNoCast, config.numStoredAttributes, params, repetition, config.withDeletes, config.bufferASH);
         ash.printParams();
         runExperiments.runSynopsisRamBased(ash, repetition);
     }

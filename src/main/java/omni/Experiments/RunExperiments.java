@@ -105,13 +105,16 @@ public class RunExperiments {
     }
     //double[] betas = new double[]{1,1.35,2.1,4.2,11};
     private void runAllExperiments(int repetition, double noisePerc) throws IOException {
-        double[] ramMultiplyers = new double[config.percs.length];
+        double[] ramMultiplyers;
 
         int ramMultiplyers_count = 0;
         if (config.readFromDisk) {
             // first value is always 1.0, no buffer
             if (config.expOmniSketchVLDBArrayWithBuffer) {
                 ramMultiplyers = new double[config.percs.length];
+            } else {
+                ramMultiplyers = new double[1];
+                ramMultiplyers[0] = 1.0; // no buffer
             }
         } else {
             if (config.expOmniSketchVLDBArrayWithBuffer) {
@@ -277,6 +280,7 @@ public class RunExperiments {
 
             if (config.expOmniSketchVLDBArrayWithBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithBufferCustom");
             if (config.expOmniSketchVLDBArrayWithBufferPerRow) enabledExperiments.add("OmniSketchVLDBArrayWithBufferPerRowCustom");
+            if (config.expOmniSketchVLDBArrayWithBufferOpt) enabledExperiments.add("OmniSketchVLDBArrayWithBufferOptCustom");
 
             if (config.expOmniSketchVLDBArrayWithBufferPessDeleteCount) enabledExperiments.add("OmniSketchVLDBArrayWithBufferPessDeleteCountCustom");
 
