@@ -49,7 +49,7 @@
   "expOmniSketchSFQLSampleSizePerRow": false,
   "expOmniSketchSFQLSampleSizeTestHashSet": false,
   "expSlowTWOLHS": false,
-  "expFastTWOLHS": true,
+  "expFastTWOLHS": false,
   "expFastTWOLHSOneBucket": false,
   "expNMaxTWOLHS": false,
 
@@ -60,7 +60,7 @@
   "expFastTWOLHSOneBucketPerRow": false,
   "expNMaxTWOLHSPerRow": false,
 
-  "expASH": true,
+  "expASH": false,
   "expHydra": false,
   "expResSample": false,
   "expCM": false,
@@ -72,5 +72,6 @@
   "domain_sizes": [10000],
   "readFromDisk": true,
   "useNoBufferOmniVLDB": false,
-  "percs": [0.0,99.0]
+  "percs": [0.0],
+  "useNoCast": false
 }

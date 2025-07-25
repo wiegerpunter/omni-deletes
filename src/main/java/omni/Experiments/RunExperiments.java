@@ -377,9 +377,12 @@ public class RunExperiments {
 
         if (config.readFromDisk) {
             System.out.println("Reading dataset from disk");
-            time_passed = runDatasetFromDisk(syn);
+            if (config.useNoCast) {
+                time_passed = runDatasetFromDisk(syn);
+            } else {
 //            time_passed = runDatasetFromDiskLong(syn);
-//            time_passed = runDatasetFromDiskString(syn);
+                time_passed = runDatasetFromDiskString(syn);
+            }
         } else {
 
             if (config.withDeletes) {
@@ -397,10 +400,13 @@ public class RunExperiments {
         int collisions = 0;
 
 
-        runQueriesNoCast ab = new runQueriesNoCast(syn, cd, time_passed, collisions, repetition, config);
-        ab.run();
-//        runQueries ab = new runQueries(syn, cd, time_passed, collisions, repetition, config);
-//        ab.runObj();
+        if (config.useNoCast) {
+            runQueriesNoCast ab = new runQueriesNoCast(syn, cd, time_passed, collisions, repetition, config);
+            ab.run();
+        } else {
+            runQueries ab = new runQueries(syn, cd, time_passed, collisions, repetition, config);
+            ab.runObj();
+        }
         long synMem = syn.getMemoryUsage();
         syn.reset();
         //ConditionChecks.run(d, s);

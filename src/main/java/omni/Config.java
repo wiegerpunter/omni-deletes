@@ -88,7 +88,8 @@ public class Config {
     public boolean expNMaxTWOLHSPerRow;
     public boolean expTWOLHSPerRowExact;
     public boolean expTWOLHSExact;
-    public boolean useNoBufferOmniVLDB;
+    public boolean useNoBufferOmniVLDB; // if true, use no buffer in omniVLDB
+    public boolean useNoCast; // if true, record is always long[]
     // Old parameters, might use them in the future
 //    public List<Double> bufferValuesOmni;
 //    public boolean expOmniSet;

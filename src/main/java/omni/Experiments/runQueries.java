@@ -80,58 +80,6 @@ public class runQueries {
 
     }
 
-    public void run() throws IOException {
-        // Count number of collisions in Omnisketch.
-
-        error = new ArrayList<>();
-        long startTime = System.currentTimeMillis();
-        if (Main.rangeQueries) {
-            for (int i = 0; i< d.rangeQueries.length; i++) {
-                computeErrorRangeQuery(i, d.rangeQueries[i], d.rangeQueryAnswers[i]);
-                //h.addQueryResult(q);
-            }
-        } else {
-            for (int i = 0; i< d.pointQueries.length; i++) {
-                computeErrorPointQuery(i, d.pointQueries[i], d.pointQueriesNumAttrs[i], d.pointQueryAnswers[i], d.pointQueryUnion[i]);
-                //h.addQueryResult(q);
-                if (i % 1000 == 0) {
-                    System.out.println("\r" + i + " queries done");
-                }
-            }
-            System.out.println("Memory usage is " + s.getMemoryUsage());
-            // test for Synopsis if it has more memory than the computed mem usage.
-
-        }
-        long endTime = System.currentTimeMillis();
-        long totalQueryExecutionTime = endTime - startTime;
-
-        long totalExecTime = 0;
-        for (long l : queryExecutionTime) {
-            totalExecTime = totalExecTime + l;
-        }
-        System.out.println("Total execution time: " + totalExecTime + " ms, average: "
-                + (double) totalExecTime / d.pointQueries.length + " ms");
-
-        System.out.println("Difference between total time and execution time per query: "
-                + (totalQueryExecutionTime - totalExecTime));
-
-
-        // Write results to file
-        if (config.rangeQueries) {
-            throw new RuntimeException("Range queries file not implemented yet");
-        } else {
-//            if (s.setting.contains("SampleLater")) {
-//                writeLoggedSetSizes(expSettings);
-//            }
-            writeResultsToFilePointQuery(repetition, s, d, ingestionTime, collisions, estimatedAnswersPointQuery,
-                    SCap, NMax, usedMaxSizes, jaccardEstimates2LHS, unionEstimates2LHS, unionExact, witness2LHS, queryExecutionTime, totalQueryExecutionTime,
-                    numberOfKmins, numberOfKminsExceedingBounds, case1, bound);
-        }
-        System.out.println("Total queries: " + d.pointQueries.length);
-        System.out.println("Total queries with zero empty or singleton witnesses: " + s.countIsZero);
-        System.out.println("Total queries with zero estimate: " + totalEstimatesZero);
-    }
-
     public void runObj() throws IOException {
         // Count number of collisions in Omnisketch.
 
