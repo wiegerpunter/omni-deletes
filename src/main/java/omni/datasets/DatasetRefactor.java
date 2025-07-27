@@ -13,8 +13,9 @@ import java.util.*;
 
 
 public class DatasetRefactor {
-    int size;
+    public int size;
     public ArrayList<ReadRecord> dataset = new ArrayList<>();
+    public String datasetReaderName;
     private int totalRead;
     public Config config;
 
@@ -25,16 +26,22 @@ public class DatasetRefactor {
                 // Check if file exists
                 String CSV_FILE_NAME = config.getInputFolder() + "/data/" + config.datasetName +
                         "/SNMPDataset_" + config.datasetName + "_"+ config.fileStartCondition + ".csv";
+
                 File f = new File(CSV_FILE_NAME);
+                boolean fileAlreadyExisted = f.exists() && f.isFile();
+
                 boolean writeSNMP = true;
-                if (!f.exists()) {
-                    SNMPDataset();
+                System.out.println("Is directory? " + f.isDirectory());
+                System.out.println("Is file? " + f.isFile());
+
+                if (!fileAlreadyExisted) {
+                    createSNMPDatasetFromGZ();
                 } else {
-                    System.out.println("Loading dataset from file, name: " + CSV_FILE_NAME);
-                    throw new RuntimeException("implement read in datasetRefactor");
+                    System.out.println("We can directly load from clean file " + CSV_FILE_NAME);
                     //dataset = Main.h.readSNMPDataset();
                     //System.out.println("Loaded size: " + dataset.size());
                 }
+                datasetReaderName = CSV_FILE_NAME;
             }
             case "CAIDA" -> {
                 CAIDADataset();
@@ -55,7 +62,7 @@ public class DatasetRefactor {
 
     public void CAIDADataset() throws RuntimeException {
         String dir;
-        dir = config.getInputFolder() + "/data/" + config.datasetName;
+        dir = config.getInputFolder() + "/data/" + config.datasetName +"/csv";
         loadCAIDAFile(dir);
     }
 
@@ -101,7 +108,7 @@ public class DatasetRefactor {
         }
     }
 
-    public void SNMPDataset() throws RuntimeException, IOException {
+    public void createSNMPDatasetFromGZ() throws RuntimeException, IOException {
         if (config.readAllFiles) {
             //String directory = "C:/Users/s162378/OneDrive - TU Eindhoven/Documents/GitHub/DSCM/fall03.tar/fall03/fall03/";
             String directory = config.getInputFolder() +"/data/" + config.datasetName;
@@ -135,7 +142,7 @@ public class DatasetRefactor {
 //            Main.logger.info("All files read.");
             System.out.println("All files read.");
         } else {
-            String smallPath = config.readFolder + "/SNMP/031101/";
+            String smallPath = config.getInputFolder() + "/data/" + config.datasetName + "/031101/";
             loadFileSNMP(smallPath);
         }
 

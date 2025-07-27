@@ -162,12 +162,12 @@ public class ProcessedStreamLoaderGenericRefactor {
 						cnt++; // 0 at start, 1 at second, 2 at third, 3 at fourth.
 					}
 					b = bis.readLine();
-					line = replace(b);
-					linesSeen++;
 					if (b == null) { // End of file.
 						skip++;
 						return null;
 					}
+					line = replace(b);
+					linesSeen++;
 					a = split(line,",");
 				}
 			} else {

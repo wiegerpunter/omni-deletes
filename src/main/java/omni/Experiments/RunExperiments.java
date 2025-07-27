@@ -120,13 +120,14 @@ public class RunExperiments {
             if (config.expOmniSketchVLDBArrayWithBuffer) {
                 ramMultiplyers = new double[config.noiseUpdateFractions.size()];
             } else {
-                ramMultiplyers= new double[0];
+                ramMultiplyers= new double[1];
+                ramMultiplyers[0] = 1.0; // no buffer
             }
         }
         RamToPar rtp = new RamToPar(config.numStoredAttributes, config.ramVals);
         for (double noiseUpdateFraction : config.noiseUpdateFractions) {
             int numNoiseUpdates = (int) (cd.getDatasetSize());
-            if (!config.readFromDisk && !cd.setNoiseUpdates(numNoiseUpdates)) {
+            if (!config.readFromDisk && !cd.setNoiseUpdates((int) (noiseUpdateFraction * numNoiseUpdates))) {
                 continue;
             };
             for (long ram : config.ramVals) {
@@ -360,6 +361,15 @@ public class RunExperiments {
             case "Test" -> cd.testDataset();
             case "tpc-ds_customer_N=99145","tpc-ds_customer_N=11894806","tpc-ds_customer_N=500000", "tpc-ds_item_N=18000" -> {
                 cd.tpcDS();
+            }
+            case "SNMP" -> {
+                if (d.size == 0) {
+                    // clean dataset
+                    cd.datasetReaderName = d.datasetReaderName;
+                    cd.readSNMP();
+                } else {
+                    cd.cleanDataset(d, perc, noiseSize);
+                }
             }
             default -> cd.cleanDataset(d, perc, noiseSize);
         }
@@ -618,7 +628,7 @@ public class RunExperiments {
                     }
 
                 else {
-                    this.conditions = new String[]{"03"};//"03110_OR_03111"};
+                    this.conditions = new String[]{"031101"};//"03110_OR_03111"};
                    /*"03110"/*,
                         "03110_OR_031110_OR_031111",
                         "03110_OR_031110_OR_031111_OR_031112_OR_031113",

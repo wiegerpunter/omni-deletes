@@ -203,13 +203,22 @@ public class CleanDataset {
     private boolean queryFileExists() throws CsvValidationException, IOException {
         String filenameToMatch = getQueryFileName(false);
         // check if there exists a file where first part of name matches filenameToMatch
-        String queriesDir = config.getInputFolder() + "pointQueries/" + config.datasetName + "/";
-        File[] files = new File(queriesDir).listFiles();
-        assert files != null;
+        String queriesDirPath = config.getInputFolder() + "pointQueries/" + config.datasetName + "/" + config.numFiles +"/";
+        File queriesDir = new File(queriesDirPath);
+        // Check if directory exists and is a directory
+        if (!queriesDir.exists() || !queriesDir.isDirectory()) {
+            System.out.println("Directory " + queriesDirPath + " does not exist.");
+            return false;
+        }
+        File[] files = queriesDir.listFiles();
+        if (files == null || files.length == 0) {
+            System.out.println("Directory " + queriesDirPath + " is empty.");
+            return false;
+        }
         String filename = fileExists(filenameToMatch, files);
         if (filename != null) {
             System.out.println("File " + filename + " exists. Reading queries with exact frequency.");
-            readWorkloadWithExact(queriesDir + filename);
+            readWorkloadWithExact(queriesDirPath + filename);
             return true;
         }
         return false;
@@ -574,7 +583,12 @@ public class CleanDataset {
     private void writePointQueriesToFile() throws IOException {
         boolean init = false;
         String queriesWithExactName = getQueryFileName(true);
-        String queryDir = config.getInputFolder() + "pointQueries/" + config.datasetName + "/";
+        String queryDir = config.getInputFolder() + "pointQueries/" + config.datasetName + "/" + config.numFiles +"/";
+        // if directory does not exist, create it.
+        File dir = new File(queryDir);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
         File f = new File(queryDir + queriesWithExactName);
         if (!f.exists()) {
             init = true;
@@ -706,33 +720,44 @@ public class CleanDataset {
         int generatedQueries = 0;
         Random rn = new Random(0);
         for (long[] longs : dataset) {
-            // Select random record from dataset with probability 0.05%.
-            Long[] query = new Long[config.numStoredAttributes];
-            // Convert k to binary string.
-            if (rn.nextDouble() > 0.0005) {
-                continue;
-            }
-            for (int l = 0; l < config.numStoredAttributes; l++) {
-                if (l < numPredicates) {
+            for (int p = 1; p < numPredicates + 1; p++) {
+
+                // Select random record from dataset with probability 0.05%.
+                Long[] query = new Long[config.numStoredAttributes];
+                // Convert k to binary string.
+                if (rn.nextDouble() > 0.0005) {
+                    continue;
+                }
+                int numToRemove = config.numStoredAttributes - p;
+
+                for (int l = 0; l < config.numStoredAttributes; l++) {
                     query[l] = longs[l + 1];
-                } else {
-                    query[l] = (long) -1;
                 }
-            }
-            // Check if query is already in list of queries.
-            boolean alreadyInList = false;
-            // check if query in set
 
-            for (Long[] key : potQueries.keySet()) {
-                if (Arrays.equals(key, query)) {
-                    alreadyInList = true;
-                    potQueries.put(key, potQueries.get(key) + 1);
+                Random rand = new Random(); // Or reuse a global one for consistency
+                Set<Integer> removed = new HashSet<>();
+                while (removed.size() < numToRemove) {
+                    int index = rand.nextInt(config.numStoredAttributes);
+                    if (!removed.contains(index)) {
+                        query[index] = -1L;
+                        removed.add(index);
+                    }
                 }
-            }
+                // Check if query is already in list of queries.
+                boolean alreadyInList = false;
+                // check if query in set
 
-            if (!alreadyInList) {
-                potQueries.put(query, 1);
-                generatedQueries++;
+                for (Long[] key : potQueries.keySet()) {
+                    if (Arrays.equals(key, query)) {
+                        alreadyInList = true;
+                        potQueries.put(key, potQueries.get(key) + 1);
+                    }
+                }
+
+                if (!alreadyInList) {
+                    potQueries.put(query, 1);
+                    generatedQueries++;
+                }
             }
 
         }
@@ -1575,7 +1600,11 @@ public class CleanDataset {
         if (config.readFromDisk) {
             return noiseSize;
         } else {
-            return noiseUpdates.length;
+            if (noiseUpdates!=null) {
+                return  noiseUpdates.length;
+            } else {
+                return 0;
+            }
         }
     }
 
@@ -1674,5 +1703,9 @@ public class CleanDataset {
 
         noiseSize = dataset.getDatasetNoiseSize();
 
+    }
+
+    public void readSNMP() {
+        throw new RuntimeException("Not implemented yet.");
     }
 }
