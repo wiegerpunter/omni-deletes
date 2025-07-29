@@ -20,6 +20,10 @@ public class OmniSketchConfig {
     private boolean useFastTWOLHS;
     private double beta;
 
+
+    public int ingestBufferSize;
+    public int deleteBufferSize;
+
     // Getters and setters for all fields
     public int getSeed() {
         return seed;
@@ -163,5 +167,12 @@ public class OmniSketchConfig {
 
     public String getSetting() {
         return setting;
+    }
+
+    public void setIngestBufferSize(int ingestBufferSize) {
+        this.ingestBufferSize = ingestBufferSize;
+    }
+    public void setDeleteBufferSize(int deleteBufferSize) {
+        this.deleteBufferSize = deleteBufferSize;
     }
 }

@@ -10,6 +10,7 @@ public class KminCustomArrayOptBatchDeletes implements Sample {
 
     private final int B;
     private final int ingestionBufferSize;
+    private final int deleteBufferSize;
     private final int b;
     private int n;
     private ArrayWithBufferOptimizedBatchDeletes sample;
@@ -18,25 +19,27 @@ public class KminCustomArrayOptBatchDeletes implements Sample {
     private final boolean onlyUseValidSamples;
     private final boolean pessimisticDeleteCounter; // Flag to indicate if we are using pessimistic delete counter
 
-    public KminCustomArrayOptBatchDeletes(int B, int b, double beta, String setting, boolean onlyUseValidSamples, boolean pessimisticDeleteCounter) {
+    public KminCustomArrayOptBatchDeletes(int B, int b, double beta, int ingestionBufferSize, int deleteBufferSize,
+                                          String setting, boolean onlyUseValidSamples, boolean pessimisticDeleteCounter) {
         this.b = b;
         this.setting = setting;
         this.n = 0;
         this.beta = beta;
         this.onlyUseValidSamples = onlyUseValidSamples;
         this.pessimisticDeleteCounter = pessimisticDeleteCounter; // Default to false, can be set via constructor if needed
-        ingestionBufferSize = (int) Math.min(150,Math.max(1, (B*beta) / 80)); // todo: optimize buffer size of ingestion.
+        this.ingestionBufferSize = ingestionBufferSize;
+        this.deleteBufferSize = deleteBufferSize;
         if (beta == 0) {
-            this.B = B - ingestionBufferSize;
+            this.B = B - ingestionBufferSize - deleteBufferSize;
         } else if (beta >= 0) {
             if (B <= ingestionBufferSize) {
                 throw new IllegalArgumentException("B must be greater than ingestionBufferSize");
             }
-            this.B = (int) ((B - ingestionBufferSize) * beta);
+            this.B = (int) ((B - ingestionBufferSize - deleteBufferSize) * beta);
         } else {
             throw new IllegalArgumentException("Beta should be >= 0");
         }
-        this.sample = new ArrayWithBufferOptimizedBatchDeletes(this.B, ingestionBufferSize);
+        this.sample = new ArrayWithBufferOptimizedBatchDeletes(this.B, ingestionBufferSize, deleteBufferSize);
     }
 
     // Implement the methods for KminPQ here
@@ -76,7 +79,7 @@ public class KminCustomArrayOptBatchDeletes implements Sample {
 
     @Override
     public void reset() {
-        sample = new ArrayWithBufferOptimizedBatchDeletes(B, this.ingestionBufferSize); // Resetting the sample without a buffer
+        sample = new ArrayWithBufferOptimizedBatchDeletes(B, this.ingestionBufferSize, this.deleteBufferSize); // Resetting the sample without a buffer
         n = 0;
     }
 

@@ -140,71 +140,83 @@ public class RunExperiments {
                                 config.d = d;
                                 for (int b : config.bGridSearch) {
                                     config.b = b;
-                                    if (config.parameterSettingType.equals("B/W")) {
-                                        for (double parFactor : config.parFactorGridSearch) {
-                                            config.parFactor = parFactor;
-                                            experiment.run(ram, rtp, repetition, config);
-                                        }
-                                    } else {
-                                        for (int w : config.wGridSearch) {
-                                            config.w = w;
-                                            if (config.parameterSettingType.equals("Custom")) {
-                                                for (int B : config.BGridSearch) {
-                                                    config.B = B;
+                                    for (int ingestBufferSize : config.ingestBufferSizeGridSearch) {
+                                        config.ingestBufferSize = ingestBufferSize;
+                                        for (int deleteBufferSize: config.deleteBufferSizeGridSearch) {
+                                            if (deleteBufferSize > config.ingestBufferSize) {
+                                                continue;
+                                            }
+                                            config.deleteBufferSize = deleteBufferSize;
+                                            if (config.parameterSettingType.equals("B/W")) {
+                                                for (double parFactor : config.parFactorGridSearch) {
+                                                    config.parFactor = parFactor;
                                                     experiment.run(ram, rtp, repetition, config);
                                                 }
-                                            } else if (config.parameterSettingType.equals("GridSearch")) {
+                                            } else {
+                                                for (int w : config.wGridSearch) {
+                                                    config.w = w;
+                                                    if (config.parameterSettingType.equals("Custom")) {
+                                                        for (int B : config.BGridSearch) {
+                                                            config.B = B;
+                                                            experiment.run(ram, rtp, repetition, config);
+                                                        }
+                                                    } else if (config.parameterSettingType.equals("GridSearch")) {
 
-                                                if (experimentName.contains("VLDB")) {
-                                                    config.B = (int) ((ram / (config.d * config.w * config.numStoredAttributes) - 32)/config.b);
-                                                    if (config.B < 1) {
-                                                        System.err.println("B is less than 1, skipping experiment");
-                                                        continue;
-                                                    }
-                                                    bp.add(ram, config.B, config.d, config.w, config.numStoredAttributes, config.b);
-                                                    if (config.readFromDisk) {
-                                                        for (double perc: config.percs) {
-                                                            config.bufferDeletesMinwise = getBeta(Main.inputFolder +
-                                                                    "/paramTable/bufferMinwiseTable.csv", perc,
-                                                                    ram, config.numStoredAttributes, config.d, 1);
-                                                            if (config.useNoBufferOmniVLDB && config.bufferDeletesMinwise > 1) {
+                                                        if (experimentName.contains("VLDB")) {
+                                                            config.B = (int) ((ram / (config.d * config.w * config.numStoredAttributes) - 32) / config.b);
+                                                            if (config.B < 1) {
+                                                                System.err.println("B is less than 1, skipping experiment");
+                                                                continue;
+                                                            }
+                                                            bp.add(ram, config.B, config.d, config.w, config.numStoredAttributes, config.b);
+                                                            if (config.readFromDisk) {
+                                                                for (double perc : config.percs) {
+                                                                    config.bufferDeletesMinwise = getBeta(Main.inputFolder +
+                                                                                    "/paramTable/bufferMinwiseTable.csv", perc,
+                                                                            ram, config.numStoredAttributes, config.d, 1);
+                                                                    if (config.useNoBufferOmniVLDB && config.bufferDeletesMinwise > 1) {
+                                                                        continue;
+                                                                    }
+                                                                    experiment.run(ram, rtp, repetition, config);
+                                                                    if (ramMultiplyers_count < config.percs.length) {
+                                                                        ramMultiplyers[ramMultiplyers_count] = config.bufferDeletesMinwise;
+                                                                        ramMultiplyers_count++;
+                                                                    }
+                                                                }
+                                                            } else {
+                                                                for (double noiseUpdateFraction1 : config.noiseUpdateFractions) {
+                                                                    config.bufferDeletesMinwise = getBeta(Main.inputFolder +
+                                                                                    "/paramTable/bufferMinwiseTable.csv",
+                                                                            noiseUpdateFraction1, ram, config.numStoredAttributes,
+                                                                            config.d, 1);
+                                                                    experiment.run(ram, rtp, repetition, config);
+                                                                    if (ramMultiplyers_count < config.noiseUpdateFractions.size()) {
+                                                                        ramMultiplyers[ramMultiplyers_count] = config.bufferDeletesMinwise;
+                                                                        ramMultiplyers_count++;
+                                                                    }
+                                                                }
+                                                            }
+                                                        } else if (experimentName.contains("TWOLHS")) {
+                                                            if (noisePerc > 0) {
+                                                                continue;
+                                                            }
+                                                            ; // TWOLHS is impervious to deletes.
+
+                                                            config.B = (int) ((ram / (config.d * config.w * config.numStoredAttributes) - 32) / (31 * 32 * 32));
+                                                            System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
+                                                            if (config.B < 1) {
+                                                                System.err.println("B is less than 1, skipping experiment");
                                                                 continue;
                                                             }
                                                             experiment.run(ram, rtp, repetition, config);
-                                                            if (ramMultiplyers_count < config.percs.length) {
-                                                                ramMultiplyers[ramMultiplyers_count] = config.bufferDeletesMinwise;
-                                                                ramMultiplyers_count++;
-                                                            }
+                                                        } else {
+                                                            throw new RuntimeException("OmniSketch experiment name not recognized " + experimentName);
                                                         }
+
                                                     } else {
-                                                        for (double noiseUpdateFraction1 : config.noiseUpdateFractions) {
-                                                            config.bufferDeletesMinwise = getBeta(Main.inputFolder +
-                                                                    "/paramTable/bufferMinwiseTable.csv",
-                                                                    noiseUpdateFraction1, ram, config.numStoredAttributes,
-                                                                    config.d, 1);
-                                                            experiment.run(ram, rtp, repetition, config);
-                                                            if (ramMultiplyers_count < config.noiseUpdateFractions.size()) {
-                                                                ramMultiplyers[ramMultiplyers_count] = config.bufferDeletesMinwise;
-                                                                ramMultiplyers_count++;
-                                                            }
-                                                        }
+                                                        throw new RuntimeException("Unknown parameter setting type: " + config.parameterSettingType);
                                                     }
-                                                } else if (experimentName.contains("TWOLHS")) {
-                                                    if (noisePerc > 0) {continue;}; // TWOLHS is impervious to deletes.
-
-                                                    config.B = (int) ((ram / (config.d * config.w * config.numStoredAttributes) - 32) / (31 * 32 *32));
-                                                    System.out.println("d: " + config.d + ", b: " + config.b + ", w: " + config.w + ", B: " + config.B);
-                                                    if (config.B < 1) {
-                                                        System.err.println("B is less than 1, skipping experiment");
-                                                        continue;
-                                                    }
-                                                    experiment.run(ram, rtp, repetition, config);
-                                                } else {
-                                                    throw new RuntimeException("OmniSketch experiment name not recognized " + experimentName);
                                                 }
-
-                                            } else {
-                                                throw new RuntimeException("Unknown parameter setting type: " + config.parameterSettingType);
                                             }
                                         }
                                     }
@@ -686,6 +698,8 @@ public class RunExperiments {
 
         OmniSketch omniSketch = omniSketchBuilder
                 .setRam(ram)
+                .setIngestBufferSize(config.ingestBufferSize)
+                .setDeleteBufferSize(config.deleteBufferSize)
                 .setNumStoredAttributes(config.numStoredAttributes)
                 .setParams(params)
                 .setSeed(repetition)

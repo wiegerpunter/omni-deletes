@@ -16,13 +16,12 @@ public class ArrayWithBufferOptimizedBatchDeletes {
     private int curTreeRoot = Integer.MAX_VALUE;
     int deletionBufferOriginalSize=0;
     private int minRejectedValue = Integer.MAX_VALUE;
-    private boolean isSorted = false;
-    public ArrayWithBufferOptimizedBatchDeletes(int budget, int ingestionBufferSize) {
+    public ArrayWithBufferOptimizedBatchDeletes(int budget, int ingestionBufferSize, int deleteBufferSize) {
         this.K = budget;
         this.arr = new int[this.K];
         Arrays.fill(this.arr, Integer.MAX_VALUE);
         this.ingestionBuffer = new int[ingestionBufferSize];
-        this.deletionBufferOriginalSize = 100;
+        this.deletionBufferOriginalSize = deleteBufferSize;
         this.deletionBuffer = new int[deletionBufferOriginalSize];
     }
 
@@ -153,6 +152,8 @@ public class ArrayWithBufferOptimizedBatchDeletes {
                 lastMaxPosition = deleteIndex;
 
             int closestBufferIndex = findClosestInBuffer(hx);
+            if (deleteIndex==curSampleSize -1)
+                curTreeRoot = ingestionBuffer[closestBufferIndex];
 
             if (closestBufferIndex >= 0) {
                 int bufferValue = ingestionBuffer[closestBufferIndex];

@@ -253,14 +253,15 @@ public class runQueriesNoCast {
                     "estTime",  "queryText", "SCap", "NMax","usedMaxSize","jacEstimate2LHS", "unionEstimate2LHS","unionExact","witness2LHS",
                     "intersectionSizeOfR","unionSizeOfR",
                     "meanQueryTime","BetaKmin","numKSamples","KminDeletes","exactInDeletes","exactUnionDeletes","uniqueSamples",
-                    "numKmins","numKminsExceedingBounds","measuredSignatureCollisions","zipfAlpha", "case1", "bound","bufferDeletesMinwise","domain"};
+                    "numKmins","numKminsExceedingBounds","measuredSignatureCollisions",
+                    "zipfAlpha", "case1", "bound","bufferDeletesMinwise","domain","ingestBufferSize","deleteBufferSize"};
             writer.writeNext(header);
         }
 
 
         String memUsageSyn = String.valueOf(s.getMemoryUsage());
         for (int i = 0; i < d.pointQueries.length; i++) {
-            String[] result = new String[49];
+            String[] result = new String[51];
             // Dataset specific info;
             result[0] = String.valueOf(repetition);
             result[1] = String.valueOf(d.getDatasetSize());
@@ -328,6 +329,8 @@ public class runQueriesNoCast {
             result[46] = String.valueOf(bound[i]);
             result[47] = String.valueOf(config.bufferDeletesMinwise);
             result[48] = String.valueOf(config.domain); // Assuming domain_sizes is an array of integers, and we want the first element.
+            result[49] = String.valueOf(config.ingestBufferSize);
+            result[50] = String.valueOf(config.deleteBufferSize);
             writer.writeNext(result);
         }
 

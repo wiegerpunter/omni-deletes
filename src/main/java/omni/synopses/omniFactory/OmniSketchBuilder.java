@@ -101,6 +101,15 @@ public class OmniSketchBuilder {
         return this;
     }
 
+    public OmniSketchBuilder setIngestBufferSize(int ingestBufferSize) {
+        config.setIngestBufferSize(ingestBufferSize);
+        return this;
+    }
+    public OmniSketchBuilder setDeleteBufferSize(int deleteBufferSize) {
+        config.setDeleteBufferSize(deleteBufferSize);
+        return this;
+    }
+
     public OmniSketch build() {
         return new OmniSketch(config, sketchType);
     }

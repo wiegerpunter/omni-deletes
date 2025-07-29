@@ -19,6 +19,9 @@ public class Config {
     public List<Integer> bGridSearch;
     public List<Integer> BGridSearch;
     public List<Integer> wGridSearch;
+    public List<Integer> ingestBufferSizeGridSearch;
+    public List<Integer> deleteBufferSizeGridSearch;
+
     public List<Double> parFactorGridSearch;
     public int numBins;
     public int numPredicates;
@@ -92,6 +95,8 @@ public class Config {
     public boolean useNoCast; // if true, record is always long[]
     public boolean expOmniSketchVLDBArrayWithBufferOpt;
     public boolean expOmniSketchVLDBArrayWithBufferOptBatchDeletes;
+    public int ingestBufferSize;
+    public int deleteBufferSize;
 
     // Old parameters, might use them in the future
 //    public List<Double> bufferValuesOmni;

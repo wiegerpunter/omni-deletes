@@ -13,6 +13,8 @@
   "bGridSearch": [31],
   "BGridSearch": [1],
   "wGridSearch": [28],
+  "ingestBufferSizeGridSearch": [50,100,150],
+  "deleteBufferSizeGridSearch": [50,100,150],
   "parFactorGridSearch": [100],
   "numBins": 3,
   "numPredicates": 9,
