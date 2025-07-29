@@ -18,7 +18,7 @@ public class SampleFactory {
             case "KminArrayRegBuffer" -> new KminArray(B, b, config.getBufferBeta(), "KminArrayRegBuffer");
 
             case "KminArrayWithBuffer" -> new KminCustomArray(B, b, config.getBufferBeta(), "KminArrayWithBuffer", false, false);
-            case "KminArrayWithBufferOpt" -> new KminCustomArrayOpt(B, b, config.getBufferBeta(),config.ingestBufferSize, "KminArrayWithBufferOpt", false, false);
+            case "KminArrayWithBufferOpt" -> new KminCustomArrayOpt(B, b, config.getBufferBeta(),config.ingestBufferSize+config.deleteBufferSize, "KminArrayWithBufferOpt", false, false);
             case "KminArrayWithBufferOptBatchDeletes" -> new KminCustomArrayOptBatchDeletes(B, b, config.getBufferBeta(),config.ingestBufferSize,config.deleteBufferSize, "KminArrayWithBufferOptBatchDeletes", false, false);
 
             case "KminArrayWithBufferOnlyValid" -> new KminCustomArray(B, b, config.getBufferBeta(), "KminArrayWithBuffer", true, false);

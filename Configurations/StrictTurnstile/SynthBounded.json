@@ -1,7 +1,7 @@
 {
   "setting": "Compare Synopses",
   "datasetName": "synthFromDisk",
-  "numRepetitions": 1,
+  "seed": 1,
   "runOnODC": false,
   "readFolder": "/home/wieger/omni-deletes/",
   "withDeletes": true,
@@ -13,8 +13,8 @@
   "bGridSearch": [31],
   "BGridSearch": [1],
   "wGridSearch": [28],
-  "ingestBufferSizeGridSearch": [50,100,150],
-  "deleteBufferSizeGridSearch": [50,100,150],
+  "ingestBufferSizeGridSearch": [200],
+  "deleteBufferSizeGridSearch": [200],
   "parFactorGridSearch": [100],
   "numBins": 3,
   "numPredicates": 9,
@@ -36,7 +36,7 @@
   "expOmniSketchVLDBArray": false,
   "expOmniSketchVLDBArrayRegBuffer": false,
   "expOmniSketchVLDBArrayWithBuffer": false,
-  "expOmniSketchVLDBArrayWithBufferOpt": true,
+  "expOmniSketchVLDBArrayWithBufferOpt": false,
   "expOmniSketchVLDBArrayWithBufferOptBatchDeletes": true,
   "expOmniSketchVLDBArrayWithBufferPerRow": false,
 
@@ -76,6 +76,6 @@
   "domain_sizes": [10000],
   "readFromDisk": true,
   "useNoBufferOmniVLDB": false,
-  "percs": [0.0,0.33,9.0],
+  "percs": [9.0],
   "useNoCast": true
 }

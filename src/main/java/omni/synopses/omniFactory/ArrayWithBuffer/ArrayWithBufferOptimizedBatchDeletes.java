@@ -116,23 +116,17 @@ public class ArrayWithBufferOptimizedBatchDeletes {
         return Arrays.binarySearch(arr, from, to, key);
     }
 
+
     public final void flushDeletes() {
         if (deletionBufferSize<deletionBufferOriginalSize)
             deletionBuffer = Arrays.copyOf(deletionBuffer, deletionBufferSize);
         int startPos=0;
         int startPosForBinSearch=0;
         boolean setStartPos=false;
-        if (deletionBufferSize>1)  {
+        if (deletionBufferSize>1)
             Arrays.sort(deletionBuffer);
-            startPos=Arrays.binarySearch(arr, 0, Math.min(curSampleSize-1, K), deletionBuffer[0]);
-            if (startPos>=0) {
-                startPosForBinSearch=startPos;
-            } else
-                startPosForBinSearch=-startPos-1;
-            setStartPos=true;
-        }
 
-        int lastMaxPosition=Math.min(curSampleSize-1, K);
+        int lastMaxPosition=Math.min(curSampleSize-1, K)+1;
         while (deletionBufferSize>0) {
             // Search in arr
             int hx = deletionBuffer[deletionBufferSize-1];
@@ -143,6 +137,7 @@ public class ArrayWithBufferOptimizedBatchDeletes {
             } else {
                 deleteIndex = binarySearch1(arr, startPosForBinSearch, lastMaxPosition, hx);
             }
+
             if (deleteIndex<0) {
                 // Element not found in arr, do nothing
                 deletionBufferSize--;
@@ -152,23 +147,24 @@ public class ArrayWithBufferOptimizedBatchDeletes {
                 lastMaxPosition = deleteIndex;
 
             int closestBufferIndex = findClosestInBuffer(hx);
-            if (deleteIndex==curSampleSize -1)
-                curTreeRoot = ingestionBuffer[closestBufferIndex];
+
 
             if (closestBufferIndex >= 0) {
+                if (deleteIndex==curSampleSize-1)
+                    curTreeRoot = ingestionBuffer[closestBufferIndex];
                 int bufferValue = ingestionBuffer[closestBufferIndex];
                 int insertIndex;
                 if (bufferValue < arr[deleteIndex]) {
                     insertIndex = Arrays.binarySearch(arr, 0, deleteIndex, bufferValue);
+                    lastMaxPosition++;
                 } else {
-                    insertIndex = Arrays.binarySearch(arr, deleteIndex + 1, Math.min(curSampleSize + 1, K), bufferValue);
+                    insertIndex = Arrays.binarySearch(arr, deleteIndex, Math.min(curSampleSize + 1, K), bufferValue);
                 }
 
                 if (insertIndex < 0) {
                     insertIndex = -insertIndex - 1;
                 }
                 insertIndex = Math.min(insertIndex, curSampleSize);
-
                 if (insertIndex > deleteIndex) {
                     int shiftLength = insertIndex - deleteIndex - 1;
                     if (shiftLength > 0) {
@@ -206,6 +202,97 @@ public class ArrayWithBufferOptimizedBatchDeletes {
         }
         if (deletionBuffer.length<deletionBufferOriginalSize)
             deletionBuffer = new int[deletionBufferOriginalSize];
+//    }
+//    public final void flushDeletes() {
+//        if (deletionBufferSize<deletionBufferOriginalSize)
+//            deletionBuffer = Arrays.copyOf(deletionBuffer, deletionBufferSize);
+//        int startPos=0;
+//        int startPosForBinSearch=0;
+//        boolean setStartPos=false;
+//        if (deletionBufferSize>1)  {
+//            Arrays.sort(deletionBuffer);
+//            startPos=Arrays.binarySearch(arr, 0, Math.min(curSampleSize-1, K), deletionBuffer[0]);
+//            if (startPos>=0) {
+//                startPosForBinSearch=startPos;
+//            } else
+//                startPosForBinSearch=-startPos-1;
+//            setStartPos=true;
+//        }
+//
+//        int lastMaxPosition=Math.min(curSampleSize-1, K);
+//        while (deletionBufferSize>0) {
+//            // Search in arr
+//            int hx = deletionBuffer[deletionBufferSize-1];
+//            int deleteIndex=0;
+//
+//            if (deletionBufferSize==1 && setStartPos) {
+//                deleteIndex = startPos;
+//            } else {
+//                deleteIndex = binarySearch1(arr, startPosForBinSearch, lastMaxPosition, hx);
+//            }
+//            if (deleteIndex<0) {
+//                // Element not found in arr, do nothing
+//                deletionBufferSize--;
+//                lastMaxPosition = -deleteIndex-1;
+//                continue;
+//            } else
+//                lastMaxPosition = deleteIndex;
+//
+//            int closestBufferIndex = findClosestInBuffer(hx);
+//            if (deleteIndex==curSampleSize -1)
+//                curTreeRoot = ingestionBuffer[closestBufferIndex];
+//
+//            if (closestBufferIndex >= 0) {
+//                int bufferValue = ingestionBuffer[closestBufferIndex];
+//                int insertIndex;
+//                if (bufferValue < arr[deleteIndex]) {
+//                    insertIndex = Arrays.binarySearch(arr, 0, deleteIndex, bufferValue);
+//                } else {
+//                    insertIndex = Arrays.binarySearch(arr, deleteIndex + 1, Math.min(curSampleSize + 1, K), bufferValue);
+//                }
+//
+//                if (insertIndex < 0) {
+//                    insertIndex = -insertIndex - 1;
+//                }
+//                insertIndex = Math.min(insertIndex, curSampleSize);
+//
+//                if (insertIndex > deleteIndex) {
+//                    int shiftLength = insertIndex - deleteIndex - 1;
+//                    if (shiftLength > 0) {
+//                        System.arraycopy(arr, deleteIndex + 1, arr, deleteIndex, shiftLength);
+//                    }
+//                    arr[insertIndex - 1] = bufferValue;
+//                } else if (insertIndex < deleteIndex) {
+//                    int shiftLength = deleteIndex - insertIndex;
+//                    if (shiftLength > 0) {
+//                        // Shift elements to the right to make space for the buffer element
+//                        System.arraycopy(arr, insertIndex, arr, insertIndex + 1, shiftLength);
+//                    }
+//                    arr[insertIndex] = bufferValue;
+//                } else {
+//                    // insertIndex == deleteIndex, directly replace
+//                    arr[deleteIndex] = bufferValue;
+//                }
+//                // Remove buffer element
+//                System.arraycopy(ingestionBuffer, closestBufferIndex + 1, ingestionBuffer, closestBufferIndex, bufferSize - closestBufferIndex - 1);
+//                bufferSize--;
+//            } else {
+//                System.arraycopy(arr, deleteIndex + 1, arr, deleteIndex, Math.min(curSampleSize + 1, K) - deleteIndex -1);
+//                arr[Math.min(curSampleSize, K - 1)] = Integer.MAX_VALUE; // Set the last element to a large value
+//                curSampleSize--;
+//            }
+//            deletesFromSample++;
+//
+//            // Update curTreeRoot
+//            if (curSampleSize > 0) {
+//                curTreeRoot = arr[Math.min(curSampleSize, K - 1)];
+//            } else {
+//                curTreeRoot = Integer.MAX_VALUE;
+//            }
+//            deletionBufferSize--;
+//        }
+//        if (deletionBuffer.length<deletionBufferOriginalSize)
+//            deletionBuffer = new int[deletionBufferOriginalSize];
     }
 
     public void removeSimple(int hx) {

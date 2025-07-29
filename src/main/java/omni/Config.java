@@ -7,7 +7,7 @@ import java.util.List;
 public class Config {
     public String setting;
     public String datasetName;
-    public int numRepetitions;
+    public int seed;
     public boolean runOnODC;
     public String readFolder;
     public boolean withDeletes;

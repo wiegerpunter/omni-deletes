@@ -1,7 +1,7 @@
 {
   "setting": "Compare Synopses",
   "datasetName": "synthFromDisk",
-  "numRepetitions": 1,
+  "seed": "REPLACE_ME",
   "runOnODC": false,
   "readFolder": "/home/wieger/omni-deletes/",
   "withDeletes": false,

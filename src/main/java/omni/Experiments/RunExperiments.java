@@ -35,37 +35,18 @@ public class RunExperiments {
         cd = new CleanDataset(config);
         double[] percs = config.percs;
         readDatasetSettings();
-        for (int repetition = 0; repetition < config.numRepetitions; repetition++) {
-            System.out.println("Running repetition " + repetition);
-            cd.setAttributes(repetition);
+        int repetition = config.seed;
+        System.out.println("Running repetition " + repetition);
+        cd.setAttributes(repetition);
 
-            for (double zipfAlpha : config.zipfAlphas) {
-                for (int i = 0; i < conditions.length; i++) {
-                    for (int n : config.sizeNoise) {
-                        for (int domain: config.domain_sizes) {
-                            config.domain = domain;
-                            if (config.useMultNumAttributes) {
-                                for (int j = 2; j < cd.cleanIds.length; j++) {
-                                    config.numStoredAttributes = j + 1;
-                                    System.out.println("Running with " + config.numStoredAttributes + " attributes");
-                                    if (config.readFromDisk) {
-                                        config.noiseUpdateFractions = new ArrayList<>();
-                                        config.noiseUpdateFractions.add(0.0);
-                                        for (double perc : percs) {
-                                            prepareDataset(i, zipfAlpha, n, perc); // prepare dataset
-                                            runAllExperiments(repetition, perc); // run all experiments in factory
-                                        }
-                                    } else {
-                                        double perc = 0;
-                                        if (config.withDeletes) {
-                                            perc = 0.901;
-                                        }
-                                        prepareDataset(i, zipfAlpha, n, perc); // prepare dataset
-                                        runAllExperiments(repetition, perc); // run all experiments in factory
-                                    }
-                                }
-                            } else {
-                                config.numStoredAttributes = cd.cleanIds.length;
+        for (double zipfAlpha : config.zipfAlphas) {
+            for (int i = 0; i < conditions.length; i++) {
+                for (int n : config.sizeNoise) {
+                    for (int domain: config.domain_sizes) {
+                        config.domain = domain;
+                        if (config.useMultNumAttributes) {
+                            for (int j = 2; j < cd.cleanIds.length; j++) {
+                                config.numStoredAttributes = j + 1;
                                 System.out.println("Running with " + config.numStoredAttributes + " attributes");
                                 if (config.readFromDisk) {
                                     config.noiseUpdateFractions = new ArrayList<>();
@@ -82,6 +63,24 @@ public class RunExperiments {
                                     prepareDataset(i, zipfAlpha, n, perc); // prepare dataset
                                     runAllExperiments(repetition, perc); // run all experiments in factory
                                 }
+                            }
+                        } else {
+                            config.numStoredAttributes = cd.cleanIds.length;
+                            System.out.println("Running with " + config.numStoredAttributes + " attributes");
+                            if (config.readFromDisk) {
+                                config.noiseUpdateFractions = new ArrayList<>();
+                                config.noiseUpdateFractions.add(0.0);
+                                for (double perc : percs) {
+                                    prepareDataset(i, zipfAlpha, n, perc); // prepare dataset
+                                    runAllExperiments(repetition, perc); // run all experiments in factory
+                                }
+                            } else {
+                                double perc = 0;
+                                if (config.withDeletes) {
+                                    perc = 0.901;
+                                }
+                                prepareDataset(i, zipfAlpha, n, perc); // prepare dataset
+                                runAllExperiments(repetition, perc); // run all experiments in factory
                             }
                         }
                     }
@@ -110,14 +109,14 @@ public class RunExperiments {
         int ramMultiplyers_count = 0;
         if (config.readFromDisk) {
             // first value is always 1.0, no buffer
-            if (config.expOmniSketchVLDBArrayWithBufferOpt) {
+            if (config.expOmniSketchVLDBArrayWithBufferOpt || config.expOmniSketchVLDBArrayWithBufferOptBatchDeletes) {
                 ramMultiplyers = new double[config.percs.length];
             } else {
                 ramMultiplyers = new double[1];
                 ramMultiplyers[0] = 1.0; // no buffer
             }
         } else {
-            if (config.expOmniSketchVLDBArrayWithBufferOpt) {
+            if (config.expOmniSketchVLDBArrayWithBufferOpt || config.expOmniSketchVLDBArrayWithBufferOptBatchDeletes) {
                 ramMultiplyers = new double[config.noiseUpdateFractions.size()];
             } else {
                 ramMultiplyers= new double[1];
