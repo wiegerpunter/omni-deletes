@@ -34,7 +34,8 @@
   "expOmniSketchVLDBArray": false,
   "expOmniSketchVLDBArrayRegBuffer": false,
   "expOmniSketchVLDBArrayWithBuffer": false,
-  "expOmniSketchVLDBArrayWithBufferOpt": false,
+  "expOmniSketchVLDBArrayWithBufferOpt": true,
+  "expOmniSketchVLDBArrayWithBufferOptBatchDeletes": true,
   "expOmniSketchVLDBArrayWithBufferPerRow": false,
 
   "expOmniSketchVLDBArrayWithBufferPessDeleteCount": false,
@@ -63,7 +64,7 @@
 
   "expASH": false,
   "expHydra": false,
-  "expResSample": true,
+  "expResSample": false,
   "expCM": false,
   "numFiles": 2,
   "expOmniSketchSFQLOptimized": false,

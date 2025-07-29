@@ -18,7 +18,8 @@ public class KminUtils {
         if (Objects.equals(kminArray[0].getKminType(), "KminArray") || Objects.equals(kminArray[0].getKminType(), "KminArrayRegBuffer")) {
             return estimateArray(kminArray, queryInfo, bound, numPreds);
         }
-        if (Objects.equals(kminArray[0].getKminType(), "KminArrayWithBuffer") || Objects.equals(kminArray[0].getKminType(), "KminArrayWithBufferOpt")) {
+        if (Objects.equals(kminArray[0].getKminType(), "KminArrayWithBuffer") || Objects.equals(kminArray[0].getKminType(), "KminArrayWithBufferOpt")
+                || Objects.equals(kminArray[0].getKminType(), "KminArrayWithBufferOptBatchDeletes")) {
             return estimateArray(kminArray, queryInfo, bound, numPreds);
         }
         if (Objects.equals(kminArray[0].getKminType(), "KminArrayWithoutBuffer")) {

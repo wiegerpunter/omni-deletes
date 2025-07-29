@@ -110,14 +110,14 @@ public class RunExperiments {
         int ramMultiplyers_count = 0;
         if (config.readFromDisk) {
             // first value is always 1.0, no buffer
-            if (config.expOmniSketchVLDBArrayWithBuffer) {
+            if (config.expOmniSketchVLDBArrayWithBufferOpt) {
                 ramMultiplyers = new double[config.percs.length];
             } else {
                 ramMultiplyers = new double[1];
                 ramMultiplyers[0] = 1.0; // no buffer
             }
         } else {
-            if (config.expOmniSketchVLDBArrayWithBuffer) {
+            if (config.expOmniSketchVLDBArrayWithBufferOpt) {
                 ramMultiplyers = new double[config.noiseUpdateFractions.size()];
             } else {
                 ramMultiplyers= new double[1];
@@ -284,6 +284,8 @@ public class RunExperiments {
             if (config.expOmniSketchVLDBArrayWithBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithBufferCustom");
             if (config.expOmniSketchVLDBArrayWithBufferPerRow) enabledExperiments.add("OmniSketchVLDBArrayWithBufferPerRowCustom");
             if (config.expOmniSketchVLDBArrayWithBufferOpt) enabledExperiments.add("OmniSketchVLDBArrayWithBufferOptCustom");
+            if (config.expOmniSketchVLDBArrayWithBufferOptBatchDeletes) enabledExperiments.add(
+                    "OmniSketchVLDBArrayWithBufferOptBatchDeletesCustom");
 
             if (config.expOmniSketchVLDBArrayWithBufferPessDeleteCount) enabledExperiments.add("OmniSketchVLDBArrayWithBufferPessDeleteCountCustom");
 

@@ -34,7 +34,8 @@
   "expOmniSketchVLDBArray": false,
   "expOmniSketchVLDBArrayRegBuffer": false,
   "expOmniSketchVLDBArrayWithBuffer": false,
-  "expOmniSketchVLDBArrayWithBufferOpt": true,
+  "expOmniSketchVLDBArrayWithBufferOpt": false,
+  "expOmniSketchVLDBArrayWithBufferOptBatchDeletes": true,
   "expOmniSketchVLDBArrayWithBufferPerRow": false,
 
   "expOmniSketchVLDBArrayWithBufferPessDeleteCount": false,

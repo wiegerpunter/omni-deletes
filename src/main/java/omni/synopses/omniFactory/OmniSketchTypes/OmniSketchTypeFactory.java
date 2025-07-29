@@ -14,6 +14,7 @@ public class OmniSketchTypeFactory {
 
             case "SampleLaterArrayWithBuffer" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminArrayWithBuffer");
             case "SampleLaterArrayWithBufferOpt" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminArrayWithBufferOpt");
+            case "SampleLaterArrayWithBufferOptBatchDeletes" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminArrayWithBufferOptBatchDeletes");
 
 
             case "SampleLaterArrayWithBufferPessDeleteCount" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminArrayWithBufferPessDeleteCount");
