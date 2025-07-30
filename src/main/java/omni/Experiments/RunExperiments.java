@@ -35,14 +35,14 @@ public class RunExperiments {
         cd = new CleanDataset(config);
         double[] percs = config.percs;
         readDatasetSettings();
-        int repetition = config.seed;
+        int repetition= config.seed;
         System.out.println("Running repetition " + repetition);
         cd.setAttributes(repetition);
 
         for (double zipfAlpha : config.zipfAlphas) {
             for (int i = 0; i < conditions.length; i++) {
                 for (int n : config.sizeNoise) {
-                    for (int domain: config.domain_sizes) {
+                    for (int domain : config.domain_sizes) {
                         config.domain = domain;
                         if (config.useMultNumAttributes) {
                             for (int j = 2; j < cd.cleanIds.length; j++) {
@@ -276,7 +276,7 @@ public class RunExperiments {
 
     private List<String> getEnabledExperiments() {
         List<String> enabledExperiments = new ArrayList<>();
-        enabledExperiments.add("readFile"); //always measure readFile time.
+        if (config.expReadFile) enabledExperiments.add("readFile"); //always measure readFile time.
         if (config.expHydra) enabledExperiments.add("Hydra");
         if (config.expCM) enabledExperiments.add("CountMin");
 

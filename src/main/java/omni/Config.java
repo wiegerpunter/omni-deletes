@@ -97,6 +97,7 @@ public class Config {
     public boolean expOmniSketchVLDBArrayWithBufferOptBatchDeletes;
     public int ingestBufferSize;
     public int deleteBufferSize;
+    public boolean expReadFile;
 
     // Old parameters, might use them in the future
 //    public List<Double> bufferValuesOmni;

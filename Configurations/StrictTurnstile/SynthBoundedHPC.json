@@ -3,7 +3,7 @@
   "datasetName": "synthFromDisk",
   "seed": 5,
   "runOnODC": false,
-  "readFolder": "/home/wieger/omni-deletes/",
+  "readFolder": "/home/s162378/omni/vldbj/",
   "withDeletes": true,
   "spreadOutDeletes": true,
   "ramVals": [10],
@@ -39,13 +39,11 @@
   "expOmniSketchVLDBArrayWithBufferOpt": false,
   "expOmniSketchVLDBArrayWithBufferOptBatchDeletes": true,
   "expOmniSketchVLDBArrayWithBufferPerRow": false,
-
   "expOmniSketchVLDBArrayWithBufferPessDeleteCount": false,
   "expOmniSketchVLDBArrayWithBufferOnlyValid": false,
   "expOmniSketchVLDBArrayWithoutBuffer": false,
   "expOmniSketchVLDBSimpleBuffer": false,
   "expOmniSketchVLDBSimpleBufferNoDeleteBuffer": false,
-
   "expOmniSketchVLDBTreeSetWithoutBuffer": false,
   "expOmniSketchVLDBTreeSet": false,
   "expOmniSketchVLDBSampleSize": false,
@@ -56,15 +54,13 @@
   "expFastTWOLHS": false,
   "expFastTWOLHSOneBucket": false,
   "expNMaxTWOLHS": false,
-
   "expSlowTWOLHSPerRow": false,
   "expFastTWOLHSPerRow": false,
   "expTWOLHSPerRowExact": false,
   "expTWOLHSExact": false,
   "expFastTWOLHSOneBucketPerRow": false,
   "expNMaxTWOLHSPerRow": false,
-
-  "expASH": false,
+  "expASH": true,
   "expHydra": false,
   "expResSample": false,
   "expCM": false,
@@ -76,7 +72,7 @@
   "domain_sizes": [10000],
   "readFromDisk": true,
   "useNoBufferOmniVLDB": false,
-  "percs": [9.0],
+  "percs": [0.0,0.33,1.0,3.0,9.0],
   "useNoCast": true,
   "expReadFile": true
 }

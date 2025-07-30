@@ -49,19 +49,21 @@ public class ArrayWithBufferOptimizedBatchDeletes {
     }
 
     public void insert(int val) {
-        if (bufferSize == ingestionBuffer.length && val <= curTreeRoot) {
-            flushDeletes();
-            mergeInPlaceOptimal();
-            curSampleSize = Math.min(curSampleSize+bufferSize, K);
-            bufferSize = 0;
-            curTreeRoot = arr[curSampleSize-1];
+        if (val <= curTreeRoot || curSampleSize < K) {
+            if (bufferSize == ingestionBuffer.length) {
+                flushDeletes();
+                mergeInPlaceOptimal();
+                curSampleSize = Math.min(curSampleSize+bufferSize, K);
+                bufferSize = 0;
+                curTreeRoot = arr[curSampleSize-1];
+                setSampleSizeBasedOnMinRejectedValue();
+            }
             insertSorted(val);
-        } else if (val > curTreeRoot) {
+        } else {
             if (val < minRejectedValue) {
                 minRejectedValue = val; // Update the minimum rejected value
             }
-        } else if (val <= curTreeRoot)
-            insertSorted(val);
+        }
     }
 
     private void insertSorted(int val) {
@@ -76,6 +78,9 @@ public class ArrayWithBufferOptimizedBatchDeletes {
     public void mergeInPlaceOptimal() {
         // Process ingestionBuffer from largest to smallest
         int bufferElementsToProcess = bufferSize;
+//        if (curSampleSize >= K && ingestionBuffer[bufferSize - 1] > arr[curSampleSize - 1]) {
+//            System.out.println("Let's see if this breaks anything");
+//        }
         int bufferPos = bufferElementsToProcess - 1;
         int lastShift = curSampleSize;
         while (bufferPos >= 0) {
@@ -85,7 +90,6 @@ public class ArrayWithBufferOptimizedBatchDeletes {
                 bufferPos--;
                 bufferElementsToProcess--;
                 minRejectedValue = Math.min(minRejectedValue, val);
-                // TODO: I am now skipping an element, do i need to update minRejectedValue? Probably not because this element is already in buffer.
                 continue;
             }
             // else i need to make space
@@ -116,27 +120,24 @@ public class ArrayWithBufferOptimizedBatchDeletes {
         return Arrays.binarySearch(arr, from, to, key);
     }
 
-
     public final void flushDeletes() {
-        if (deletionBufferSize<deletionBufferOriginalSize)
-            deletionBuffer = Arrays.copyOf(deletionBuffer, deletionBufferSize);
-        int startPos=0;
-        int startPosForBinSearch=0;
-        boolean setStartPos=false;
         if (deletionBufferSize>1)
-            Arrays.sort(deletionBuffer);
+            Arrays.sort(deletionBuffer, 0, deletionBufferSize);
+        int startPosForBinSearch=0;
 
         int lastMaxPosition=Math.min(curSampleSize-1, K)+1;
         while (deletionBufferSize>0) {
             // Search in arr
             int hx = deletionBuffer[deletionBufferSize-1];
+            if (hx > curTreeRoot) {
+                // Element is larger than largest in sample, ignore
+                minRejectedValue = Math.min(minRejectedValue, hx);
+                deletionBufferSize--;
+                continue;
+            }
             int deleteIndex=0;
 
-            if (deletionBufferSize==1 && setStartPos) {
-                deleteIndex = startPos;
-            } else {
-                deleteIndex = binarySearch1(arr, startPosForBinSearch, lastMaxPosition, hx);
-            }
+            deleteIndex = binarySearch1(arr, startPosForBinSearch, lastMaxPosition, hx);
 
             if (deleteIndex<0) {
                 // Element not found in arr, do nothing
@@ -148,10 +149,7 @@ public class ArrayWithBufferOptimizedBatchDeletes {
 
             int closestBufferIndex = findClosestInBuffer(hx);
 
-
             if (closestBufferIndex >= 0) {
-                if (deleteIndex==curSampleSize-1)
-                    curTreeRoot = ingestionBuffer[closestBufferIndex];
                 int bufferValue = ingestionBuffer[closestBufferIndex];
                 int insertIndex;
                 if (bufferValue < arr[deleteIndex]) {
@@ -187,112 +185,27 @@ public class ArrayWithBufferOptimizedBatchDeletes {
                 bufferSize--;
             } else {
                 System.arraycopy(arr, deleteIndex + 1, arr, deleteIndex, Math.min(curSampleSize + 1, K) - deleteIndex -1);
-                arr[Math.min(curSampleSize, K - 1)] = Integer.MAX_VALUE; // Set the last element to a large value
+//                arr[Math.min(curSampleSize - 1, K - 1)] = Integer.MAX_VALUE; // Set the last element to a large value
                 curSampleSize--;
             }
             deletesFromSample++;
 
             // Update curTreeRoot
             if (curSampleSize > 0) {
-                curTreeRoot = arr[Math.min(curSampleSize, K - 1)];
+                curTreeRoot = arr[Math.min(curSampleSize-1, K - 1)];
+                setSampleSizeBasedOnMinRejectedValue();
             } else {
                 curTreeRoot = Integer.MAX_VALUE;
             }
             deletionBufferSize--;
         }
-        if (deletionBuffer.length<deletionBufferOriginalSize)
-            deletionBuffer = new int[deletionBufferOriginalSize];
-//    }
-//    public final void flushDeletes() {
-//        if (deletionBufferSize<deletionBufferOriginalSize)
-//            deletionBuffer = Arrays.copyOf(deletionBuffer, deletionBufferSize);
-//        int startPos=0;
-//        int startPosForBinSearch=0;
-//        boolean setStartPos=false;
-//        if (deletionBufferSize>1)  {
-//            Arrays.sort(deletionBuffer);
-//            startPos=Arrays.binarySearch(arr, 0, Math.min(curSampleSize-1, K), deletionBuffer[0]);
-//            if (startPos>=0) {
-//                startPosForBinSearch=startPos;
-//            } else
-//                startPosForBinSearch=-startPos-1;
-//            setStartPos=true;
-//        }
-//
-//        int lastMaxPosition=Math.min(curSampleSize-1, K);
-//        while (deletionBufferSize>0) {
-//            // Search in arr
-//            int hx = deletionBuffer[deletionBufferSize-1];
-//            int deleteIndex=0;
-//
-//            if (deletionBufferSize==1 && setStartPos) {
-//                deleteIndex = startPos;
-//            } else {
-//                deleteIndex = binarySearch1(arr, startPosForBinSearch, lastMaxPosition, hx);
-//            }
-//            if (deleteIndex<0) {
-//                // Element not found in arr, do nothing
-//                deletionBufferSize--;
-//                lastMaxPosition = -deleteIndex-1;
-//                continue;
-//            } else
-//                lastMaxPosition = deleteIndex;
-//
-//            int closestBufferIndex = findClosestInBuffer(hx);
-//            if (deleteIndex==curSampleSize -1)
-//                curTreeRoot = ingestionBuffer[closestBufferIndex];
-//
-//            if (closestBufferIndex >= 0) {
-//                int bufferValue = ingestionBuffer[closestBufferIndex];
-//                int insertIndex;
-//                if (bufferValue < arr[deleteIndex]) {
-//                    insertIndex = Arrays.binarySearch(arr, 0, deleteIndex, bufferValue);
-//                } else {
-//                    insertIndex = Arrays.binarySearch(arr, deleteIndex + 1, Math.min(curSampleSize + 1, K), bufferValue);
-//                }
-//
-//                if (insertIndex < 0) {
-//                    insertIndex = -insertIndex - 1;
-//                }
-//                insertIndex = Math.min(insertIndex, curSampleSize);
-//
-//                if (insertIndex > deleteIndex) {
-//                    int shiftLength = insertIndex - deleteIndex - 1;
-//                    if (shiftLength > 0) {
-//                        System.arraycopy(arr, deleteIndex + 1, arr, deleteIndex, shiftLength);
-//                    }
-//                    arr[insertIndex - 1] = bufferValue;
-//                } else if (insertIndex < deleteIndex) {
-//                    int shiftLength = deleteIndex - insertIndex;
-//                    if (shiftLength > 0) {
-//                        // Shift elements to the right to make space for the buffer element
-//                        System.arraycopy(arr, insertIndex, arr, insertIndex + 1, shiftLength);
-//                    }
-//                    arr[insertIndex] = bufferValue;
-//                } else {
-//                    // insertIndex == deleteIndex, directly replace
-//                    arr[deleteIndex] = bufferValue;
-//                }
-//                // Remove buffer element
-//                System.arraycopy(ingestionBuffer, closestBufferIndex + 1, ingestionBuffer, closestBufferIndex, bufferSize - closestBufferIndex - 1);
-//                bufferSize--;
-//            } else {
-//                System.arraycopy(arr, deleteIndex + 1, arr, deleteIndex, Math.min(curSampleSize + 1, K) - deleteIndex -1);
-//                arr[Math.min(curSampleSize, K - 1)] = Integer.MAX_VALUE; // Set the last element to a large value
-//                curSampleSize--;
-//            }
-//            deletesFromSample++;
-//
-//            // Update curTreeRoot
-//            if (curSampleSize > 0) {
-//                curTreeRoot = arr[Math.min(curSampleSize, K - 1)];
-//            } else {
-//                curTreeRoot = Integer.MAX_VALUE;
-//            }
-//            deletionBufferSize--;
-//        }
-//        if (deletionBuffer.length<deletionBufferOriginalSize)
-//            deletionBuffer = new int[deletionBufferOriginalSize];
+        // Update curTreeRoot
+        if (curSampleSize > 0) {
+            curTreeRoot = arr[Math.min(curSampleSize-1, K - 1)];
+            setSampleSizeBasedOnMinRejectedValue();
+        } else {
+            curTreeRoot = Integer.MAX_VALUE;
+        }
     }
 
     public void removeSimple(int hx) {
@@ -359,76 +272,17 @@ public class ArrayWithBufferOptimizedBatchDeletes {
         return (Math.abs(before - target) <= Math.abs(after - target)) ? (low - 1) : low;
     }
 
-    public void remove(int hx) {
-        System.err.println("Deleting a sample2");
-        if (curSampleSize == 0) {
-            return; // Nothing to remove
+    public void setSampleSizeBasedOnMinRejectedValue() {
+        if (minRejectedValue == Integer.MAX_VALUE || minRejectedValue > curTreeRoot) {
+            return; // No valid min rejected value, return current sample size
         }
-
-        if (hx > curTreeRoot) {
-            // Element is larger than the largest in the sample, ignore
-            return;
+        int index = Arrays.binarySearch(arr, 0, curSampleSize, minRejectedValue);
+        if (index < 0) {
+            index = -index - 1; // Convert to insertion point
         }
-        // check if present in buffer
-        int bufferIndex = Arrays.binarySearch(ingestionBuffer, 0, bufferSize, hx);
-        if (bufferIndex >= 0) {
-            // Element found in buffer, remove it
-            System.arraycopy(ingestionBuffer, bufferIndex + 1, ingestionBuffer, bufferIndex, bufferSize - bufferIndex - 1);
-            bufferSize--;
-            deletesFromBuffer++;
-            return;
-        }
-
-        int deleteIndex = Arrays.binarySearch(arr, 0, Math.min(curSampleSize + 1, K), hx);
-        if (deleteIndex >= 0) {
-            // check if buffer has element close to this rec:
-            if (bufferSize > 0) {
-                bufferIndex = Arrays.binarySearch(ingestionBuffer, 0, bufferSize, hx);
-                if (bufferIndex >= 0) {
-                    while (bufferIndex > 0 && ingestionBuffer[bufferIndex] == ingestionBuffer[bufferIndex - 1]) {
-                        bufferIndex--; // Find the first occurrence of the value
-                    }
-                } else {
-                        bufferIndex = -bufferIndex - 1;
-                }
-                if (bufferIndex >= bufferSize) {
-                    bufferIndex = bufferSize - 1;
-                }
-
-                int insertIndex = Arrays.binarySearch(arr, 0, Math.min(curSampleSize + 1, K), ingestionBuffer[bufferIndex]);
-                if (insertIndex >= 0) {
-                    while (insertIndex > 0 && arr[insertIndex] == arr[insertIndex - 1]) {
-                        insertIndex--; // Find the first occurrence of the value
-                    }
-                } else {
-                    insertIndex = -insertIndex - 1;
-                }
-                if (insertIndex >= Math.min(curSampleSize + 1, K) & Math.min(curSampleSize + 1, K) == 1) {
-                    insertIndex = 0;
-                } else if (insertIndex >= Math.min(curSampleSize + 1, K)) {
-                    insertIndex = Math.min(curSampleSize + 1, K) - 1;
-                }
-                insertFromBufferToDeleteSlot(bufferIndex, deleteIndex, insertIndex);
-            } else {
-                System.arraycopy(arr, deleteIndex + 1, arr, deleteIndex, Math.min(curSampleSize + 1, K) - deleteIndex -1);
-                arr[Math.min(curSampleSize, K - 1)] = Integer.MAX_VALUE; // Set the last element to a large value
-                curSampleSize--;
-                deletesFromSample++;
-            }
-        } else {
-            // Element not found in neither buffer or sample, do nothing
-            return;
-        }
-
-
-        // Update the current tree root if necessary
-        if (curSampleSize > 0) {
-            curTreeRoot = arr[Math.min(curSampleSize, K- 1)];
-        } else {
-            curTreeRoot = Integer.MAX_VALUE; // Reset if the sample is empty
-        }
+        curSampleSize = Math.min(index, K);
+        curTreeRoot = minRejectedValue;
     }
-
 
     public int[] getK() {
         flushBeforeQuery();
@@ -465,6 +319,7 @@ public class ArrayWithBufferOptimizedBatchDeletes {
             curSampleSize = Math.min(curSampleSize+bufferSize, K);
             bufferSize = 0;
             curTreeRoot = arr[curSampleSize-1];
+            setSampleSizeBasedOnMinRejectedValue();
         }
     }
 }
