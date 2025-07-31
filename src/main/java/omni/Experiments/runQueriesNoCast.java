@@ -132,43 +132,6 @@ public class runQueriesNoCast {
         System.out.println("Total queries with zero estimate: " + totalEstimatesZero);
     }
 
-    private void writeLoggedSetSizes(ExpSetting[] expSettings) throws IOException {
-        String CSV_FILE_NAME = config.getOutputFolder() + "/pointQueries/" + config.datasetName + "/" + config.currentDate + "_" + config.experimentName + "_"
-                + config.setting + "_dataset_" + config.datasetName +
-                "_loggedSetSizes.csv";
-        boolean init = false;
-        //String currentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-
-        if (!new File(CSV_FILE_NAME).exists()) {
-            init = true;
-        }
-        CSVWriter writer = new CSVWriter(new FileWriter(CSV_FILE_NAME, true));
-
-        if (init) {
-            String[] header = new String[]{"intersectionSize", "B", "setSizes"};
-            writer.writeNext(header);
-        }
-        for (ExpSetting expSetting : expSettings) {
-            String[] result = new String[3];
-            result[0] = String.valueOf(expSetting.getIntersectionSize());
-            result[1] = Arrays.toString(expSetting.getB());
-            result[2] = Arrays.toString(expSetting.getSetSizes());
-            writer.writeNext(result);
-        }
-
-    }
-
-    public void testQueryInfoIsolation() {
-        QueryInfo queryInfo1 = new QueryInfo();
-        QueryInfo queryInfo2 = new QueryInfo();
-        queryInfo1.case1 = true;
-        if (!queryInfo2.case1) {
-            System.out.println("QueryInfo objects are independent");
-        } else {
-            throw new RuntimeException("QueryInfo objects are not independent");
-        }
-    }
-
    // = new QueryInfo(0);
     public void computeErrorPointQuery (int queryId, long[] q, int numPreds, int exactAnswer, int unionSize) {
         //q.exactAnswer = d.exactSolution(q);
@@ -235,8 +198,7 @@ public class runQueriesNoCast {
         // write string[] result to csvOutputFile using BufferedWriter
         boolean init = false;
         //String currentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-        String CSV_FILE_NAME = config.getOutputFolder() + "/pointQueries/" + config.datasetName + "/" + config.currentDate + "_" + config.experimentName + "_"
-                + config.setting + "_dataset_" + config.datasetName +
+        String CSV_FILE_NAME = config.getOutputFolder() + "/pointQueries/" + config.datasetName + "/" + config.currentDate + "_" + config.job_name +"_"+config.seed +"_dataset_" + config.datasetName +
                 ".csv";
         if (!new File(CSV_FILE_NAME).exists()) {
             init = true;

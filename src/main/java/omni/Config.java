@@ -98,6 +98,7 @@ public class Config {
     public int ingestBufferSize;
     public int deleteBufferSize;
     public boolean expReadFile;
+    public String job_name;
 
     // Old parameters, might use them in the future
 //    public List<Double> bufferValuesOmni;

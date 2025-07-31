@@ -133,8 +133,7 @@ public class runQueries {
     }
 
     private void writeLoggedSetSizes(ExpSetting[] expSettings) throws IOException {
-        String CSV_FILE_NAME = config.getOutputFolder() + "/pointQueries/" + config.datasetName + "/" + config.currentDate + "_" + config.experimentName + "_"
-                + config.setting + "_dataset_" + config.datasetName +
+        String CSV_FILE_NAME = config.getOutputFolder() + "/pointQueries/" + config.datasetName + "/" + config.currentDate + "_" + config.experimentName + "_dataset_" + config.datasetName +
                 "_loggedSetSizes.csv";
         boolean init = false;
         //String currentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
@@ -268,8 +267,7 @@ public class runQueries {
         // write string[] result to csvOutputFile using BufferedWriter
         boolean init = false;
         //String currentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-        String CSV_FILE_NAME = config.getOutputFolder() + "/pointQueries/" + config.datasetName + "/" + config.currentDate + "_" + config.experimentName + "_"
-                + config.setting + "_dataset_" + config.datasetName +
+        String CSV_FILE_NAME = config.getOutputFolder() + "/pointQueries/" + config.datasetName + "/" + config.currentDate + "_" + config.job_name +"_"+config.seed+ "_dataset_" + config.datasetName +
                 ".csv";
         if (!new File(CSV_FILE_NAME).exists()) {
             init = true;
@@ -286,14 +284,15 @@ public class runQueries {
                     "estTime",  "queryText", "SCap", "NMax","usedMaxSize","jacEstimate2LHS", "unionEstimate2LHS","unionExact","witness2LHS",
                     "intersectionSizeOfR","unionSizeOfR",
                     "meanQueryTime","BetaKmin","numKSamples","KminDeletes","exactInDeletes","exactUnionDeletes","uniqueSamples",
-                    "numKmins","numKminsExceedingBounds","measuredSignatureCollisions","zipfAlpha", "case1", "bound","bufferDeletesMinwise","domain"};
+                    "numKmins","numKminsExceedingBounds","measuredSignatureCollisions","zipfAlpha", "case1", "bound",
+                    "bufferDeletesMinwise","domain","ingestBufferSize","deleteBufferSize"};
             writer.writeNext(header);
         }
 
 
         String memUsageSyn = String.valueOf(s.getMemoryUsage());
         for (int i = 0; i < d.pointQueriesObj.length; i++) {
-            String[] result = new String[49];
+            String[] result = new String[51];
             // Dataset specific info;
             result[0] = String.valueOf(repetition);
             result[1] = String.valueOf(d.getDatasetSize());
@@ -361,115 +360,8 @@ public class runQueries {
             result[46] = String.valueOf(bound[i]);
             result[47] = String.valueOf(config.bufferDeletesMinwise);
             result[48] = String.valueOf(config.domain); // Assuming domain_sizes is an array of integers, and we want the first element.
-            writer.writeNext(result);
-        }
-
-        writer.close();
-    }
-
-
-    private void writeResultsToFilePointQueryNoCast(int repetition, SynopsisRefactor s, CleanDataset d,
-                                              long timePassed, int collisions, int[] estimatedAnswersPointQuery,
-                                              int[] SCap, int[] NMax, int[] usedMaxSizes, double[] jaccardEstimates2LHS,
-                                              double[] unionEstimates2LHS, int[] unionExact, int[] witness2LHS, long[] queryExecutionTime,
-                                              long totalQueryExecutionTime,
-                                              int[] numberOfKmins, int[] numberOfKminsExceedingBounds, boolean[] case1, double[] bound) throws IOException {
-        // write string[] result to csvOutputFile using BufferedWriter
-        boolean init = false;
-        //String currentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-        String CSV_FILE_NAME = config.getOutputFolder() + "/pointQueries/" + config.datasetName + "/" + config.currentDate + "_" + config.experimentName + "_"
-                + config.setting + "_dataset_" + config.datasetName +
-                ".csv";
-        if (!new File(CSV_FILE_NAME).exists()) {
-            init = true;
-        }
-        CSVWriter writer = new CSVWriter(new FileWriter(CSV_FILE_NAME, true));
-
-        if (init) {
-            String[] header = new String[]{"repetition","totalStreamSize", "noiseUpdates", "streamSizeAfterDeletes",
-                    "numAttributes", "memUsageDataset", "RAM", "setting", "sampleType",
-                    "Avg Update Time", "memUsageSynopsis", "parameters", "numAttributesInWorkload",
-                    "queryID", "numPredicates","numZipfianPredicates","binNumber",
-                    "exactAnswer", "estimate", "absError",
-                    "relError", "epsError", "withinThreshold",
-                    "estTime",  "queryText", "SCap", "NMax","usedMaxSize","jacEstimate2LHS", "unionEstimate2LHS","unionExact","witness2LHS",
-                    "intersectionSizeOfR","unionSizeOfR",
-                    "meanQueryTime","BetaKmin","numKSamples","KminDeletes","exactInDeletes","exactUnionDeletes","uniqueSamples",
-                    "numKmins","numKminsExceedingBounds","measuredSignatureCollisions","zipfAlpha", "case1", "bound","bufferDeletesMinwise","domain"};
-            writer.writeNext(header);
-        }
-
-
-        String memUsageSyn = String.valueOf(s.getMemoryUsage());
-        for (int i = 0; i < d.pointQueries.length; i++) {
-            String[] result = new String[49];
-            // Dataset specific info;
-            result[0] = String.valueOf(repetition);
-            result[1] = String.valueOf(d.getDatasetSize());
-            if (d.noiseUpdates == null && !config.readFromDisk) {
-                result[2] = String.valueOf(0);
-            } else {
-                result[2] = String.valueOf(d.getNoiseSize());
-            }
-            result[3] = String.valueOf(d.getDatasetResiduSize());
-            result[4] = String.valueOf(config.numAttributes);
-
-            result[5] = String.valueOf(d.getMemoryUsage());
-            result[6] = String.valueOf(s.ram);
-            result[7] = s.getSetting();
-            result[8] = s.sampleType;
-            result[9] = String.valueOf(timePassed);
-            result[10] = memUsageSyn;
-            result[11] = Arrays.toString(s.parameters);
-            result[12] = String.valueOf(config.numStoredAttributes);
-            result[13] = String.valueOf(i);
-            result[14] = String.valueOf(d.pointQueriesNumAttrs[i]);
-            if (d.pointQueriesNumZipfian != null) {
-                result[15] = String.valueOf(d.pointQueriesNumZipfian[i]);
-            }
-            result[16] = String.valueOf(d.pointQueryBinNumber[i]);
-            result[17] = String.valueOf(d.pointQueryAnswers[i]);
-            result[18] = String.valueOf(estimatedAnswersPointQuery[i]);
-            result[19] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]));
-            result[20] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) / d.pointQueryAnswers[i]);
-            result[21] = String.valueOf((double) Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) / d.getDatasetResiduSize());
-            result[22] = String.valueOf(Math.abs(d.pointQueryAnswers[i] - estimatedAnswersPointQuery[i]) <= Main.eps * d.getDatasetResiduSize());
-            result[23] = String.valueOf(queryExecutionTime[i]);
-            result[24] = d.parsePointQueryToString(d.pointQueries[i]);
-            result[25] = String.valueOf(SCap[i]);
-            result[26] = String.valueOf(NMax[i]);
-            result[27] = String.valueOf(usedMaxSizes[i]);
-            result[28] = String.valueOf(jaccardEstimates2LHS[i]);
-            result[29] = String.valueOf(unionEstimates2LHS[i]);
-            result[30] = String.valueOf(unionExact[i]);
-            result[31] = String.valueOf(witness2LHS[i]);
-            if (config.checkConditions) {
-                result[32] = String.valueOf(intersectionOfR[i]);
-                result[33] = String.valueOf(unionOfR[i]);
-            };
-            result[34] = String.valueOf(totalQueryExecutionTime);
-            result[35] = String.valueOf(s.useBetaKmin);
-            result[36] = String.valueOf(0);
-            result[37] = String.valueOf(Main.kminDeletes);
-            result[38] = String.valueOf(d.pointQueryAnswersDeletes[i]);
-            result[39] = String.valueOf(d.pointQueryUnionDeletes[i]);
-            if (!Main.countUniqueSamples) {
-                result[40] = "0";
-            } else {
-                if (s.setting.contains("OmniSketch")) {
-                    result[40] = String.valueOf(Main.uniqueSamples.size());
-                } else {
-                    result[40] = String.valueOf(Main.uniqueSamplesReservoir.size());
-                }
-            }
-            result[41] = String.valueOf(numberOfKmins[i]);
-            result[42] = String.valueOf(numberOfKminsExceedingBounds[i]);
-            result[43] = String.valueOf(collisions);
-            result[44] = String.valueOf(d.zipfAlpha);
-            result[45] = String.valueOf(case1[i]);
-            result[46] = String.valueOf(bound[i]);
-            result[47] = String.valueOf(config.bufferDeletesMinwise);
-            result[48] = String.valueOf(config.domain); // Assuming domain_sizes is an array of integers, and we want the first element.
+            result[49] = String.valueOf(config.ingestBufferSize);
+            result[50] = String.valueOf(config.deleteBufferSize);
             writer.writeNext(result);
         }
 
