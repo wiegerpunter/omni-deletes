@@ -83,6 +83,7 @@ public class Config {
     public int[] domain_sizes;
     public boolean readFromDisk;
     public double[] percs;
+    public double[] percsForMultiplyers;
     public boolean expSlowTWOLHSPerRow;
     public boolean expFastTWOLHSPerRow;
     public boolean expFastTWOLHSOneBucket;

@@ -75,8 +75,9 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
     ArrayList<Integer> attrsIdx;
     //ArrayList<boolean[]> validSubpop;// = new ArrayList<boolean[]>();
     ArrayList<ArrayList<Integer>> validSubpop;
-    public ImpHydraStruct(long ram, int numStoredAttributes, int depthRoot, int widthRoot, int depthCS, int widthCS, int repetition) {
+    public ImpHydraStruct(long ram, int numStoredAttributes, int[] parameters, int repetition) {
         this.ram = ram;
+        this.parameters = parameters;
         this.setting = "Hydra";
         this.attrsIdx = new ArrayList<Integer>();
         this.seed = repetition;
@@ -84,10 +85,10 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
         for (int i = 0; i < numStoredAttributes; i++) {
             attrsIdx.add(i + 1);
         }
-        d = depthRoot;
-        w = widthRoot;
-        numRows = depthCS;
-        countersPerRow = widthCS;
+        d = parameters[0];
+        w = parameters[1];
+        numRows = parameters[2];
+        countersPerRow = parameters[3];
         levels = 15;
         k = 30;
         parameters = new int[] {d, w, numRows, countersPerRow, levels, k};
@@ -613,6 +614,6 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
     }
 
     public void printParams() {
-        System.out.println("Hydra with depthRoot: " + d + "widthRoot: " + w + " depthCS: " + numRows + " widthCS: " + countersPerRow);
+        System.out.println("Hydra with depthRoot: " + d + " widthRoot: " + w + " depthCS: " + numRows + " widthCS: " + countersPerRow);
     }
 }

@@ -18,7 +18,7 @@
   "parFactorGridSearch": [100],
   "numBins": 3,
   "numPredicates": 9,
-  "sizeFactorOptions": [23],
+  "sizeFactorOptions": [16],
   "sizeNoise": [0],
   "experimentName": "Deletes v0.1",
   "useMultNumAttributes": false,
@@ -37,7 +37,7 @@
   "expOmniSketchVLDBArrayRegBuffer": false,
   "expOmniSketchVLDBArrayWithBuffer": false,
   "expOmniSketchVLDBArrayWithBufferOpt": false,
-  "expOmniSketchVLDBArrayWithBufferOptBatchDeletes": true,
+  "expOmniSketchVLDBArrayWithBufferOptBatchDeletes": false,
   "expOmniSketchVLDBArrayWithBufferPerRow": false,
 
   "expOmniSketchVLDBArrayWithBufferPessDeleteCount": false,
@@ -76,9 +76,9 @@
   "domain_sizes": [10000],
   "readFromDisk": true,
   "useNoBufferOmniVLDB": false,
-  "percs": [0.0],
-  "percsForMultiplyers": [0.0,0.33,1.0,3.0,9.0],
+  "percs": [0.0,9.0],
+  "percsForMultiplyers": [0.0,9.0],
   "useNoCast": true,
-  "expReadFile": true,
+  "expReadFile": false,
   "job_name": "local"
 }

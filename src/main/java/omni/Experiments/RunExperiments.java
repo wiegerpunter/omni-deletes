@@ -33,7 +33,6 @@ public class RunExperiments {
     public void run() throws IOException, CsvValidationException {
         bp = new BufferedParamMinwiseSettings(Main.inputFolder);
         cd = new CleanDataset(config);
-        double[] percs = config.percs;
         readDatasetSettings();
         int repetition= config.seed;
         System.out.println("Running repetition " + repetition);
@@ -51,7 +50,7 @@ public class RunExperiments {
                                 if (config.readFromDisk) {
                                     config.noiseUpdateFractions = new ArrayList<>();
                                     config.noiseUpdateFractions.add(0.0);
-                                    for (double perc : percs) {
+                                    for (double perc : config.percs) {
                                         prepareDataset(i, zipfAlpha, n, perc); // prepare dataset
                                         runAllExperiments(repetition, perc); // run all experiments in factory
                                     }
@@ -70,7 +69,7 @@ public class RunExperiments {
                             if (config.readFromDisk) {
                                 config.noiseUpdateFractions = new ArrayList<>();
                                 config.noiseUpdateFractions.add(0.0);
-                                for (double perc : percs) {
+                                for (double perc : config.percs) {
                                     prepareDataset(i, zipfAlpha, n, perc); // prepare dataset
                                     runAllExperiments(repetition, perc); // run all experiments in factory
                                 }
@@ -110,7 +109,7 @@ public class RunExperiments {
         if (config.readFromDisk) {
             // first value is always 1.0, no buffer
             if (config.expOmniSketchVLDBArrayWithBufferOpt || config.expOmniSketchVLDBArrayWithBufferOptBatchDeletes) {
-                ramMultiplyers = new double[config.percs.length];
+                ramMultiplyers = new double[config.percsForMultiplyers.length];
             } else {
                 ramMultiplyers = new double[1];
                 ramMultiplyers[0] = 1.0; // no buffer
@@ -169,7 +168,7 @@ public class RunExperiments {
                                                             }
                                                             bp.add(ram, config.B, config.d, config.w, config.numStoredAttributes, config.b);
                                                             if (config.readFromDisk) {
-                                                                for (double perc : config.percs) {
+                                                                for (double perc : config.percsForMultiplyers) {
                                                                     config.bufferDeletesMinwise = getBeta(Main.inputFolder +
                                                                                     "/paramTable/bufferMinwiseTable.csv", perc,
                                                                             ram, config.numStoredAttributes, config.d, 1);
@@ -177,7 +176,7 @@ public class RunExperiments {
                                                                         continue;
                                                                     }
                                                                     experiment.run(ram, rtp, repetition, config);
-                                                                    if (ramMultiplyers_count < config.percs.length) {
+                                                                    if (ramMultiplyers_count < config.percsForMultiplyers.length) {
                                                                         ramMultiplyers[ramMultiplyers_count] = config.bufferDeletesMinwise;
                                                                         ramMultiplyers_count++;
                                                                     }
