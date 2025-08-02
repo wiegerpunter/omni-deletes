@@ -1,27 +1,25 @@
-package omni.datasets.stringData;
+package omni.datasets.caida;
 
 import omni.Config;
-import omni.datasets.Record.Record;
 import omni.datasets.Record.RecordUtils;
-import omni.datasets.Record.StringRecord;
 
 import java.io.*;
 import java.util.*;
 
-public class StringDataset {
-    private Config config;
+public class CAIDADataset {
+    private final Config config;
     private String datasetFileName;
     private int datasetResiduSize;
     private int noiseSize;
     private String queryFileName;
-    private Record[] pointQueriesObj;
+    private long[][] pointQueries;
     private int[] pointQueryAnswers;
     private int[] pointQueryUnion;
 
     private int[] pointQueriesNumAttrs;
     private int[] pointQueryBinNumber;
 
-    public StringDataset(Config config) {
+    public CAIDADataset(Config config) {
         this.config = config;
     }
     private int countCsvRecords(File file) throws IOException {
@@ -48,14 +46,14 @@ public class StringDataset {
 
 
     private void setupResiduDataset(int sizeFactor) {
-        String subfolder = config.readFolder + "input/data/tpc-ds/" + sizeFactor + "/" + 0.0 + "/";
+        String subfolder = config.readFolder + "input/data/caida/" + sizeFactor + "/" + 0.0 + "/";
         datasetFileName = subfolder + "final_stream_" + 0.0 + ".csv";
 //        datasetFileName = config.readFolder + "input/data/" + config.datasetName + "/" + config.datasetName +".csv";
         datasetResiduSize = countCsvRecords(subfolder);
     }
 
     private void setupDataset(double perc, int sizeFactor) {
-        String subfolder = config.readFolder + "input/data/tpc-ds/" + sizeFactor + "/" + perc+ "/";
+        String subfolder = config.readFolder + "input/data/caida/" + sizeFactor + "/" + perc+ "/";
         datasetFileName = subfolder + "final_stream_" + perc + ".csv";
         if (datasetResiduSize == 0) {
             throw new RuntimeException("Dataset Residu size is zero");
@@ -70,28 +68,28 @@ public class StringDataset {
 
     public void loader(int sizeFactor) {
         setupResiduDataset(sizeFactor);
-        loadQueriesString();
+        loadQueries();
     }
 
-    private void loadPointQueryArrays(ArrayList<omni.datasets.Record.Record> pointQueriesList, ArrayList<Integer> pointQueryAnswersList, ArrayList<Integer> pointQueryUnionList, int numAttrs) {
-        pointQueriesObj = new omni.datasets.Record.Record[pointQueriesList.size()];
-        pointQueryAnswers = new int[pointQueriesObj.length];
-        pointQueryUnion = new int[pointQueriesObj.length];
-        pointQueriesNumAttrs = new int[pointQueriesObj.length];
-        pointQueryBinNumber = new int[pointQueriesObj.length];
+    private void loadPointQueryArrays(ArrayList<long[]> pointQueriesList, ArrayList<Integer> pointQueryAnswersList, ArrayList<Integer> pointQueryUnionList, int numAttrs) {
+        pointQueries = new long[pointQueriesList.size()][];
+        pointQueryAnswers = new int[pointQueries.length];
+        pointQueryUnion = new int[pointQueries.length];
+        pointQueriesNumAttrs = new int[pointQueries.length];
+        pointQueryBinNumber = new int[pointQueries.length];
         for (int i = 0; i < pointQueriesList.size(); i++) {
-            pointQueriesObj[i] = pointQueriesList.get(i);
+            pointQueries[i] = pointQueriesList.get(i);
             pointQueryAnswers[i] = pointQueryAnswersList.get(i);
             pointQueryUnion[i] = pointQueryUnionList.get(i);
         }
 
-        computeQueryStatsObj(numAttrs);
+        computeQueryStats(numAttrs);
     }
 
-    private void computeQueryStatsObj(int numAttrs) {
-        for (int i = 0; i < pointQueriesObj.length; i++) {
+    private void computeQueryStats(int numAttrs) {
+        for (int i = 0; i < pointQueries.length; i++) {
             for (int j = 0; j < numAttrs; j++) {
-                if (!RecordUtils.flexibleEquals(pointQueriesObj[i].getValue(j), -1)) {
+                if (!RecordUtils.flexibleEquals(pointQueries[i][j], -1)) {
                     pointQueriesNumAttrs[i]++;
                 }
             }
@@ -99,8 +97,8 @@ public class StringDataset {
         }
     }
 
-    private void loadQueriesString() {
-        ArrayList<Record> pointQueriesList = new ArrayList<>();
+    private void loadQueries() {
+        ArrayList<long[]> pointQueriesList = new ArrayList<>();
         ArrayList<Integer> pointQueryAnswersList = new ArrayList<>();
         ArrayList<Integer> pointQueryUnionList = new ArrayList<>();
         queryFileName = setQueryFileName(datasetFileName);
@@ -116,10 +114,11 @@ public class StringDataset {
                 if (parts.length != numAttrs + 3) { // +2 for answer and union
                     throw new RuntimeException("Record does not match expected number of attributes: " + line);
                 }
-                String[] query = new String[numAttrs];
-                // Skip id
-                System.arraycopy(parts, 1, query, 0, numAttrs);
-                pointQueriesList.add(new StringRecord(query));
+                long[] query = new long[numAttrs];
+                for (int i = 0; i < numAttrs; i++) {
+                    query[i] = Long.parseLong(parts[i + 1]); // Skip id
+                }
+                pointQueriesList.add(query);
                 pointQueryAnswersList.add(Integer.parseInt(parts[numAttrs + 1]));
                 pointQueryUnionList.add(Integer.parseInt(parts[numAttrs + 2]));
                 queryCount++;
@@ -135,7 +134,7 @@ public class StringDataset {
 
     private void generateQueriesString() throws IOException {
         int numAttrs = config.numAttributes;
-        pointQueriesObj = new omni.datasets.Record.Record[config.numQueries * config.numPredicates];
+        pointQueries = new long[config.numQueries * config.numPredicates][];
 
         Set<Integer> selectedIndices = selectRandomIndices(datasetResiduSize, config.numQueries);
         try (BufferedReader reader = new BufferedReader(new FileReader(datasetFileName))) {
@@ -145,14 +144,14 @@ public class StringDataset {
             throw e;
         }
 
-        pointQueryAnswers = new int[pointQueriesObj.length];
-        pointQueryUnion = new int[pointQueriesObj.length];
-        pointQueriesNumAttrs = new int[pointQueriesObj.length];
-        pointQueryBinNumber = new int[pointQueriesObj.length];
-        applyPredicatesObj(numAttrs);
-        deduplicateQueriesObj(numAttrs);
-        computeExactAnswersObj();
-        computeQueryStatsObj(numAttrs);
+        pointQueryAnswers = new int[pointQueries.length];
+        pointQueryUnion = new int[pointQueries.length];
+        pointQueriesNumAttrs = new int[pointQueries.length];
+        pointQueryBinNumber = new int[pointQueries.length];
+        applyPredicates(numAttrs);
+        deduplicateQueries(numAttrs);
+        computeExactAnswers();
+        computeQueryStats(numAttrs);
     }
 
     private Set<Integer> selectRandomIndices(int datasetSize, int numQueries) {
@@ -171,34 +170,37 @@ public class StringDataset {
     private void populatePointQueriesString(BufferedReader reader, int numAttrs, Set<Integer> selectedIndices) throws IOException {
         String line;
         int added = 0;
-        while ((line = reader.readLine()) != null && added < pointQueriesObj.length) {
+        while ((line = reader.readLine()) != null && added < pointQueries.length) {
             if (line.startsWith("id")) continue;
 
-            Record record = readRecordString(line, numAttrs);
-            int id = Integer.parseInt((String) record.getValue(0));
+            long[] record = readRecord(line, numAttrs);
+            int id = (int) record[0];
             if (selectedIndices.contains(id)) {
                 for (int p = 0; p < config.numPredicates; p++) {
-                    String[] queryData = new String[numAttrs];
-                    System.arraycopy(record.getData(), 1, queryData, 0, numAttrs);
-                    pointQueriesObj[added] = new StringRecord(queryData);
+                    pointQueries[added] = new long[numAttrs];
+                    System.arraycopy(record, 1, pointQueries[added], 0, numAttrs);
                     added++;
                 }
             }
         }
 
         // shrink the pointQueries array to the actual number of queries added
-        pointQueriesObj = Arrays.copyOf(pointQueriesObj, added);
+        pointQueries = Arrays.copyOf(pointQueries, added);
     }
 
-    private omni.datasets.Record.Record readRecordString(String line, int numAttrs) {
+    private long[] readRecord(String line, int numAttrs) {
         String[] parts = line.split(",");
         if (parts.length != numAttrs + 2) {
             throw new IllegalArgumentException("Record does not match expected number of attributes: " + line);
         }
-        return new StringRecord(parts);
+        long[] record = new long[numAttrs + 2];
+        for (int i = 0; i < parts.length; i++) {
+            record[i] = Long.parseLong(parts[i]);
+        }
+        return record;
     }
 
-    private void applyPredicatesObj(int numAttrs) {
+    private void applyPredicates(int numAttrs) {
         Random randomQueries = new Random(0);
 
         for (int p = 0; p < config.numPredicates; p++) {
@@ -206,8 +208,8 @@ public class StringDataset {
                 int curNumPreds = 0;
                 while (curNumPreds < numAttrs - (p + 1)) {
                     int index = randomQueries.nextInt(numAttrs);
-                    if (!RecordUtils.flexibleEquals(pointQueriesObj[i].getValue(index),-1)) {
-                        pointQueriesObj[i].setValue(index, -1);
+                    if (pointQueries[i][index] !=-1) {
+                        pointQueries[i][index] = -1;
                         curNumPreds++;
                     }
                 }
@@ -215,42 +217,42 @@ public class StringDataset {
         }
     }
 
-    private void deduplicateQueriesObj(int numAttrs) {
+    private void deduplicateQueries(int numAttrs) {
         // Deduplication process
         Set<String> uniqueQueries = new HashSet<>();
         int uniqueCount = 0;
 
-        for (Record query : pointQueriesObj) {
+        for (long[] query : pointQueries) {
             String key = buildQueryKey(query, numAttrs);
 
             if (uniqueQueries.add(key)) {
-                pointQueriesObj[uniqueCount] = query;
+                pointQueries[uniqueCount] = query;
                 uniqueCount++;
             }
         }
         // Resize the pointQueries array to contain only unique entries
-        pointQueriesObj = Arrays.copyOf(pointQueriesObj, uniqueCount);
+        pointQueries = Arrays.copyOf(pointQueries, uniqueCount);
     }
 
-    private String buildQueryKey(Record query, int numAttrs) {
+    private String buildQueryKey(long[] query, int numAttrs) {
         StringBuilder keyBuilder = new StringBuilder();
         for (int j = 0; j < numAttrs; j++) {
-            if (!query.getValue(j).equals(-1)) {
-                keyBuilder.append(j).append(":").append(query.getValue(j)).append(",");
+            if (query[j] !=-1) {
+                keyBuilder.append(j).append(":").append(query[j]).append(",");
             }
         }
         return keyBuilder.toString();
     }
 
-    private void computeExactAnswersObj() {
+    private void computeExactAnswers() {
         try (BufferedReader reader = new BufferedReader(new FileReader(datasetFileName))) {
             String line;
 
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("id")) continue;
 
-                Record record = readRecordString(line, pointQueriesObj[0].length());
-                updateAnswersObj(record);
+                long[] record = readRecord(line, pointQueries[0].length);
+                updateAnswers(record);
             }
         } catch (IOException e) {
             System.err.println("Error computing exact answers.");
@@ -260,20 +262,20 @@ public class StringDataset {
         writeQueriesToFile();
     }
 
-    private void updateAnswersObj(Record record) {
-        for (int i = 0; i < pointQueriesObj.length; i++) {
+    private void updateAnswers(long[] record) {
+        for (int i = 0; i < pointQueries.length; i++) {
             boolean match = true;
             boolean unionMatch = false;
 
-            for (int j = 0; j < pointQueriesObj[i].length(); j++) {
-                Object queryVal = pointQueriesObj[i].getValue(j);
-                Object recordVal = record.getValue(j + 1);
+            for (int j = 0; j < pointQueries[i].length; j++) {
+                long queryVal = pointQueries[i][j];
+                long recordVal = record[j + 1];
 
-                if (!RecordUtils.flexibleEquals(queryVal,-1) && !queryVal.equals(recordVal)) {
+                if (queryVal != -1 && queryVal != recordVal) {
                     match = false;
                     break;
                 }
-                if (!RecordUtils.flexibleEquals(queryVal,-1) && queryVal.equals(recordVal)) {
+                if (queryVal != -1 && queryVal == recordVal) {
                     unionMatch = true;
                 }
             }
@@ -287,13 +289,13 @@ public class StringDataset {
         queryFileName = setQueryFileName(datasetFileName);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(queryFileName))) {
-            writeHeaderQueryFile(writer, pointQueriesObj[0].length());
-            for (int i = 0; i < pointQueriesObj.length; i++) {
+            writeHeaderQueryFile(writer, pointQueries[0].length);
+            for (int i = 0; i < pointQueries.length; i++) {
                 StringBuilder line = new StringBuilder();
                 line.append(i);
 
-                for (int j = 0; j < pointQueriesObj[i].length(); j++) {
-                    line.append(",").append(pointQueriesObj[i].getValue(j));
+                for (int j = 0; j < pointQueries[i].length; j++) {
+                    line.append(",").append(pointQueries[i][j]);
                 }
                 line.append(",").append(pointQueryAnswers[i])
                         .append(",").append(pointQueryUnion[i]);
@@ -350,8 +352,8 @@ public class StringDataset {
         return pointQueryUnion;
     }
 
-    public Record[] getPointQueriesObj() {
-        return pointQueriesObj;
+    public long[][] getPointQueries() {
+        return pointQueries;
     }
 
     public String getDatasetReaderName(double perc, int sizeFactor) {
@@ -363,7 +365,7 @@ public class StringDataset {
         return datasetResiduSize;
     }
 
-    public boolean queriesNotExistTPCDS(int sizeFactor) {
+    public boolean queriesNotExistCAIDA(int sizeFactor) {
         setupResiduDataset(sizeFactor); // Use 0.0 queries are generated on residu.
         String queryFileName = setQueryFileName(datasetFileName);
         File queryFile = new File(queryFileName);

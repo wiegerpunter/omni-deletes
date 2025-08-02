@@ -92,7 +92,9 @@ public class RunExperiments {
         double sizeFactor = 0;
         if (config.datasetName.equals("SNMP") || config.datasetName.equals("CAIDA")) {
             config.fileStartCondition = conditions[conditionIndex];
-            readRealDataset(conditionIndex);
+            if (!config.readFromDisk) {
+                readRealDataset(conditionIndex);
+            }
         } else {
             sizeFactor = Double.parseDouble(config.sizeFactorOptions[conditionIndex]);
             cd.initToNull();
@@ -371,14 +373,21 @@ public class RunExperiments {
                 cd.testStringData();
             }
             case "Test" -> cd.testDataset();
-            case "tpc-ds_customer_N=99145","tpc-ds_customer_N=11894806","tpc-ds_customer_N=500000", "tpc-ds_item_N=18000" -> {
-                cd.tpcDS();
+            case "tpc-ds" -> {
+                cd.tpcDS(perc, (int) sizeFactor);
             }
             case "SNMP" -> {
                 if (d.size == 0) {
                     // clean dataset
                     cd.datasetReaderName = d.datasetReaderName;
                     cd.readSNMP();
+                } else {
+                    cd.cleanDataset(d, perc, noiseSize);
+                }
+            }
+            case "CAIDA" -> {
+                if (config.readFromDisk) {
+                    cd.caida(perc, sizeFactor);
                 } else {
                     cd.cleanDataset(d, perc, noiseSize);
                 }
@@ -661,17 +670,9 @@ public class RunExperiments {
                 this.conditions = new String[]{"0"};
                 config.numAttributes = 3;
             }
-            case "tpc-ds_customer_N=11894806"-> {
+            case "tpc-ds"-> {
                 this.conditions = new String[]{"0"};
-                config.numAttributes = 6;
-            }
-            case "tpc-ds_customer_N=99145"-> {
-                this.conditions = new String[]{"0"};
-                config.numAttributes = 6;
-            }
-            case "tpc-ds_customer_N=18000"-> {
-                this.conditions = new String[]{"0"};
-                config.numAttributes = 7;
+                config.numAttributes = 5;
             }
             default -> {
                 if (!config.datasetName.contains("synth")) {

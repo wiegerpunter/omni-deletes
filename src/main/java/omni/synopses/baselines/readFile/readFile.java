@@ -17,9 +17,8 @@ public class readFile extends SynopsisRefactor {
 
     @Override
     public void add(Record record) {
-        int id = (int) record.getValue(0); // Assuming the first value is the ID
+        int id = Integer.parseInt((String) record.getValue(0)); // Assuming the first value is the ID
     }
-
 
     public void ingest(long[] record, int sign) {
 
@@ -66,7 +65,7 @@ public class readFile extends SynopsisRefactor {
 
     @Override
     public void delete(Record r) {
-        int id = (int) r.getValue(0); // Assuming the first value is the ID
+        int id = Integer.parseInt((String) r.getValue(0)); // Assuming the first value is the ID
     }
 
     @Override
