@@ -22,7 +22,13 @@ public class LongRecord implements Record {
     }
 
     @Override
-    public Object getData() {
+    public Object getData(int numAttrs) {
+        if (numAttrs > data.length) {
+            throw new IllegalArgumentException("Requested number of attributes exceeds the length of the data array.");
+        }
+        long[] data = new long[numAttrs + 2];
+        System.arraycopy(this.data, 0, data, 0, numAttrs + 1);
+        data[numAttrs + 2] = this.data[this.data.length - 1];
         return data;
     }
 }

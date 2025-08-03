@@ -103,8 +103,9 @@ public class StringDataset {
         ArrayList<Record> pointQueriesList = new ArrayList<>();
         ArrayList<Integer> pointQueryAnswersList = new ArrayList<>();
         ArrayList<Integer> pointQueryUnionList = new ArrayList<>();
-        queryFileName = setQueryFileName(datasetFileName);
+
         int numAttrs = config.numStoredAttributes;
+        queryFileName = setQueryFileName(datasetFileName);
         // load queries and pointQueryAnswers from file
         try (BufferedReader reader = new BufferedReader(new FileReader(queryFileName))) {
             String line;
@@ -113,8 +114,8 @@ public class StringDataset {
                 if (line.startsWith("id")) continue; // Skip header line
 
                 String[] parts = line.split(",");
-                if (parts.length != numAttrs + 3) { // +2 for answer and union
-                    throw new RuntimeException("Record does not match expected number of attributes: " + line);
+                if (parts.length!= numAttrs + 3) { // +2 for answer and union
+                    throw new RuntimeException("Record too short, not matching expected number of attributes: " + line);
                 }
                 String[] query = new String[numAttrs];
                 // Skip id
@@ -134,7 +135,7 @@ public class StringDataset {
     }
 
     private void generateQueriesString() throws IOException {
-        int numAttrs = config.numAttributes;
+        int numAttrs = config.numStoredAttributes;
         pointQueriesObj = new omni.datasets.Record.Record[config.numQueries * config.numPredicates];
 
         Set<Integer> selectedIndices = selectRandomIndices(datasetResiduSize, config.numQueries);
@@ -179,7 +180,12 @@ public class StringDataset {
             if (selectedIndices.contains(id)) {
                 for (int p = 0; p < config.numPredicates; p++) {
                     String[] queryData = new String[numAttrs];
-                    System.arraycopy(record.getData(), 1, queryData, 0, numAttrs);
+                    // copy the numAttrs from the record, skipping the first value (id)
+                    if (added >= pointQueriesObj.length) {
+                        break; // Prevent ArrayIndexOutOfBoundsException
+                    }
+
+                    System.arraycopy(record.getData(numAttrs), 1, queryData, 0, numAttrs);
                     pointQueriesObj[added] = new StringRecord(queryData);
                     added++;
                 }
@@ -192,7 +198,7 @@ public class StringDataset {
 
     private omni.datasets.Record.Record readRecordString(String line, int numAttrs) {
         String[] parts = line.split(",");
-        if (parts.length != numAttrs + 2) {
+        if (parts.length < numAttrs + 2) {
             throw new IllegalArgumentException("Record does not match expected number of attributes: " + line);
         }
         return new StringRecord(parts);
@@ -331,7 +337,7 @@ public class StringDataset {
     }
 
     private String setQueryFileName(String datasetFileName) {
-        return datasetFileName.replace(".csv", "_queries.csv");
+        return datasetFileName.replace(".csv", "_" + config.numStoredAttributes + "_queries.csv");
     }
 
     public int[] getPointQueryAnswers() {

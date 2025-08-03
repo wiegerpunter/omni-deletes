@@ -22,15 +22,6 @@ public class CAIDADataset {
     public CAIDADataset(Config config) {
         this.config = config;
     }
-    private int countCsvRecords(File file) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            int lines = 0;
-            while (reader.readLine() != null) {
-                lines++;
-            }
-            return Math.max(0, lines - 1); // Subtract 1 for header
-        }
-    }
 
     private int countCsvRecords(String subfolder) {
         File countFile = new File(subfolder, "count.txt");
@@ -46,14 +37,14 @@ public class CAIDADataset {
 
 
     private void setupResiduDataset(int sizeFactor) {
-        String subfolder = config.readFolder + "input/data/caida/" + sizeFactor + "/" + 0.0 + "/";
+        String subfolder = config.readFolder + "input/data/CAIDA/" + sizeFactor + "/" + 0.0 + "/";
         datasetFileName = subfolder + "final_stream_" + 0.0 + ".csv";
 //        datasetFileName = config.readFolder + "input/data/" + config.datasetName + "/" + config.datasetName +".csv";
         datasetResiduSize = countCsvRecords(subfolder);
     }
 
     private void setupDataset(double perc, int sizeFactor) {
-        String subfolder = config.readFolder + "input/data/caida/" + sizeFactor + "/" + perc+ "/";
+        String subfolder = config.readFolder + "input/data/CAIDA/" + sizeFactor + "/" + perc+ "/";
         datasetFileName = subfolder + "final_stream_" + perc + ".csv";
         if (datasetResiduSize == 0) {
             throw new RuntimeException("Dataset Residu size is zero");

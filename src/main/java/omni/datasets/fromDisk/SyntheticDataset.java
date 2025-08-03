@@ -382,7 +382,7 @@ public class SyntheticDataset {
             if (selectedIndices.contains(id)) {
                 for (int p = 0; p < config.numPredicates; p++) {
                     long[] queryData = new long[numAttrs];
-                    System.arraycopy(record.getData(), 1, queryData, 0, numAttrs);
+                    System.arraycopy(record.getData(numAttrs), 1, queryData, 0, numAttrs);
                     pointQueriesObj[added] = new LongRecord(queryData);
                     added++;
                 }

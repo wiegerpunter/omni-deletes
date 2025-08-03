@@ -90,7 +90,7 @@ public class RunExperiments {
 
     private void prepareDataset(int conditionIndex, double zipfAlpha, int noiseSize, double perc) throws IOException, CsvValidationException {
         double sizeFactor = 0;
-        if (config.datasetName.equals("SNMP") || config.datasetName.equals("CAIDA")) {
+        if ((config.datasetName.equals("SNMP") || config.datasetName.equals("CAIDA") && !config.readFromDisk)) {
             config.fileStartCondition = conditions[conditionIndex];
             if (!config.readFromDisk) {
                 readRealDataset(conditionIndex);
@@ -387,7 +387,7 @@ public class RunExperiments {
             }
             case "CAIDA" -> {
                 if (config.readFromDisk) {
-                    cd.caida(perc, sizeFactor);
+                    cd.caida(perc, (int) sizeFactor);
                 } else {
                     cd.cleanDataset(d, perc, noiseSize);
                 }
@@ -561,8 +561,10 @@ public class RunExperiments {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] values = line.split(",");
-                String[] record = new String[values.length - 1];
-                System.arraycopy(values, 0, record, 0, values.length - 1);
+//                String[] record = new String[values.length - 1];
+                String[] record = new String[config.numStoredAttributes + 1];
+                System.arraycopy(values, 0, record, 0, config.numStoredAttributes + 1);
+//                System.arraycopy(values, 0, record, 0, values.length - 1);
                 int sign = Integer.parseInt(values[values.length - 1]);
                 StringRecord rec = new StringRecord(record);
                 if (sign == 1) {
@@ -660,7 +662,7 @@ public class RunExperiments {
             }
             case "CAIDA" -> {
                 this.conditions = new String[]{"1"};//, "4", "5", "6", "7", "8", "9", "10", "11", "12"};
-                config.numAttributes = 11;//10; //actually 7; can be 10;
+                config.numAttributes = 8;//10; //actually 7; can be 10;
             }
             case "Test" -> {
                 this.conditions = new String[]{"0"};
