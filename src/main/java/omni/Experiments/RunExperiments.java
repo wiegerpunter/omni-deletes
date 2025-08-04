@@ -697,10 +697,12 @@ public class RunExperiments {
     public static void omniExperiment(long ram, int repetition, Config config, int[] params, OmniSketchBuilder omniSketchBuilder, RunExperiments runExperiments) throws IOException {
         System.out.println("Running OmniSketch with parameters: " + Arrays.toString(params));
 
+        int numCells = config.d * config.w * config.numStoredAttributes;
+        int bufferSize = 8000000 / numCells / 32; // 1MB buffer size
         OmniSketch omniSketch = omniSketchBuilder
                 .setRam(ram)
-                .setIngestBufferSize(config.ingestBufferSize)
-                .setDeleteBufferSize(config.deleteBufferSize)
+                .setIngestBufferSize(bufferSize/2)
+                .setDeleteBufferSize(bufferSize/2)
                 .setNumStoredAttributes(config.numStoredAttributes)
                 .setParams(params)
                 .setSeed(repetition)

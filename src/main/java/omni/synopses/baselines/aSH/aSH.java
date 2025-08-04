@@ -234,20 +234,27 @@ public class aSH extends SynopsisRefactor {
     }
 
     private void ejectObj() {
-        List<Map.Entry<ObjectArrayKey, double[]>> entries = new ArrayList<>(sketchObj.entrySet());
+        int mapSize = sketchObj.size();
+
+        double[] Tis = new double[mapSize];
+
+        Map<ObjectArrayKey, Double> TisMap = new HashMap<>();
+//        List<Map.Entry<ObjectArrayKey, double[]>> entries = new ArrayList<>(sketchObj.entrySet());
 
 
-        double[] Tis = new double[entries.size()];
         int numToEject = size - sketchSize;
 
         PriorityQueue<Double> bs_minvalues = new PriorityQueue<>(Comparator.reverseOrder());//Ascending: we want the min values to eject. Comparator.reverseOrder());
 
-        for (int i = 0; i < entries.size(); i++) {
-            double[] sample = entries.get(i).getValue();
+        int idx = 0;
+        for (Map.Entry<ObjectArrayKey, double[]> entry : sketchObj.entrySet()) {
+            double[] sample = entry.getValue();
             sample[2] = rn.nextDouble(0, 1);
             sample[3] = Math.log(rn1.nextDouble(0, 1));
-            Tis[i] = Math.max(sample[1] / sample[2], sample[0] / (-sample[3]));
-            bs_minvalues.add(Tis[i]);
+            double Ti = Math.max(sample[1] / sample[2], sample[0] / (-sample[3]));
+            Tis[idx++] = Ti;
+            TisMap.put(entry.getKey(), Ti);
+            bs_minvalues.add(Ti);
             if (bs_minvalues.size() > numToEject) { // We only want to eject numToEject records with the smallest values. If we have more, we eject the largest ones.
                 bs_minvalues.poll(); // Eject the largest value.
             }
@@ -256,15 +263,17 @@ public class aSH extends SynopsisRefactor {
             throw new RuntimeException("Error in ejecting records from aSH");
         }
         double tstar = bs_minvalues.peek(); // The largest value in the set of smallest values.
+        Iterator<Map.Entry<ObjectArrayKey, double[]>> iterator = sketchObj.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<ObjectArrayKey, double[]> entry = iterator.next();
+            ObjectArrayKey key = entry.getKey();
+            double[] sample = entry.getValue();
+            double Ti = TisMap.get(key);
 
-        for (int i = 0; i < entries.size(); i++) {
-            ObjectArrayKey key = entries.get(i).getKey();
-
-            if (Tis[i] <= tstar) { // tstar is threshold for ejection.
-                sketchObj.remove(key);
+            if (Ti <= tstar) { // tstar is threshold for ejection.
+                iterator.remove();
                 size--;
             } else { // Update the records that are not ejected.
-                double[] sample = entries.get(i).getValue();
                 if (sample[1] <= tstar) {
                     if (tstar * sample[2] > sample[1]) {
                         //sketch.get(key)[0] += tstar * sample[3];
