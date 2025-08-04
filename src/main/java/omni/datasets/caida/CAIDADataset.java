@@ -124,7 +124,7 @@ public class CAIDADataset {
     }
 
     private void generateQueriesString() throws IOException {
-        int numAttrs = config.numAttributes;
+        int numAttrs = config.numStoredAttributes;
         pointQueries = new long[config.numQueries * config.numPredicates][];
 
         Set<Integer> selectedIndices = selectRandomIndices(datasetResiduSize, config.numQueries);
@@ -181,13 +181,14 @@ public class CAIDADataset {
 
     private long[] readRecord(String line, int numAttrs) {
         String[] parts = line.split(",");
-        if (parts.length != numAttrs + 2) {
+        if (parts.length < numAttrs + 2) {
             throw new IllegalArgumentException("Record does not match expected number of attributes: " + line);
         }
         long[] record = new long[numAttrs + 2];
-        for (int i = 0; i < parts.length; i++) {
+        for (int i = 0; i < numAttrs + 1; i++) {
             record[i] = Long.parseLong(parts[i]);
         }
+        record[numAttrs + 1] = Long.parseLong(parts[parts.length - 1]); // Last part is sign
         return record;
     }
 
@@ -324,7 +325,7 @@ public class CAIDADataset {
     }
 
     private String setQueryFileName(String datasetFileName) {
-        return datasetFileName.replace(".csv", "_queries.csv");
+        return datasetFileName.replace(".csv", "_" + config.numStoredAttributes +"_queries.csv");
     }
 
     public int[] getPointQueryAnswers() {
