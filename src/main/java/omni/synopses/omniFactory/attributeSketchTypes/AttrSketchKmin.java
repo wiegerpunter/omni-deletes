@@ -45,6 +45,7 @@ public class AttrSketchKmin {
         attrHash(attrValue);
         for (int j = 0; j < depth; j++) {
             int i = reusableHashes[j];
+            //todo: if we want to prune inserts, we can do it here.
             sketch[j][i].ingest(hx[j], sign);
         }
     }

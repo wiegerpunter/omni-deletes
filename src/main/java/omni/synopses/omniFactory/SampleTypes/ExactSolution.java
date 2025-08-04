@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ExactSolution implements Sample {
-    private Set<Integer> set;
+    private final Set<Integer> set;
     private int n;
 
     public ExactSolution() {
@@ -41,7 +41,7 @@ public class ExactSolution implements Sample {
 
     @Override
     public String getKminType() {
-        return "ExactSolution";
+        return "KminExact";
     }
 
     @Override

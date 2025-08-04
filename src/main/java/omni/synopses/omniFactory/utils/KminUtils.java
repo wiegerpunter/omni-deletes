@@ -15,6 +15,9 @@ public class KminUtils {
         if (Objects.equals(kminArray[0].getKminType(), "KminPQ")) {
             return estimatePriorityQueue(kminArray, queryInfo, bound, numPreds);
         }
+        if (Objects.equals(kminArray[0].getKminType(), "KminExact")) {
+            return estimateSetExact(kminArray, queryInfo);
+        }
         if (Objects.equals(kminArray[0].getKminType(), "KminArray") || Objects.equals(kminArray[0].getKminType(), "KminArrayRegBuffer")) {
             return estimateArray(kminArray, queryInfo, bound, numPreds);
         }
@@ -150,7 +153,7 @@ public class KminUtils {
             throw new IllegalArgumentException("kminSets is null or empty");
         }
 
-        if (Objects.equals(kminSets[0].getKminType(), "ExactSolution")) {
+        if (Objects.equals(kminSets[0].getKminType(), "KminExact")) {
             int intersection;
             Set<Integer> intersectionSet = new HashSet<>((Set<Integer>) kminSets[0].query());
 

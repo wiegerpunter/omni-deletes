@@ -131,6 +131,8 @@ public class RunExperiments {
                 continue;
             };
             for (long ram : config.ramVals) {
+
+                int s0 = 0;
                 for (String experimentName : getEnabledExperiments()) {
                     Experiment experiment = ExperimentFactory.getExperiment(experimentName);
                     if (experiment != null) {
@@ -176,6 +178,11 @@ public class RunExperiments {
                                                                             ram, config.numStoredAttributes, config.d, 1);
                                                                     if (config.useNoBufferOmniVLDB && config.bufferDeletesMinwise > 1) {
                                                                         continue;
+                                                                    }
+                                                                    if (s0 > 0 && experimentName.equals("OmniSketchVLDBS0Custom")) {
+                                                                        continue;
+                                                                    } else if (experimentName.equals("OmniSketchVLDBS0Custom")){
+                                                                        s0++;
                                                                     }
                                                                     experiment.run(ram, rtp, repetition, config);
                                                                     if (ramMultiplyers_count < config.percsForMultiplyers.length) {
@@ -290,6 +297,7 @@ public class RunExperiments {
         }
         if (config.parameterSettingType.equals("Custom") || config.parameterSettingType.equals("GridSearch")) {
             if (config.expOmniSketchVLDB) enabledExperiments.add("OmniSketchVLDBCustom");
+            if (config.expOmniSketchVLDBS0) enabledExperiments.add("OmniSketchVLDBS0Custom");
             if (config.expOmniSketchVLDBArray) enabledExperiments.add("OmniSketchVLDBArrayCustom");
             if (config.expOmniSketchVLDBArrayRegBuffer) enabledExperiments.add("OmniSketchVLDBArrayRegBufferCustom");
 

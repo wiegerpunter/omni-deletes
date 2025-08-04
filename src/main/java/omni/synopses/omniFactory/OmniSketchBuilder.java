@@ -6,6 +6,7 @@ public class OmniSketchBuilder {
     private final OmniSketchConfig config = new OmniSketchConfig();
 
 
+
     public OmniSketchBuilder setSeed(int seed) {
         config.setSeed(seed);
         return this;
@@ -183,6 +184,14 @@ public class OmniSketchBuilder {
                 .setUseNMax(true)
                 .setSketchType("SampleLaterArrayWithBufferOptBatchDeletes");
     }
+
+    public static OmniSketchBuilder QFirstSampleLaterExact() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(true)
+                .setUseNMax(true)
+                .setSketchType("SampleLaterExact");
+    }
+
 
     public static OmniSketchBuilder QFirstSampleLaterArrayWithBufferPerRow() {
         return new OmniSketchBuilder()

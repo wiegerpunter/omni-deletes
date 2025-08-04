@@ -12,7 +12,7 @@ public class SampleFactory {
             case "KminTreeSet" -> new KminTreeSet(B, b, config.getBufferBeta(), "KminTreeSet");
             case "KminTreeSetWithoutBuffer" -> new KminTreeSet(B, b, 0, "KminTreeSetWithoutBuffer");
             case "FastTWOLHS", "SlowTWOLHS","NMaxTWOLHS","FastTWOLHSOneBucket" -> new TWOLHS(B, config.getSeed());
-            case "TWOLHSExact" -> new ExactSolution();
+            case "TWOLHSExact", "KminExact" -> new ExactSolution();
 
             case "KminArray" -> new KminArray(B, b,0, "KminArray");
             case "KminArrayRegBuffer" -> new KminArray(B, b, config.getBufferBeta(), "KminArrayRegBuffer");
