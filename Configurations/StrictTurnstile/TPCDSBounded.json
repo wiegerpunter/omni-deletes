@@ -64,8 +64,8 @@
   "expFastTWOLHSOneBucketPerRow": false,
   "expNMaxTWOLHSPerRow": false,
 
-  "expASH": true,
-  "expHydra": false,
+  "expASH": false,
+  "expHydra": true,
   "expResSample": false,
   "expCM": false,
   "numFiles": 2,

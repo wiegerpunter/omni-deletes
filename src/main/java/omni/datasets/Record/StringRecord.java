@@ -33,4 +33,14 @@ public class StringRecord implements Record {
         data[numAttrs + 1] = this.data[this.data.length - 1];
         return data;
     }
+
+    @Override
+    public String[] getQueryData(int numAttrs) {
+        if (numAttrs > data.length) {
+            throw new IllegalArgumentException("Requested number of attributes exceeds the length of the data array.");
+        }
+        //String[] data = new String[numAttrs];
+        //System.arraycopy(this.data, 0, data, 0, numAttrs);
+        return data;
+    }
 }

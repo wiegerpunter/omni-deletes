@@ -6,4 +6,6 @@ public interface Record {
     Object getData(int numAttrs);
 
     void setValue(int index, int i);
+
+    Object getQueryData(int numStoredAttributes);
 }

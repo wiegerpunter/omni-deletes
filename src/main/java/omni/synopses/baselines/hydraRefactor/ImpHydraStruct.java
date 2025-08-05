@@ -6,6 +6,7 @@ import net.jpountz.xxhash.XXHashFactory;
 import omni.Experiments.utils.QueryInfo;
 import omni.datasets.ReadRecord.Query;
 import omni.datasets.Record.Record;
+import omni.datasets.Record.RecordUtils;
 import omni.synopses.SynopsisRefactor;
 
 import java.io.Serializable;
@@ -473,7 +474,7 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
 
     @Override
     public void add(Record record) {
-
+        ingest(record, 1);
     }
 
     @Override
@@ -483,7 +484,7 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
 
     @Override
     public void ingest(Record record, int i) {
-
+        insertString(record, i);
     }
 
     @Override
@@ -493,7 +494,7 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
 
     @Override
     public void delete(Record r) {
-
+        ingest(r, -1);
     }
 
     public void insert(long[] record, int value) {
@@ -511,6 +512,46 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
                     recToAdd[l] = record[l + 1];
                 } else {
                     recToAdd[l] = -1;
+                }
+            }
+
+            String insert = binaryString + "-" + Arrays.toString(recToAdd);
+            totalAdded++;
+            updateOne(insert, "1", value);
+        }
+
+        /*
+        Set<Integer> keySet = subPopMap.subPopulations2.keySet();
+        for (int sp : keySet) {
+            ArrayList<Integer> subpop = subPopMap.subPopulations2.get(sp);
+            StringBuilder key = new StringBuilder();
+            for (int i: attrsIdx) {
+                if (subpop.contains(i))
+                    key.append(record[i]);
+            }
+            String insert = sp + "-" + key;
+            totalAdded++;
+            //String keyString = String.valueOf(key);
+            //updateOne(Integer.toString(sp), keyString, "1");
+            updateOne(insert, "1");
+        }*/
+    }
+
+    public void insertString(Record record, int value) {
+        for (int k = 1; k < Math.pow(2, numStoredAttributes); k++) {
+            String[] recToAdd = new String[numStoredAttributes];
+            // Convert k to binary string.
+            StringBuilder binaryString = new StringBuilder(Integer.toBinaryString(k));
+            // Pad with zeros.
+            while (binaryString.length() < numStoredAttributes) {
+                binaryString.insert(0, "0");
+            }
+            // Make rec to add.
+            for (int l = 0; l < numStoredAttributes; l++) {
+                if (binaryString.charAt(l) == '1') {
+                    recToAdd[l] = (String) record.getValue(l + 1);
+                } else {
+                    recToAdd[l] = "-1";
                 }
             }
 
@@ -573,9 +614,43 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
 //        return (int) ret[0];
     }
 
+    public int query(Record query, int numPreds) {
+        StringBuilder binaryString = new StringBuilder();
+        for (String l : (String[]) query.getQueryData(numStoredAttributes)) {
+            if (RecordUtils.flexibleEquals(l,"-1")) {
+                binaryString.append("0");
+            } else {
+                binaryString.append("1");
+            }
+        }
+
+        String insert = binaryString + "-" + Arrays.toString((String[]) query.getQueryData(numStoredAttributes));
+
+        float[] ret = queryOneNoCheck(insert);
+        //String key = String.valueOf(value);
+        //float[] ret = queryOneNoCheck(Integer.toString(subPop), key);
+        return (int) ret[0];
+
+//        ArrayList<Integer> attrsIdx = new ArrayList<Integer>();
+//        StringBuilder value = new StringBuilder();
+//        for (int i = 0; i < query.length; i++) {
+//            if (query[i] == -1) {
+//                continue;
+//            }
+//            attrsIdx.add(i);
+//            value.append(query[i]);
+//        }
+//        int subPop = subPopMap.getSubPop(attrsIdx);
+//        String insert = subPop + "-" + value;
+//        float[] ret = queryOneNoCheck(insert);
+//        //String key = String.valueOf(value);
+//        //float[] ret = queryOneNoCheck(Integer.toString(subPop), key);
+//        return (int) ret[0];
+    }
+
     @Override
     public int query(Record query, int numPreds, QueryInfo queryInfo) {
-        return 0;
+        return query(query, numPreds);
     }
 
     @Override

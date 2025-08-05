@@ -1,11 +1,6 @@
 package omni.datasets.fromDisk;
 
 import omni.Config;
-import omni.datasets.Record.*;
-import omni.datasets.Record.Record;
-import omni.datasets.ZipfGenerator;
-import org.apache.commons.math3.distribution.ZipfDistribution;
-
 import java.io.*;
 import java.util.*;
 
@@ -13,10 +8,9 @@ public class SyntheticDataset {
     private final Config config;
     private String datasetFileName;
     private String queryFileName;
-    private int datasetSize;
+    private int datasetResiduSize;
     private int noiseSize;
     private long[][] pointQueries;
-    private Record[] pointQueriesObj;
     private int[] pointQueryAnswers;
     private int[] pointQueryUnion;
 
@@ -29,174 +23,40 @@ public class SyntheticDataset {
         config.domain = 10000;
         int numQueries = config.numQueries * config.numPredicates;
         pointQueries = new long[numQueries][];
-        pointQueriesObj = new Record[numQueries];
     }
 
-    public String getDatasetFileName() {
-        return datasetFileName;
-    }
-    public String getQueryFileName() {
-        return queryFileName;
-    }
-
-    public void synthDevDataGenerator(double perc, double sizeFactor,
-                                  double zipfAlpha) {
-        setupDataset(perc, sizeFactor, zipfAlpha);
-        generateSynthDataset(zipfAlpha);
-
-    }
-
-    public void synthDevQueryGenerator(double perc, double sizeFactor,
-                                  double zipfAlpha) throws IOException {
-        setupDataset(perc, sizeFactor, zipfAlpha);
-        generateSynthQueries();
-    }
-
-    public void synthDevLoader(double perc, double sizeFactor, double zipfAlpha) {
-        setupDataset(perc, sizeFactor, zipfAlpha);
-        if (config.useNoCast) {
-            loadQueries(perc);
-        } else {
-            loadQueriesString(perc);
+    private int countCsvRecords(String subfolder) {
+        File countFile = new File(subfolder, "count.txt");
+        if (countFile.exists()) {
+            try (BufferedReader br = new BufferedReader(new FileReader(countFile))) {
+                return Integer.parseInt(br.readLine());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
+        throw new RuntimeException("Count file does not exist");
     }
 
-    private void setupDataset(double perc, double sizeFactor, double zipfAlpha) {
-        int numAttrs = 9;
-        int domain = config.domain;
-        int numZipfianAttrs = config.numZipfAttributes;
-        int numUniformAttrs = config.numUniformAttributes;
-        datasetSize = (int) Math.pow(2, sizeFactor);
-        noiseSize = (int) (datasetSize * perc);
-        datasetFileName = setDatasetName(numAttrs, domain, sizeFactor, datasetSize, numZipfianAttrs, zipfAlpha, numUniformAttrs, perc);
+    private void setupResiduDataset(double sizeFactor, double zipfAlpha) {
+        String subfolder = config.readFolder + "input/data/synthFromDisk/zipfAlpha_" + zipfAlpha + "/" + sizeFactor + "/";
+        datasetFileName = subfolder + "residu.csv";
+        datasetResiduSize = countCsvRecords(subfolder + "1.0/" )/2;
     }
 
-    private String setDatasetName(int numAttrs, int domain, double sizeFactor, int datasetSize,
-                                  int numZipfianAttrs, double zipfAlpha, int numUniformAttrs,
+
+    private void setupDataset(double perc, int sizeFactor, double zipfAlpha) {
+        noiseSize = datasetResiduSize;
+        datasetFileName = setDatasetName(sizeFactor, zipfAlpha,perc);
+    }
+
+    private String setDatasetName(double sizeFactor, double zipfAlpha,
                                   double perc) {
-        return config.readFolder + "input/data/synthFromDisk/" + sizeFactor + "/" + perc + "/" + "syntheticDataset_" + numAttrs + "_" + domain + "_" + sizeFactor + "_" + datasetSize + "_" +
-                numZipfianAttrs + "_" + zipfAlpha + "_" + numUniformAttrs + "_" + perc + ".csv";
+        return config.readFolder + "input/data/synthFromDisk/zipfAlpha_" + zipfAlpha + "/" + sizeFactor + "/" + perc + "/" + "final_stream_" + perc+ ".csv";
     }
 
-//    private String setQueryFileName(String datasetFileName) {
-//        if (datasetFileName.endsWith(".csv")) {
-//            return datasetFileName.substring(0, datasetFileName.length() - 4) + "_queries.csv";
-//        } else {
-//            throw new IllegalArgumentException("Dataset filename does not end with .csv");
-//        }
-//    }
-
-    private String setQueryFileName(String datasetFileName, double perc) {
-        File datasetFile = new File(datasetFileName);
-        File percFolder = datasetFile.getParentFile();  // e.g., .../5.0/0.3
-        File sizeFactorFolder = percFolder.getParentFile();  // e.g., .../5.0
-
-        if (datasetFileName.endsWith(".csv")) {
-            String queryFileName = datasetFile.getName().replace(".csv", "_queries.csv");
-            // Find positions of the last two underscores
-            int lastUnderscore = queryFileName.lastIndexOf("_");
-            int secondLastUnderscore = queryFileName.lastIndexOf("_", lastUnderscore - 1);
-
-            if (secondLastUnderscore != -1 && lastUnderscore != -1 && lastUnderscore > secondLastUnderscore) {
-                String before = queryFileName.substring(0, secondLastUnderscore + 1);
-                String after = queryFileName.substring(lastUnderscore); // includes the underscore and the .csv part
-
-                String modified = before + "0.0" + after;
-
-                System.out.println(modified);
-                File queryFile = new File(sizeFactorFolder, "0.0/" + modified);
-                return queryFile.getAbsolutePath();
-            } else {
-                throw new IllegalArgumentException("Dataset filename does not contain the expected underscores for modification: " + datasetFileName);
-            }
-
-        } else {
-            throw new IllegalArgumentException("Dataset filename does not end with .csv");
-        }
+    private String setQueryFileName(String datasetFileName) {
+        return datasetFileName.replace(".csv", "_" + config.numStoredAttributes +"_queries.csv");
     }
-
-
-    private long[] createRecord (int index, ZipfDistribution zipf, Random unifRandom, int numAttrs, int numZipfianAttrs, int numUniformAttrs, int domain, double zipfAlpha) {
-        long[] record = new long[numAttrs + 1]; // +1 for id
-        record[0] = index; // id
-        if (numZipfianAttrs > 0) {
-            long[] zipfData = ZipfGenerator.zipfDataRecord(zipf, numZipfianAttrs);
-            System.arraycopy(zipfData, 0, record, 1, numZipfianAttrs);
-        }
-        if (numUniformAttrs > 0) {
-            long[] unifData = new long[numUniformAttrs];
-            for (int j = 0; j < numUniformAttrs; j++) {
-                unifData[j] = unifRandom.nextInt(domain);
-            }
-            System.arraycopy(unifData, 0, record, 1 + numZipfianAttrs, numUniformAttrs);
-        }
-
-        return record;
-    }
-
-    private void generateSynthDataset(double zipfAlpha) {
-        int numAttrs = 9;
-        int domain = config.domain;
-        int numZipfianAttrs = config.numZipfAttributes;
-        int numUniformAttrs = config.numUniformAttributes;
-        if (numAttrs != numZipfianAttrs + numUniformAttrs) {
-            throw new IllegalArgumentException("Number of attributes must be sum of Zipfian and Uniform attributes (" +
-                    numZipfianAttrs + " + " + numUniformAttrs + ") but got " + numAttrs);
-        }
-        try (BufferedWriter writer = getBufferedWriter(datasetFileName)) {
-            writeHeader(writer, numAttrs);
-            ZipfDistribution zipfResidu = ZipfGenerator.getZipfDistribution(domain, zipfAlpha, 0);
-            double zipfNoiseAlpha = zipfAlpha - 0.2; // Slightly lower alpha for noise
-            ZipfDistribution zipfNoise = ZipfGenerator.getZipfDistribution(domain, zipfNoiseAlpha, 1);
-
-            Random unifRandom = new Random(0);
-
-            for (int i = 0; i < datasetSize; i++) {
-                // Create a record
-                long[] record = createRecord(i, zipfResidu, unifRandom, numAttrs, numZipfianAttrs, numUniformAttrs, domain, zipfAlpha);
-                writeRecord(writer, record, 1);
-            }
-            for (int i = 0; i < noiseSize; i++) {
-                // Create a noise record
-                long[] record = createRecord(i + datasetSize, zipfNoise, unifRandom, numAttrs, numZipfianAttrs, numUniformAttrs, domain, zipfNoiseAlpha);
-                writeRecord(writer, record, 1);
-                writeRecord(writer, record, -1);
-            }
-        } catch (IOException except)
-        {
-            System.err.println("Error opening file for writing: " + datasetFileName);
-            except.printStackTrace();
-        }
-    }
-
-
-
-    private void generateSynthQueries() throws IOException {
-        int numAttrs = 9;
-        int numZipfianAttrs = config.numZipfAttributes;
-
-        Set<Integer> selectedIndices = selectRandomIndices(datasetSize, config.numQueries);
-        System.out.println("/home/wieger/omni-deletes/input/data/synthFromDisk/1.3/0.0/syntheticDataset_9_10000_5.0_32_9_1.3_0_0.0.csv");
-        try (BufferedReader reader = new BufferedReader(new FileReader(datasetFileName))) {
-            populatePointQueries(reader, numAttrs, selectedIndices);
-        } catch (IOException e) {
-            System.err.println("Error opening file for queries: " + datasetFileName);
-            throw e;
-        }
-
-        pointQueryAnswers = new int[pointQueries.length];
-        pointQueryUnion = new int[pointQueries.length];
-        pointQueriesNumAttrs = new int[pointQueries.length];
-        pointQueryBinNumber = new int[pointQueries.length];
-        pointQueriesNumZipfian = new int[pointQueries.length];
-        applyPredicates(numAttrs);
-        deduplicateQueries(numAttrs);
-        computeExactAnswers();
-        computeQueryStats(numAttrs, numZipfianAttrs);
-    }
-
-
-
 
     private void applyPredicates(int numAttrs) {
         Random randomQueries = new Random(0);
@@ -284,10 +144,8 @@ public class SyntheticDataset {
         }
     }
 
-
-
     private void writeQueriesToFile() {
-        queryFileName = setQueryFileName(datasetFileName, 0.0);
+        queryFileName = setQueryFileName(datasetFileName);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(queryFileName))) {
             writeHeaderQueryFile(writer, pointQueries[0].length);
@@ -339,68 +197,11 @@ public class SyntheticDataset {
         }
     }
 
-    private void computeQueryStatsObj(int numAttrs, int numZipfianAttrs) {
-        for (int i = 0; i < pointQueriesObj.length; i++) {
-            for (int j = 0; j < numAttrs; j++) {
-                if (!RecordUtils.flexibleEquals(pointQueriesObj[i].getValue(j), -1)) {
-                    pointQueriesNumAttrs[i]++;
-                    if (j < numZipfianAttrs) pointQueriesNumZipfian[i]++;
-                }
-            }
-            pointQueryBinNumber[i] = i;
-        }
-    }
-
-    private void populatePointQueries(BufferedReader reader, int numAttrs, Set<Integer> selectedIndices) throws IOException {
-        String line;
-        int added = 0;
-        while ((line = reader.readLine()) != null && added < pointQueries.length) {
-            if (line.startsWith("id")) continue;
-            long[] record = readRecord(line, numAttrs);
-            int id = (int) record[0];
-            if (selectedIndices.contains(id)) {
-                for (int p = 0; p < config.numPredicates; p++) {
-                    pointQueries[added] = new long[numAttrs];
-                    System.arraycopy(record, 1, pointQueries[added], 0, numAttrs);
-                    added++;
-                }
-            }
-        }
-
-        // shrink the pointQueries array to the actual number of queries added
-        pointQueries = Arrays.copyOf(pointQueries, added);
-
-    }
-
-    private void populatePointQueriesLong(BufferedReader reader, int numAttrs, Set<Integer> selectedIndices) throws IOException {
-        String line;
-        int added = 0;
-        while ((line = reader.readLine()) != null && added < pointQueriesObj.length) {
-            if (line.startsWith("id")) continue;
-            Record record = readRecordLong(line, numAttrs);
-            int id = (int) record.getValue(0);
-            if (selectedIndices.contains(id)) {
-                for (int p = 0; p < config.numPredicates; p++) {
-                    long[] queryData = new long[numAttrs];
-                    System.arraycopy(record.getData(numAttrs), 1, queryData, 0, numAttrs);
-                    pointQueriesObj[added] = new LongRecord(queryData);
-                    added++;
-                }
-            }
-        }
-
-        // shrink the pointQueries array to the actual number of queries added
-        pointQueriesObj = Arrays.copyOf(pointQueriesObj, added);
-
-    }
-
-
-
-    private void loadQueries(double perc) {
+    private void loadQueries() {
         ArrayList<long[]> pointQueriesList = new ArrayList<>();
         ArrayList<Integer> pointQueryAnswersList = new ArrayList<>();
         ArrayList<Integer> pointQueryUnionList = new ArrayList<>();
-        queryFileName = setQueryFileName(datasetFileName, perc);
+        queryFileName = setQueryFileName(datasetFileName);
         int numAttrs = config.numStoredAttributes;
         // load queries and pointQueryAnswers from file
         try (BufferedReader reader = new BufferedReader(new FileReader(queryFileName))) {
@@ -443,142 +244,6 @@ public class SyntheticDataset {
         computeQueryStats(numAttrs, config.numZipfAttributes);
     }
 
-
-    private void loadQueriesLong(double perc) {
-        ArrayList<Record> pointQueriesList = new ArrayList<>();
-        ArrayList<Integer> pointQueryAnswersList = new ArrayList<>();
-        ArrayList<Integer> pointQueryUnionList = new ArrayList<>();
-        pointQueryAnswers = new int[pointQueries.length];
-        pointQueryUnion = new int[pointQueries.length];
-        pointQueriesNumAttrs = new int[pointQueries.length];
-        pointQueryBinNumber = new int[pointQueries.length];
-        pointQueriesNumZipfian = new int[pointQueries.length];
-        queryFileName = setQueryFileName(datasetFileName, perc);
-        int numAttrs = config.numStoredAttributes;
-        // load queries and pointQueryAnswers from file
-        try (BufferedReader reader = new BufferedReader(new FileReader(queryFileName))) {
-            String line;
-            int queryCount = 0;
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith("id")) continue; // Skip header line
-
-                String[] parts = line.split(",");
-                if (parts.length != numAttrs + 3) { // +2 for answer and union
-                    throw new RuntimeException("Record does not match expected number of attributes: " + line);
-                }
-                long[] query = new long[numAttrs];
-                for (int i = 0; i < numAttrs; i++) {
-                    query[i] = Long.parseLong(parts[i + 1]); // Skip id
-                }
-                pointQueriesList.add(new LongRecord(query));
-                pointQueryAnswersList.add(Integer.parseInt(parts[numAttrs + 1]));
-                pointQueryUnionList.add(Integer.parseInt(parts[numAttrs + 2]));
-                queryCount++;
-            }
-        } catch (IOException e) {
-            System.err.println("Error reading dataset file: " + datasetFileName);
-            e.printStackTrace();
-        }
-
-        // Convert ArrayLists to arrays
-        loadPointQueryArrays(pointQueriesList, pointQueryAnswersList, pointQueryUnionList, numAttrs);
-    }
-
-    private void loadPointQueryArrays(ArrayList<Record> pointQueriesList, ArrayList<Integer> pointQueryAnswersList, ArrayList<Integer> pointQueryUnionList, int numAttrs) {
-        pointQueriesObj = new Record[pointQueriesList.size()];
-        pointQueryAnswers = new int[pointQueriesObj.length];
-        pointQueryUnion = new int[pointQueriesObj.length];
-        pointQueriesNumAttrs = new int[pointQueriesObj.length];
-        pointQueriesNumZipfian = new int[pointQueriesObj.length];
-        pointQueryBinNumber = new int[pointQueriesObj.length];
-        for (int i = 0; i < pointQueriesList.size(); i++) {
-            pointQueriesObj[i] = pointQueriesList.get(i);
-            pointQueryAnswers[i] = pointQueryAnswersList.get(i);
-            pointQueryUnion[i] = pointQueryUnionList.get(i);
-        }
-
-        computeQueryStatsObj(numAttrs, config.numZipfAttributes);
-    }
-
-    private void loadQueriesString(double perc) {
-        ArrayList<Record> pointQueriesList = new ArrayList<>();
-        ArrayList<Integer> pointQueryAnswersList = new ArrayList<>();
-        ArrayList<Integer> pointQueryUnionList = new ArrayList<>();
-        pointQueryAnswers = new int[pointQueries.length];
-        pointQueryUnion = new int[pointQueries.length];
-        pointQueriesNumAttrs = new int[pointQueries.length];
-        pointQueryBinNumber = new int[pointQueries.length];
-        pointQueriesNumZipfian = new int[pointQueries.length];
-        queryFileName = setQueryFileName(datasetFileName, perc);
-        int numAttrs = config.numStoredAttributes;
-        // load queries and pointQueryAnswers from file
-        try (BufferedReader reader = new BufferedReader(new FileReader(queryFileName))) {
-            String line;
-            int queryCount = 0;
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith("id")) continue; // Skip header line
-
-                String[] parts = line.split(",");
-                if (parts.length != numAttrs + 3) { // +2 for answer and union
-                    throw new RuntimeException("Record does not match expected number of attributes: " + line);
-                }
-                String[] query = new String[numAttrs];
-                // Skip id
-                System.arraycopy(parts, 1, query, 0, numAttrs);
-                pointQueriesList.add(new StringRecord(query));
-                pointQueryAnswersList.add(Integer.parseInt(parts[numAttrs + 1]));
-                pointQueryUnionList.add(Integer.parseInt(parts[numAttrs + 2]));
-                queryCount++;
-            }
-        } catch (IOException e) {
-            System.err.println("Error reading dataset file: " + datasetFileName);
-            e.printStackTrace();
-        }
-
-        // Convert ArrayLists to arrays
-        loadPointQueryArrays(pointQueriesList, pointQueryAnswersList, pointQueryUnionList, numAttrs);
-    }
-
-
-    BufferedReader getDatasetReader(String filename) {
-        try {
-            return new BufferedReader(new java.io.FileReader(filename));
-        } catch (IOException e) {
-            System.err.println("Error opening file: " + filename);
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private void writeRecord(BufferedWriter writer, long[] record, int sign) {
-        String[] recordStr = Arrays.stream(record)
-                .mapToObj(String::valueOf)
-                .toArray(String[]::new);
-        recordStr = Arrays.copyOf(recordStr, recordStr.length + 1);
-        recordStr[recordStr.length - 1] = String.valueOf(sign); // Append sign at the end
-        try {
-            writeLine(writer, recordStr);
-        } catch (IOException e) {
-            System.err.println("Error writing record to file: " + datasetFileName);
-            e.printStackTrace();
-        }
-    }
-
-    private void writeHeader(BufferedWriter writer, int numAttrs) {
-        String[] header = new String[numAttrs + 2];
-        header[0] = "id";
-        for (int i = 1; i <= numAttrs; i++) {
-            header[i] = "attr" + i;
-        }
-        header[header.length - 1] = "sign"; // Append sign at the end
-        try {
-            writeLine(writer, header);
-        } catch (IOException e) {
-            System.err.println("Error writing header to file: " + datasetFileName);
-            e.printStackTrace();
-        }
-    }
-
     private long[] readRecord(String line, int numAttrs) {
         String[] parts = line.split(",");
         if (parts.length != numAttrs + 2) {
@@ -589,40 +254,6 @@ public class SyntheticDataset {
             record[i] = Long.parseLong(parts[i]);
         }
         return record;
-    }
-
-    private omni.datasets.Record.Record readRecordLong(String line, int numAttrs) {
-        String[] parts = line.split(",");
-        if (parts.length != numAttrs + 2) {
-            throw new IllegalArgumentException("Record does not match expected number of attributes: " + line);
-        }
-        long[] record = new long[numAttrs + 2];
-        for (int i = 0; i < parts.length; i++) {
-            record[i] = Long.parseLong(parts[i]);
-        }
-        return new LongRecord(record);
-    }
-
-    private omni.datasets.Record.Record readRecordString(String line, int numAttrs) {
-        String[] parts = line.split(",");
-        if (parts.length != numAttrs + 2) {
-            throw new IllegalArgumentException("Record does not match expected number of attributes: " + line);
-        }
-        return new StringRecord(parts);
-    }
-
-    private BufferedWriter getBufferedWriter(String filename) throws IOException {
-        // check if dir exists, if not create it
-        File file = new File(filename);
-        File parentDir = file.getParentFile();
-        if (parentDir != null && !parentDir.exists()) {
-            parentDir.mkdirs();
-        }
-        return new BufferedWriter(new FileWriter(filename));
-    }
-
-    private BufferedReader getBufferedReader(String filename) throws IOException {
-        return new BufferedReader(new java.io.FileReader(filename));
     }
 
     private void writeLine(BufferedWriter writer, String... values) throws IOException {
@@ -662,8 +293,78 @@ public class SyntheticDataset {
     public int[] getPointQueryUnion() {
         return pointQueryUnion;
     }
+    public boolean queriesNotExistSynthetic(int sizeFactor, double zipfAlpha) {
+        setupResiduDataset(sizeFactor, zipfAlpha); // Use 0.0 queries are generated on residu.
+        String queryFileName = setQueryFileName(datasetFileName);
+        File queryFile = new File(queryFileName);
+        return !queryFile.exists() || queryFile.length() == 0;
+    }
 
-    public Record[] getPointQueriesObj() {
-        return pointQueriesObj;
+    public void generateQueries(int sizeFactor, double zipfAlpha) throws IOException {
+        setupResiduDataset(sizeFactor, zipfAlpha); // Use 0.0 to generate queries on the residu dataset
+        generateQueriesString();
+    }
+
+    private void generateQueriesString() throws IOException {
+        int numAttrs = config.numStoredAttributes;
+        pointQueries = new long[config.numQueries * config.numPredicates][];
+
+        Set<Integer> selectedIndices = selectRandomIndices(datasetResiduSize, config.numQueries);
+        try (BufferedReader reader = new BufferedReader(new FileReader(datasetFileName))) {
+            populatePointQueriesString(reader, numAttrs, selectedIndices);
+        } catch (IOException e) {
+            System.err.println("Error opening file for queries: " + datasetFileName);
+            throw e;
+        }
+
+        pointQueryAnswers = new int[pointQueries.length];
+        pointQueryUnion = new int[pointQueries.length];
+        pointQueriesNumAttrs = new int[pointQueries.length];
+        pointQueryBinNumber = new int[pointQueries.length];
+        applyPredicates(numAttrs);
+        deduplicateQueries(numAttrs);
+        computeExactAnswers();
+        computeQueryStats(numAttrs, config.numZipfAttributes);
+    }
+
+    private void populatePointQueriesString(BufferedReader reader, int numAttrs, Set<Integer> selectedIndices) throws IOException {
+        String line;
+        int added = 0;
+        while ((line = reader.readLine()) != null && added < pointQueries.length) {
+            if (line.startsWith("id")) continue;
+
+            long[] record = readRecord(line, numAttrs);
+            int id = (int) record[0];
+            if (selectedIndices.contains(id)) {
+                for (int p = 0; p < config.numPredicates; p++) {
+                    pointQueries[added] = new long[numAttrs];
+                    System.arraycopy(record, 1, pointQueries[added], 0, numAttrs);
+                    added++;
+                }
+            }
+        }
+
+        // shrink the pointQueries array to the actual number of queries added
+        pointQueries = Arrays.copyOf(pointQueries, added);
+    }
+
+    public void loader(int sizeFactor, double zipfAlpha) {
+        setupResiduDataset(sizeFactor, zipfAlpha);
+        loadQueries();
+    }
+
+    public String getDatasetReaderName(double perc, int sizeFactor, double zipfAlpha) {
+        setupDataset(perc, sizeFactor, zipfAlpha); // Use 0.0 to generate queries on the residu dataset
+        String datasetFileName = setDatasetName(sizeFactor, zipfAlpha, perc);
+        return datasetFileName;
+    }
+
+
+    public int getDatasetResiduSize() {
+        return datasetResiduSize;
+    }
+
+    public int getDatasetNoiseSize() {
+        return noiseSize;
     }
 }

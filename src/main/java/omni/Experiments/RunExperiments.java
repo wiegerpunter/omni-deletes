@@ -375,7 +375,7 @@ public class RunExperiments {
                 cd.synthDev(perc, sizeFactor, config.numZipfAttributes , zipfAlpha, config.numUniformAttributes);
             }
             case "synthFromDisk" -> {
-                cd.synthFromDisk(perc, sizeFactor, zipfAlpha);
+                cd.synthetic(perc, sizeFactor, zipfAlpha);
             }
             case "StringTest" -> {
                 cd.testStringData();

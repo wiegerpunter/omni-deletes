@@ -31,4 +31,14 @@ public class LongRecord implements Record {
         data[numAttrs + 2] = this.data[this.data.length - 1];
         return data;
     }
+
+    @Override
+    public Object getQueryData(int numAttrs) {
+        if (numAttrs > data.length) {
+            throw new IllegalArgumentException("Requested number of attributes exceeds the length of the data array.");
+        }
+        //long[] data = new long[numAttrs];
+        //System.arraycopy(this.data, 0, data, 0, numAttrs);
+        return data;
+    }
 }

@@ -1614,52 +1614,6 @@ public class CleanDataset {
     int datasetResiduSize = 0;
     int noiseSize = 0;
 
-    public void synthFromDisk(double perc, double sizeFactor, double zipfAlpha) {
-        String datasetFolder = config.readFolder + "input/data/" + config.datasetName + "/" + sizeFactor + "/" + perc + "/";
-        File folder = new File(datasetFolder);
-
-        if (!folder.exists() || !folder.isDirectory()) {
-            throw new IllegalArgumentException("Dataset folder does not exist: " + datasetFolder);
-        }
-
-        String expectedSuffix = String.format("_%.1f_.*_%.1f_.*_%s\\.csv", sizeFactor, zipfAlpha, perc).replace(",", "\\,");
-        Pattern pattern = Pattern.compile("final_stream_spread_out" + expectedSuffix);
-
-        String matchedFile = null;
-
-        for (File file : Objects.requireNonNull(folder.listFiles())) {
-            String name = file.getName();
-            if (pattern.matcher(name).matches()) {
-                matchedFile = file.getAbsolutePath();
-                break;
-            }
-        }
-
-        if (matchedFile == null) {
-            throw new RuntimeException("Could not find final_stream file matching sizeFactor=" + sizeFactor +
-                    ", zipfAlpha=" + zipfAlpha + ", perc=" + perc + " in " + datasetFolder + " suffix: " + expectedSuffix);
-        }
-
-        System.out.println("Using final_stream file: " + matchedFile);
-
-        SyntheticDataset dataset = new SyntheticDataset(config);
-        dataset.synthDevLoader(perc, sizeFactor, zipfAlpha);
-        pointQueries = dataset.getPointQueries();
-        pointQueriesObj = dataset.getPointQueriesObj();
-        pointQueryAnswers = dataset.getPointQueryAnswers();
-        pointQueriesNumAttrs = dataset.getPointQueriesNumAttrs();
-        pointQueryBinNumber = dataset.getPointQueryBinNumber();
-        pointQueryUnion = dataset.getPointQueryUnion();
-
-        // Compute answers for deletes
-        pointQueryAnswersDeletes = new int[pointQueries.length];
-        pointQueryUnionDeletes = new int[pointQueries.length];
-        System.out.println(matchedFile);
-        datasetReaderName = matchedFile;
-        datasetResiduSize = (int) (Math.pow(2, sizeFactor));
-        noiseSize = (int) (Math.pow(2, sizeFactor) * perc);
-    }
-
     public void testStringData() {
         StringDataset dataset = new StringDataset(config);
         dataset.loader(1);
@@ -1714,6 +1668,27 @@ public class CleanDataset {
         pointQueryAnswersDeletes = new int[pointQueries.length];
         pointQueryUnionDeletes = new int[pointQueries.length];
         datasetReaderName = dataset.getDatasetReaderName(perc, sizeFactor);
+        datasetResiduSize = dataset.getDatasetResiduSize();
+
+        noiseSize = dataset.getDatasetNoiseSize();
+    }
+
+    public void synthetic(double perc, int sizeFactor, double zipfAlpha) throws IOException {
+        SyntheticDataset dataset = new SyntheticDataset(config);
+        if (dataset.queriesNotExistSynthetic(sizeFactor, zipfAlpha)) {
+            dataset.generateQueries(sizeFactor, zipfAlpha);
+        } else {
+            dataset.loader(sizeFactor, zipfAlpha);
+        }
+        pointQueries = dataset.getPointQueries();
+        pointQueryAnswers = dataset.getPointQueryAnswers();
+        pointQueriesNumAttrs = dataset.getPointQueriesNumAttrs();
+        pointQueryBinNumber = dataset.getPointQueryBinNumber();
+        pointQueryUnion = dataset.getPointQueryUnion();
+        // Compute answers for deletes
+        pointQueryAnswersDeletes = new int[pointQueries.length];
+        pointQueryUnionDeletes = new int[pointQueries.length];
+        datasetReaderName = dataset.getDatasetReaderName(perc, sizeFactor, zipfAlpha);
         datasetResiduSize = dataset.getDatasetResiduSize();
 
         noiseSize = dataset.getDatasetNoiseSize();
