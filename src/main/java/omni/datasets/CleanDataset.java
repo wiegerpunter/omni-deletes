@@ -1673,7 +1673,7 @@ public class CleanDataset {
         noiseSize = dataset.getDatasetNoiseSize();
     }
 
-    public void synthetic(double perc, int sizeFactor, double zipfAlpha) throws IOException {
+    public void synthetic(double perc, double sizeFactor, double zipfAlpha) throws IOException {
         SyntheticDataset dataset = new SyntheticDataset(config);
         if (dataset.queriesNotExistSynthetic(sizeFactor, zipfAlpha)) {
             dataset.generateQueries(sizeFactor, zipfAlpha);

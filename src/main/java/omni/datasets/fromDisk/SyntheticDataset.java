@@ -40,11 +40,11 @@ public class SyntheticDataset {
     private void setupResiduDataset(double sizeFactor, double zipfAlpha) {
         String subfolder = config.readFolder + "input/data/synthFromDisk/zipfAlpha_" + zipfAlpha + "/" + sizeFactor + "/";
         datasetFileName = subfolder + "residu.csv";
-        datasetResiduSize = countCsvRecords(subfolder + "1.0/" )/2;
+        datasetResiduSize = countCsvRecords(subfolder + "1.0/" )/3;
     }
 
 
-    private void setupDataset(double perc, int sizeFactor, double zipfAlpha) {
+    private void setupDataset(double perc, double sizeFactor, double zipfAlpha) {
         noiseSize = datasetResiduSize;
         datasetFileName = setDatasetName(sizeFactor, zipfAlpha,perc);
     }
@@ -293,14 +293,14 @@ public class SyntheticDataset {
     public int[] getPointQueryUnion() {
         return pointQueryUnion;
     }
-    public boolean queriesNotExistSynthetic(int sizeFactor, double zipfAlpha) {
+    public boolean queriesNotExistSynthetic(double sizeFactor, double zipfAlpha) {
         setupResiduDataset(sizeFactor, zipfAlpha); // Use 0.0 queries are generated on residu.
         String queryFileName = setQueryFileName(datasetFileName);
         File queryFile = new File(queryFileName);
         return !queryFile.exists() || queryFile.length() == 0;
     }
 
-    public void generateQueries(int sizeFactor, double zipfAlpha) throws IOException {
+    public void generateQueries(double sizeFactor, double zipfAlpha) throws IOException {
         setupResiduDataset(sizeFactor, zipfAlpha); // Use 0.0 to generate queries on the residu dataset
         generateQueriesString();
     }
@@ -321,6 +321,7 @@ public class SyntheticDataset {
         pointQueryUnion = new int[pointQueries.length];
         pointQueriesNumAttrs = new int[pointQueries.length];
         pointQueryBinNumber = new int[pointQueries.length];
+        pointQueriesNumZipfian = new int[pointQueries.length];
         applyPredicates(numAttrs);
         deduplicateQueries(numAttrs);
         computeExactAnswers();
@@ -348,12 +349,12 @@ public class SyntheticDataset {
         pointQueries = Arrays.copyOf(pointQueries, added);
     }
 
-    public void loader(int sizeFactor, double zipfAlpha) {
+    public void loader(double sizeFactor, double zipfAlpha) {
         setupResiduDataset(sizeFactor, zipfAlpha);
         loadQueries();
     }
 
-    public String getDatasetReaderName(double perc, int sizeFactor, double zipfAlpha) {
+    public String getDatasetReaderName(double perc, double sizeFactor, double zipfAlpha) {
         setupDataset(perc, sizeFactor, zipfAlpha); // Use 0.0 to generate queries on the residu dataset
         String datasetFileName = setDatasetName(sizeFactor, zipfAlpha, perc);
         return datasetFileName;
