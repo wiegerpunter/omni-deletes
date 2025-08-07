@@ -38,20 +38,21 @@ public class SyntheticDataset {
     }
 
     private void setupResiduDataset(double sizeFactor, double zipfAlpha) {
-        String subfolder = config.readFolder + "input/data/synthFromDisk/zipfAlpha_" + zipfAlpha + "/" + sizeFactor + "/";
-        datasetFileName = subfolder + "residu.csv";
-        datasetResiduSize = countCsvRecords(subfolder + "1.0/" )/3;
+        String subfolder = config.readFolder + "input/data/synthFromDisk/11/zipfAlpha_" + zipfAlpha + "/" + sizeFactor + "/" + 0.0 + "/";
+        datasetFileName = subfolder + "synth_final_stream_" + 0.0 + ".csv";
+        datasetResiduSize = countCsvRecords(subfolder);
     }
 
 
     private void setupDataset(double perc, double sizeFactor, double zipfAlpha) {
-        noiseSize = datasetResiduSize;
+        String subfolder = config.readFolder + "input/data/synthFromDisk/11/zipfAlpha_" + zipfAlpha +"/" + sizeFactor + "/" + perc + "/";
+        noiseSize = (countCsvRecords(subfolder) - datasetResiduSize)/2;
         datasetFileName = setDatasetName(sizeFactor, zipfAlpha,perc);
     }
 
     private String setDatasetName(double sizeFactor, double zipfAlpha,
                                   double perc) {
-        return config.readFolder + "input/data/synthFromDisk/zipfAlpha_" + zipfAlpha + "/" + sizeFactor + "/" + perc + "/" + "final_stream_" + perc+ ".csv";
+        return config.readFolder + "input/data/synthFromDisk/11/zipfAlpha_" + zipfAlpha + "/" + sizeFactor + "/" + perc + "/" + "synth_final_stream_" + perc+ ".csv";
     }
 
     private String setQueryFileName(String datasetFileName) {
@@ -246,13 +247,14 @@ public class SyntheticDataset {
 
     private long[] readRecord(String line, int numAttrs) {
         String[] parts = line.split(",");
-        if (parts.length != numAttrs + 2) {
+        if (parts.length < numAttrs + 2) {
             throw new IllegalArgumentException("Record does not match expected number of attributes: " + line);
         }
         long[] record = new long[numAttrs + 2];
-        for (int i = 0; i < parts.length; i++) {
+        for (int i = 0; i < numAttrs; i++) {
             record[i] = Long.parseLong(parts[i]);
         }
+        record[numAttrs + 1] = Long.parseLong(parts[parts.length - 1]);
         return record;
     }
 
@@ -356,8 +358,7 @@ public class SyntheticDataset {
 
     public String getDatasetReaderName(double perc, double sizeFactor, double zipfAlpha) {
         setupDataset(perc, sizeFactor, zipfAlpha); // Use 0.0 to generate queries on the residu dataset
-        String datasetFileName = setDatasetName(sizeFactor, zipfAlpha, perc);
-        return datasetFileName;
+        return setDatasetName(sizeFactor, zipfAlpha, perc);
     }
 
 

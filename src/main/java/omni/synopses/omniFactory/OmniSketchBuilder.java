@@ -192,6 +192,13 @@ public class OmniSketchBuilder {
                 .setSketchType("SampleLaterExact");
     }
 
+    public static OmniSketchBuilder QFirstSampleLaterExactPerRow() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(false)
+                .setUseNMax(true)
+                .setSketchType("SampleLaterExact");
+    }
+
 
     public static OmniSketchBuilder QFirstSampleLaterArrayWithBufferPerRow() {
         return new OmniSketchBuilder()

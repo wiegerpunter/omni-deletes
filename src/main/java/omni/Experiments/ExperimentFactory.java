@@ -39,6 +39,8 @@ public class ExperimentFactory {
         // OmniSketch based on custom parameters;
         experiments.put("OmniSketchVLDBCustom", new OmniVLDBCustomExperiment());
         experiments.put("OmniSketchVLDBS0Custom", new OmniVLDBS0CustomExperiment());
+        experiments.put("OmniSketchVLDBS0PerRowCustom", new OmniVLDBS0PerRowCustomExperiment());
+
 
         experiments.put("OmniSketchVLDBArrayCustom", new OmniVLDBArrayCustomExperiment());
         experiments.put("OmniSketchVLDBArrayRegBufferCustom", new OmniVLDBArrayRegBufferCustomExperiment());

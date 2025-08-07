@@ -1674,6 +1674,7 @@ public class CleanDataset {
     }
 
     public void synthetic(double perc, double sizeFactor, double zipfAlpha) throws IOException {
+        this.zipfAlpha = zipfAlpha;
         SyntheticDataset dataset = new SyntheticDataset(config);
         if (dataset.queriesNotExistSynthetic(sizeFactor, zipfAlpha)) {
             dataset.generateQueries(sizeFactor, zipfAlpha);

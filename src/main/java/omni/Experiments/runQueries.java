@@ -269,6 +269,10 @@ public class runQueries {
         //String currentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
         String CSV_FILE_NAME = config.getOutputFolder() + "/pointQueries/" + config.datasetName + "/" + config.currentDate + "_" + config.job_name +"_"+config.seed+ "_dataset_" + config.datasetName +
                 ".csv";
+        // make path
+//        File file = new File(CSV_FILE_NAME);
+//        file.getParentFile().mkdirs();
+
         if (!new File(CSV_FILE_NAME).exists()) {
             init = true;
         }

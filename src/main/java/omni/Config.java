@@ -29,6 +29,7 @@ public class Config {
     public boolean expOmniSketchSampleFirstQLaterPerRow;
     public boolean expOmniSketchVLDB;
     public boolean expOmniSketchVLDBS0;
+    public boolean expOmniSketchVLDBS0PerRow;
 
     public boolean expOmniSketchVLDBSampleSize;
     public boolean expOmniSketchSFQLSampleSize;

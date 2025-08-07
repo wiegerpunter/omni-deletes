@@ -44,7 +44,7 @@ public class RunExperiments {
                     for (int domain : config.domain_sizes) {
                         config.domain = domain;
                         if (config.useMultNumAttributes) {
-                            for (int j = 2; j < cd.cleanIds.length; j++) {
+                            for (int j = 2; j < 3; j++) { //cd.cleanIds.length
                                 config.numStoredAttributes = j + 1;
                                 System.out.println("Running with " + config.numStoredAttributes + " attributes");
                                 if (config.readFromDisk) {
@@ -298,6 +298,8 @@ public class RunExperiments {
         if (config.parameterSettingType.equals("Custom") || config.parameterSettingType.equals("GridSearch")) {
             if (config.expOmniSketchVLDB) enabledExperiments.add("OmniSketchVLDBCustom");
             if (config.expOmniSketchVLDBS0) enabledExperiments.add("OmniSketchVLDBS0Custom");
+            if (config.expOmniSketchVLDBS0PerRow) enabledExperiments.add("OmniSketchVLDBS0PerRowCustom");
+
             if (config.expOmniSketchVLDBArray) enabledExperiments.add("OmniSketchVLDBArrayCustom");
             if (config.expOmniSketchVLDBArrayRegBuffer) enabledExperiments.add("OmniSketchVLDBArrayRegBufferCustom");
 

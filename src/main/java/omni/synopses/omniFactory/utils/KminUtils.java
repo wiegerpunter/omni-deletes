@@ -156,7 +156,6 @@ public class KminUtils {
         if (Objects.equals(kminSets[0].getKminType(), "KminExact")) {
             int intersection;
             Set<Integer> intersectionSet = new HashSet<>((Set<Integer>) kminSets[0].query());
-
             for (int i = 1; i < kminSets.length; i++) {
                 intersectionSet.retainAll((Set<Integer>) kminSets[i].query());
             }
