@@ -44,8 +44,11 @@ public class RunExperiments {
                     for (int domain : config.domain_sizes) {
                         config.domain = domain;
                         if (config.useMultNumAttributes) {
-                            for (int j = 2; j < 3; j++) { //cd.cleanIds.length
+                            for (int j = 2; j < cd.cleanIds.length; j++) { //cd.cleanIds.length
                                 config.numStoredAttributes = j + 1;
+                                if (config.numStoredAttributes % 3 != 0 && config.numStoredAttributes != 11) {
+                                    continue; // skip attributes that are not multiples of 3, except for 11
+                                }
                                 System.out.println("Running with " + config.numStoredAttributes + " attributes");
                                 if (config.readFromDisk) {
                                     config.noiseUpdateFractions = new ArrayList<>();

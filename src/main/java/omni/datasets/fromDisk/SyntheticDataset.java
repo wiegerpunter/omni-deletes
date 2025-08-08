@@ -56,7 +56,11 @@ public class SyntheticDataset {
     }
 
     private String setQueryFileName(String datasetFileName) {
-        return datasetFileName.replace(".csv", "_" + config.numStoredAttributes +"_queries.csv");
+        if (config.useMultNumAttributes){
+            return datasetFileName.replace(".csv", "_3_queries.csv");
+        } else {
+            return datasetFileName.replace(".csv", "_" + config.numStoredAttributes + "_queries.csv");
+        }
     }
 
     private void applyPredicates(int numAttrs) {
@@ -212,16 +216,21 @@ public class SyntheticDataset {
                 if (line.startsWith("id")) continue; // Skip header line
 
                 String[] parts = line.split(",");
-                if (parts.length != numAttrs + 3) { // +2 for answer and union
+                if (parts.length > numAttrs + 3) { // +2 for answer and union
                     throw new RuntimeException("Record does not match expected number of attributes: " + line);
                 }
                 long[] query = new long[numAttrs];
+
                 for (int i = 0; i < numAttrs; i++) {
-                    query[i] = Long.parseLong(parts[i + 1]); // Skip id
+                    if (i < parts.length - 3) {  // parts.length - 3 to skip id, answer, and union
+                        query[i] = Long.parseLong(parts[i + 1]); // Skip id
+                    } else {
+                        query[i] = -1; // Fill with -1 if not enough attributes
+                    }
                 }
                 pointQueriesList.add(query);
-                pointQueryAnswersList.add(Integer.parseInt(parts[numAttrs + 1]));
-                pointQueryUnionList.add(Integer.parseInt(parts[numAttrs + 2]));
+                pointQueryAnswersList.add(Integer.parseInt(parts[parts.length - 2]));
+                pointQueryUnionList.add(Integer.parseInt(parts[parts.length - 1]));
                 queryCount++;
             }
         } catch (IOException e) {
