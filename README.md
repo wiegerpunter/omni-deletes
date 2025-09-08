@@ -12,4 +12,6 @@ The OmniSketch setting used as S2 in the paper, so the final setting, can be use
 
 If you have any questions, don't hesitate to ask.
 
+Wieger Punter
+
 
