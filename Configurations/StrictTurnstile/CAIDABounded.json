@@ -3,7 +3,7 @@
   "datasetName": "CAIDA",
   "seed": 5,
   "runOnODC": false,
-  "readFolder": "/home/wieger/omni-deletes/",
+  "readFolder": "/home/wieger/omnibounded/",
   "withDeletes": true,
   "spreadOutDeletes": true,
   "ramVals": [10],
