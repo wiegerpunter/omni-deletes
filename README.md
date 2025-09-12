@@ -1,14 +1,26 @@
 # OmniSketch VLDBJ
 
+
 Repository with code to run experiments in the VLDBJ version of OmniSketch: using deletes in the stream.
 
-First, prepare the datasets, following the steps described in https://github.com/wiegerpunter/dataset-pipeline.git.
+# Step 1: Prepare the datasets
+Three datasets are used throughout these experiments: CAIDA, TPC-DS and synthetic data with Zipf distributions.
+The setup is described in detail in https://github.com/wiegerpunter/dataset-pipeline.git.
 
-Second, make sure data is in input folder, and that output folder for results is created.
+# Step 2: Set configurations
+The configurations for the experiments can be set in the json files under Configurations. Here, parameters such as the available RAM, dataset, number of predicates, etc can be set.
+Below, some important settings are highlighted.
 
-Experiments can be condigured in the json files under Configurations. Here, parameters such as the available RAM, dataset, number of predicates, etc can be set.
-Also, this file contains booleans to express which settings should be run. To run aSH for instance, set expASH to true.
-The OmniSketch setting used as S2 in the paper, so the final setting, can be used by setting expOmniSketchVLDBArrayWithBufferOptBatchDeletes.
+# Step 3: Build
+The project can be built using maven. From the root folder, run:
+```mvn clean package
+```
+This will create a jar file named 'DSCM-5.0-SNAPSHOT.jar' in the target folder.
+# Step 4: Run experiments
+To run the experiments, use the following command:
+```java -Xmx{RAM} -jar target/DSCM-5.0-SNAPSHOT.jar {configuration file}```
+
+# Details on configurations
 
 If you have any questions, don't hesitate to ask.
 
