@@ -136,9 +136,9 @@ public class StringDataset {
 
     private void generateQueriesString() throws IOException {
         int numAttrs = config.numStoredAttributes;
-        pointQueriesObj = new omni.datasets.Record.Record[config.numQueries * config.numPredicates];
+        pointQueriesObj = new omni.datasets.Record.Record[config.numSelectedRecForQueries * config.numPredicates];
 
-        Set<Integer> selectedIndices = selectRandomIndices(datasetResiduSize, config.numQueries);
+        Set<Integer> selectedIndices = selectRandomIndices(datasetResiduSize, config.numSelectedRecForQueries);
         try (BufferedReader reader = new BufferedReader(new FileReader(datasetFileName))) {
             populatePointQueriesString(reader, numAttrs, selectedIndices);
         } catch (IOException e) {
@@ -164,7 +164,7 @@ public class StringDataset {
             randomIndices.add(index);
         }
         if (randomIndices.size() < numQueries) {
-            config.numQueries = randomIndices.size(); // Adjust numQueries if not enough unique indices
+            config.numSelectedRecForQueries = randomIndices.size(); // Adjust numQueries if not enough unique indices
         }
         return randomIndices;
     }
@@ -208,7 +208,7 @@ public class StringDataset {
         Random randomQueries = new Random(0);
 
         for (int p = 0; p < config.numPredicates; p++) {
-            for (int i = p * config.numQueries; i < (p + 1) * config.numQueries; i++) {
+            for (int i = p * config.numSelectedRecForQueries; i < (p + 1) * config.numSelectedRecForQueries; i++) {
                 int curNumPreds = 0;
                 while (curNumPreds < numAttrs - (p + 1)) {
                     int index = randomQueries.nextInt(numAttrs);

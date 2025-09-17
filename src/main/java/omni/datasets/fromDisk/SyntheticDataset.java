@@ -21,7 +21,7 @@ public class SyntheticDataset {
     public SyntheticDataset(Config config) {
         this.config = config;
         config.domain = 10000;
-        int numQueries = config.numQueries * config.numPredicates;
+        int numQueries = config.numSelectedRecForQueries * config.numPredicates;
         pointQueries = new long[numQueries][];
     }
 
@@ -66,18 +66,32 @@ public class SyntheticDataset {
     private void applyPredicates(int numAttrs) {
         Random randomQueries = new Random(0);
 
-        for (int p = 0; p < config.numPredicates; p++) {
-            for (int i = p * config.numQueries; i < (p + 1) * config.numQueries; i++) {
-                int curNumPreds = 0;
-                while (curNumPreds < numAttrs - (p + 1)) {
-                    int index = randomQueries.nextInt(numAttrs);
-                    if (pointQueries[i][index] != -1) {
-                        pointQueries[i][index] = -1;
-                        curNumPreds++;
-                    }
+
+        for (int i = 0; i < pointQueries.length; i++) {
+            int numPreds = i % config.numPredicates + 1; // Every p records, we should have a new sampled record.
+            int curNumPreds = 0;
+            while (curNumPreds < numPreds) {
+                int index = randomQueries.nextInt(numAttrs);
+                if (pointQueries[i][index] != -1) {
+                    pointQueries[i][index] = -1;
+                    curNumPreds++;
                 }
             }
         }
+
+//
+//        for (int p = 0; p < config.numPredicates; p++) {
+//            for (int i = p * config.numSelectedRecForQueries; i < (p + 1) * config.numSelectedRecForQueries; i++) {
+//                int curNumPreds = 0;
+//                while (curNumPreds < numAttrs - (p + 1)) {
+//                    int index = randomQueries.nextInt(numAttrs);
+//                    if (pointQueries[i][index] != -1) {
+//                        pointQueries[i][index] = -1;
+//                        curNumPreds++;
+//                    }
+//                }
+//            }
+//        }
     }
 
 
@@ -123,7 +137,6 @@ public class SyntheticDataset {
             e.printStackTrace();
         }
 
-        writeQueriesToFile();
     }
 
     private void updateAnswers(long[] record) {
@@ -198,7 +211,7 @@ public class SyntheticDataset {
                     if (j < numZipfianAttrs) pointQueriesNumZipfian[i]++;
                 }
             }
-            pointQueryBinNumber[i] = i;
+            pointQueryBinNumber[i] = (int) (Math.log(pointQueryAnswers[i])/Math.log(10));
         }
     }
 
@@ -272,15 +285,15 @@ public class SyntheticDataset {
         writer.newLine();
     }
 
-    private Set<Integer> selectRandomIndices(int datasetSize, int numQueries) {
+    private Set<Integer> selectRandomIndices(int datasetSize, int numSelectedRecordsForQueries) {
         Set<Integer> randomIndices = new HashSet<>();
         Random random = new Random(0);
-        while (randomIndices.size() < numQueries && randomIndices.size() < datasetSize) {
+        while (randomIndices.size() < numSelectedRecordsForQueries && randomIndices.size() < datasetSize) {
             int index = random.nextInt(datasetSize);
             randomIndices.add(index);
         }
-        if (randomIndices.size() < numQueries) {
-            config.numQueries = randomIndices.size(); // Adjust numQueries if not enough unique indices
+        if (randomIndices.size() < numSelectedRecordsForQueries) {
+            config.numSelectedRecForQueries = randomIndices.size(); // Adjust numQueries if not enough unique indices
         }
         return randomIndices;
     }
@@ -318,9 +331,9 @@ public class SyntheticDataset {
 
     private void generateQueriesString() throws IOException {
         int numAttrs = config.numStoredAttributes;
-        pointQueries = new long[config.numQueries * config.numPredicates][];
+        pointQueries = new long[config.numSelectedRecForQueries * config.numPredicates][];
 
-        Set<Integer> selectedIndices = selectRandomIndices(datasetResiduSize, config.numQueries);
+        Set<Integer> selectedIndices = selectRandomIndices(datasetResiduSize, config.numSelectedRecForQueries);
         try (BufferedReader reader = new BufferedReader(new FileReader(datasetFileName))) {
             populatePointQueriesString(reader, numAttrs, selectedIndices);
         } catch (IOException e) {
@@ -337,6 +350,52 @@ public class SyntheticDataset {
         deduplicateQueries(numAttrs);
         computeExactAnswers();
         computeQueryStats(numAttrs, config.numZipfAttributes);
+        keepPerBin();
+
+        writeQueriesToFile();
+    }
+
+    private void keepPerBin() {
+        // make sure we have limited amount of queries per bin.
+        HashSet<Integer> pointQueriesToKeep =  new HashSet<>();
+        HashMap<Integer, Integer> binCounter = new HashMap<>();
+
+        for (int i = 0; i < pointQueries.length; i++) {
+            if (binCounter.containsKey(pointQueryBinNumber[i])  ) {
+                if (binCounter.get(pointQueryBinNumber[i]) < 100) {
+                    pointQueriesToKeep.add(i);
+                    binCounter.put(pointQueryBinNumber[i], binCounter.get(pointQueryBinNumber[i]) + 1);
+                }
+            } else {
+                binCounter.put(pointQueryBinNumber[i], 1);
+            }
+        }
+
+        // keep only queries in pointQueriesToKeep
+        long[][] pointQueriesRemain = new long[pointQueriesToKeep.size()][pointQueries[0].length];
+        int[] pointQueryAnswersRemain = new int[pointQueriesToKeep.size()];
+        int[] pointQueryUnionRemain =  new int[pointQueriesToKeep.size()];
+        int[] pointQueriesNumAttrsRemain = new int[pointQueriesToKeep.size()];
+        int[] pointQueryBinNumberRemain = new int[pointQueriesToKeep.size()];
+        int[] pointQueriesNumZipfianRemain = new int[pointQueriesToKeep.size()];
+        int counter =  0;
+        for (Integer i : pointQueriesToKeep) {
+            pointQueriesRemain[counter] = pointQueries[i];
+            pointQueryAnswersRemain[counter] = pointQueryAnswers[i];
+            pointQueryUnionRemain[counter] = pointQueryUnion[i];
+            pointQueriesNumAttrsRemain[counter] = pointQueriesNumAttrs[i];
+            pointQueryBinNumberRemain[counter] = pointQueryBinNumber[i];
+            pointQueriesNumZipfianRemain[counter] = pointQueriesNumZipfian[i];
+            counter++;
+        }
+
+        pointQueriesToKeep.clear();
+        pointQueries =  pointQueriesRemain;
+        pointQueryAnswers = pointQueryAnswersRemain;
+        pointQueryUnion = pointQueryUnionRemain;
+        pointQueriesNumAttrs = pointQueriesNumAttrsRemain;
+        pointQueryBinNumber = pointQueryBinNumberRemain;
+        pointQueriesNumZipfian = pointQueriesNumZipfianRemain;
     }
 
     private void populatePointQueriesString(BufferedReader reader, int numAttrs, Set<Integer> selectedIndices) throws IOException {

@@ -60,7 +60,7 @@ public class Config {
     public int numZipfAttributes;
     public List<Double> zipfAlphas;
     public int numUniformAttributes;
-    public int numQueries;
+    public int numSelectedRecForQueries;
     public String fileStartCondition;
     public boolean rangeQueries;
     public int numAttributes;

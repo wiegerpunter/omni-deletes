@@ -16,7 +16,6 @@ import omni.datasets.stringData.StringDataset;
 
 import java.io.*;
 import java.util.*;
-import java.util.regex.Pattern;
 
 public class CleanDataset {
     private final Config config;
@@ -229,7 +228,7 @@ public class CleanDataset {
         // Then generate dataset in zipf distribution.
 
         // Generate queries
-        int numQueries = config.numQueries;
+        int numQueries = config.numSelectedRecForQueries;
         int numAttrs = config.numAttributes;
         int largeQueryDomainSize = 1000000;
         int smallQueryDomainSize = 100;
@@ -333,7 +332,7 @@ public class CleanDataset {
         this.sizeFactor = sizeFactor;
 
         // Generate queries
-        int numQueries = config.numQueries * numBins;
+        int numQueries = config.numSelectedRecForQueries * numBins;
         int numAttrs = config.numAttributes; // Change to numStoredAttributes if needed.
 
         int queriesPerBin = numQueries / numBins;
@@ -621,7 +620,7 @@ public class CleanDataset {
                 "_numPredicates_" + this.numPredicates +
                 "_numBins_" + this.numBins;
         if (withNumberOfQueries) {
-            return filename + "_numQueries_" + config.numQueries + ".csv";
+            return filename + "_numQueries_" + config.numSelectedRecForQueries + ".csv";
         } else {
             return filename;
         }
@@ -681,7 +680,7 @@ public class CleanDataset {
     }
 
     private void computeExactRange() {
-        rangeQueryAnswers = new int[config.numQueries];
+        rangeQueryAnswers = new int[config.numSelectedRecForQueries];
         // loop over dataset, for each record, check if it is in one of the queries, if so, add to answer.
         for (long[] longs : dataset) {
             for (int j = 0; j < rangeQueries.length; j++) {
@@ -760,7 +759,7 @@ public class CleanDataset {
 
         // Sort queries by frequency of occurrence.
         //
-        if (config.numQueries > generatedQueries) {
+        if (config.numSelectedRecForQueries > generatedQueries) {
             throw new RuntimeException("Number of queries to generate is larger than number of potential queries.");
         }
         // Sort queries by frequency of occurrence.
@@ -821,7 +820,7 @@ public class CleanDataset {
             splitIndices[splitIndex]++;
         }
 
-        config.numQueries = 0;
+        config.numSelectedRecForQueries = 0;
         for (int i = 0; i < numBins; i++) {
             int binSize;
             if (i == 0) {
@@ -832,12 +831,12 @@ public class CleanDataset {
             addRandomQueries(numQueriesPerBin, i, splitIndices, indices, binSize, potPointQueries, potPointQueryAnswers, random);
         }
         // Now we know actual # queries, resize pointQueries array to be pointQueries[Main.numQueries]
-        pointQueries = new long[config.numQueries][];
-        pointQueryAnswers = new int[config.numQueries];
-        pointQueryBinNumber = new int[config.numQueries];
-        System.arraycopy(pointQueriesEmpty, 0, pointQueries, 0, config.numQueries);
-        System.arraycopy(pointQueryAnswersEmpty, 0, pointQueryAnswers, 0, config.numQueries);
-        System.arraycopy(pointQueryBinNumberEmpty, 0, pointQueryBinNumber, 0, config.numQueries);
+        pointQueries = new long[config.numSelectedRecForQueries][];
+        pointQueryAnswers = new int[config.numSelectedRecForQueries];
+        pointQueryBinNumber = new int[config.numSelectedRecForQueries];
+        System.arraycopy(pointQueriesEmpty, 0, pointQueries, 0, config.numSelectedRecForQueries);
+        System.arraycopy(pointQueryAnswersEmpty, 0, pointQueryAnswers, 0, config.numSelectedRecForQueries);
+        System.arraycopy(pointQueryBinNumberEmpty, 0, pointQueryBinNumber, 0, config.numSelectedRecForQueries);
 
         //sort map by value
         // add query of every bin to pointQueries
@@ -886,10 +885,10 @@ public class CleanDataset {
             }
         }
         for (int randomIndex : randomIndices) {
-            pointQueriesEmpty[config.numQueries] = potPointQueries[indices[randomIndex]];
-            pointQueryAnswersEmpty[config.numQueries] = potPointQueryAnswers[indices[randomIndex]];
-            pointQueryBinNumberEmpty[config.numQueries] = i;
-            config.numQueries++;
+            pointQueriesEmpty[config.numSelectedRecForQueries] = potPointQueries[indices[randomIndex]];
+            pointQueryAnswersEmpty[config.numSelectedRecForQueries] = potPointQueryAnswers[indices[randomIndex]];
+            pointQueryBinNumberEmpty[config.numSelectedRecForQueries] = i;
+            config.numSelectedRecForQueries++;
         }
     }
 
@@ -951,9 +950,9 @@ public class CleanDataset {
         // get numQueries from filename, it is between "_numQueries_" and ".csv"; not a fixed length.
         int start = fileName.indexOf("_numQueries_") + 12;
         int end = fileName.indexOf(".csv");
-        config.numQueries = Integer.parseInt(fileName.substring(start, end));
-        System.out.println("NumQueries: " + config.numQueries);
-        pointQueries = new long[config.numQueries][];
+        config.numSelectedRecForQueries = Integer.parseInt(fileName.substring(start, end));
+        System.out.println("NumQueries: " + config.numSelectedRecForQueries);
+        pointQueries = new long[config.numSelectedRecForQueries][];
         pointQueryAnswers = new int[pointQueries.length];
         pointQueryBinNumber = new int[pointQueries.length];
         pointQueriesNumAttrs = new int[pointQueries.length];
@@ -997,9 +996,9 @@ public class CleanDataset {
     }
 
     private void readWorkloadWithoutExact(String fileName, int numToKeep, double percToDelete, double maxPercToDelete) throws IOException, CsvValidationException {
-        pointQueries = new long[config.numQueries][];
-        pointQueriesNumAttrs = new int[config.numQueries];
-        pointQueryBinNumber = new int[config.numQueries];
+        pointQueries = new long[config.numSelectedRecForQueries][];
+        pointQueriesNumAttrs = new int[config.numSelectedRecForQueries];
+        pointQueryBinNumber = new int[config.numSelectedRecForQueries];
         // Read workload from file.
         CSVReader reader = new CSVReader(new FileReader(fileName));
         String[] nextLine;
@@ -1267,16 +1266,16 @@ public class CleanDataset {
 
         // now make sure we get Main.numQueries per numPreds, randomly sampled from the indicesPerNumPreds
         int filledQueries = 0;
-        long[][] newPointQueries = new long[maxNumPreds * config.numQueries][];
-        int[] newPointQueryAnswers = new int[maxNumPreds * config.numQueries];
-        int[] newPointQueriesNumAttrs = new int[maxNumPreds * config.numQueries];
+        long[][] newPointQueries = new long[maxNumPreds * config.numSelectedRecForQueries][];
+        int[] newPointQueryAnswers = new int[maxNumPreds * config.numSelectedRecForQueries];
+        int[] newPointQueriesNumAttrs = new int[maxNumPreds * config.numSelectedRecForQueries];
         int[] sampledQueriesPerNumPreds = new int[maxNumPreds];
         for (int i = 0; i < maxNumPreds; i++) {
-            if (indicesPerNumPreds[i].size() > config.numQueries) {
+            if (indicesPerNumPreds[i].size() > config.numSelectedRecForQueries) {
                 // Downsample
                 Random random = new Random(0);
                 Set<Integer> uniqueIndices = new HashSet<>();
-                while (uniqueIndices.size() < config.numQueries) {
+                while (uniqueIndices.size() < config.numSelectedRecForQueries) {
                     uniqueIndices.add(random.nextInt(indicesPerNumPreds[i].size()));
                 }
                 for (int new_i : uniqueIndices) {
@@ -1314,10 +1313,10 @@ public class CleanDataset {
     private void generateSynthQueries(int numAttrs, double percToDelete, int numZipfianAttrs) {
         // draw 1000 records from dataset
         Random random = new Random(repetition);
-        pointQueries = new long[config.numQueries * numPredicates][];
+        pointQueries = new long[config.numSelectedRecForQueries * numPredicates][];
 
         for (int p = 0; p < numPredicates; p++) {
-            for (int i = p * config.numQueries; i < (p + 1) * config.numQueries; i++) {
+            for (int i = p * config.numSelectedRecForQueries; i < (p + 1) * config.numSelectedRecForQueries; i++) {
                 int index = random.nextInt(dataset.length);
                 // pointQueries[i] = last numAttrs of dataset[index]
                 pointQueries[i] = new long[numAttrs];
@@ -1333,7 +1332,7 @@ public class CleanDataset {
         Random randomQueries = new Random(repetition);
 
         for (int p = 0; p < numPredicates; p++) {
-            for (int i = p * config.numQueries; i < (p + 1) * config.numQueries; i++) {
+            for (int i = p * config.numSelectedRecForQueries; i < (p + 1) * config.numSelectedRecForQueries; i++) {
                 int curNumPreds = 0;
                 while (curNumPreds < numAttrs - (p + 1)) {
                     int index = randomQueries.nextInt(numAttrs);
