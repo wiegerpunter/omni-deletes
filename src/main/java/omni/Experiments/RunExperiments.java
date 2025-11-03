@@ -46,8 +46,8 @@ public class RunExperiments {
                         if (config.useMultNumAttributes) {
                             for (int j = 2; j < cd.cleanIds.length; j++) { //cd.cleanIds.length
                                 config.numStoredAttributes = j + 1;
-                                if (config.numStoredAttributes % 3 != 0 && config.numStoredAttributes != 11) {
-                                    continue; // skip attributes that are not multiples of 3, except for 11
+                                if (cd.cleanIds.length == 11 && config.numStoredAttributes % 3 != 0 && config.numStoredAttributes != 11) {
+                                    continue; // skip attributes that are not multiples of 3, except for 11. Only do this for synth, otherwise keep everything in.
                                 }
                                 System.out.println("Running with " + config.numStoredAttributes + " attributes");
                                 if (config.readFromDisk) {
@@ -167,7 +167,7 @@ public class RunExperiments {
                                                         }
                                                     } else if (config.parameterSettingType.equals("GridSearch")) {
 
-                                                        if (experimentName.contains("VLDB")) {
+                                                        if (experimentName.contains("OmniSketch")) { // prev "VLDB"
                                                             config.B = (int) ((ram / (config.d * config.w * config.numStoredAttributes) - 32) / config.b);
                                                             if (config.B < 1) {
                                                                 System.err.println("B is less than 1, skipping experiment");
@@ -337,9 +337,12 @@ public class RunExperiments {
             if (config.expTWOLHSExact) enabledExperiments.add("OmniSketchTWOLHSExactCustom");
             if (config.expTWOLHSPerRowExact) enabledExperiments.add("OmniSketchTWOLHSPerRowExactCustom");
 
+            if (config.expOmniSketchSampleFirstQLater) enabledExperiments.add("OmniSketchSampleFirstQLaterCustom");
+            if (config.expOmniSketchSampleFirstQLaterNaive) enabledExperiments.add("OmniSketchSampleFirstQLaterNaiveCustom");
 
-            if (config.expOmniSketchSFQLOptimized) enabledExperiments.add("OmniSketchSFQLOptimizedCustom");
-            if (config.expOmniSketchSFQLOptimizedOnlyNew) enabledExperiments.add("OmniSketchSFQLOptimizedOnlyNewCustom");
+
+            if (config.expOmniSketchSampleLaterQFOptimized) enabledExperiments.add("OmniSketchSampleLaterQFOptimizedCustom");
+            if (config.expOmniSketchSampleLaterQFOptimizedOnlyNew) enabledExperiments.add("OmniSketchSampleLaterQFOptimizedOnlyNewCustom");
         }
 
         if (config.parameterSettingType.equals("B/w")) {
@@ -349,8 +352,8 @@ public class RunExperiments {
             if (config.expOmniSketchVLDBArrayWithoutBuffer) enabledExperiments.add("OmniSketchVLDBArrayWithoutBuffer");
             if (config.expOmniSketchVLDBTreeSet) enabledExperiments.add("OmniSketchVLDBTreeSet");
             if (config.expOmniSketchVLDBTreeSetWithoutBuffer) enabledExperiments.add("OmniSketchVLDBTreeSetWithoutBuffer");
-            if (config.expOmniSketchSFQLOptimized) enabledExperiments.add("OmniSketchSFQLOptimized");
-            if (config.expOmniSketchSFQLOptimizedOnlyNew) enabledExperiments.add("OmniSketchSFQLOptimizedOnlyNew");
+            if (config.expOmniSketchSampleLaterQFOptimized) enabledExperiments.add("OmniSketchSFQLOptimized");
+            if (config.expOmniSketchSampleLaterQFOptimizedOnlyNew) enabledExperiments.add("OmniSketchSFQLOptimizedOnlyNew");
             if (config.expOmniSketchSampleFirstQLater) enabledExperiments.add("OmniSketchSampleFirstQLater");
             if (config.expOmniSketchSampleFirstQLaterPerRow) enabledExperiments.add("OmniSketchSampleFirstQLaterPerRow");
 
@@ -475,8 +478,12 @@ public class RunExperiments {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] values = line.split(",");
-                long[] record = new long[values.length - 1];
-                for (int i = 0; i < values.length -1; i++) {
+//                long[] record = new long[values.length - 1];
+                long[] record = new long[config.numStoredAttributes + 1];
+//                for (int i = 0; i < values.length -1; i++) {
+//                    record[i] = Long.parseLong(values[i]);
+//                }
+                for (int i = 0; i < record.length; i++) {
                     record[i] = Long.parseLong(values[i]);
                 }
                 int sign = Integer.parseInt(values[values.length - 1]);
@@ -524,8 +531,9 @@ public class RunExperiments {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] values = line.split(",");
-                long[] record = new long[values.length - 1];
-                for (int i = 0; i < values.length -1; i++) {
+//                long[] record = new long[values.length - 1];
+                long[] record = new long[config.numStoredAttributes + 1];
+                for (int i = 0; i < record.length -1; i++) {
                     record[i] = Long.parseLong(values[i]);
                 }
                 int sign = Integer.parseInt(values[values.length - 1]);

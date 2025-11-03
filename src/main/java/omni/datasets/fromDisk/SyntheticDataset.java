@@ -68,13 +68,13 @@ public class SyntheticDataset {
 
 
         for (int i = 0; i < pointQueries.length; i++) {
-            int numPreds = i % config.numPredicates + 1; // Every p records, we should have a new sampled record.
-            int curNumPreds = 0;
-            while (curNumPreds < numPreds) {
+            int numPreds = i % config.numStoredAttributes + 1; // Every p records, we should have a new sampled record.
+            int curMasked = 0;
+            while (curMasked < (config.numStoredAttributes - numPreds)) {
                 int index = randomQueries.nextInt(numAttrs);
                 if (pointQueries[i][index] != -1) {
                     pointQueries[i][index] = -1;
-                    curNumPreds++;
+                    curMasked++;
                 }
             }
         }
@@ -407,7 +407,7 @@ public class SyntheticDataset {
             long[] record = readRecord(line, numAttrs);
             int id = (int) record[0];
             if (selectedIndices.contains(id)) {
-                for (int p = 0; p < config.numPredicates; p++) {
+                for (int p = 0; p < config.numStoredAttributes; p++) {
                     pointQueries[added] = new long[numAttrs];
                     System.arraycopy(record, 1, pointQueries[added], 0, numAttrs);
                     added++;

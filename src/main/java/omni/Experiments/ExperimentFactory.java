@@ -74,11 +74,12 @@ public class ExperimentFactory {
         experiments.put("OmniSketchFastTWOLHSOneBucketPerRowCustom", new OmniFastTWOLHSOneBucketPerRowCustomExperiment());
         experiments.put("OmniSketchNMaxTWOLHSPerRowCustom", new OmniNMaxTWOLHSPerRowCustomExperiment());
 
+        experiments.put("OmniSketchSampleLaterQFOptimizedCustom", new OmniSampleLaterQFOptimizedCustomExperiment());
+        experiments.put("OmniSketchSampleLaterQFOptimizedOnlyNewCustom", new OmniSampleLaterQFOptimizedOnlyNewCustomExperiment());
 
 
-
-        experiments.put("OmniSketchSFQLOptimizedCustom", new OmniSFQLOptimizedCustomExperiment());
-        experiments.put("OmniSketchSFQLOptimizedOnlyNewCustom", new OmniSFQLOptimizedOnlyNewCustomExperiment());
+        experiments.put("OmniSketchSampleFirstQLaterNaiveCustom", new OmniSampleFirstQLaterNaiveCustomExperiment());
+        experiments.put("OmniSketchSampleFirstQLaterCustom", new OmniSampleFirstQLaterCustomExperiment());
 
 
         experiments.put("ReservoirSampling", new ReservoirExperiment());

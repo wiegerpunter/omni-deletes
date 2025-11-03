@@ -1,4 +1,4 @@
-package omni.Experiments.deprecated;
+package omni.Experiments.custom;
 
 import omni.Config;
 import omni.Experiments.Experiment;
@@ -8,11 +8,11 @@ import omni.synopses.omniFactory.OmniSketchBuilder;
 
 import java.io.IOException;
 
-public class OmniSFQLOptimizedOnlyNewCustomExperiment implements Experiment {
+public class OmniSampleFirstQLaterCustomExperiment implements Experiment {
     private RunExperiments runExperiments;
     private final OmniSketchBuilder omniSketchBuilder;
-    public OmniSFQLOptimizedOnlyNewCustomExperiment() {
-        this.omniSketchBuilder = OmniSketchBuilder.QFirstSampleLaterOptimizedOnlyNew();
+    public OmniSampleFirstQLaterCustomExperiment() {
+        this.omniSketchBuilder = OmniSketchBuilder.sampleFirstQLater();
     }
 
     @Override

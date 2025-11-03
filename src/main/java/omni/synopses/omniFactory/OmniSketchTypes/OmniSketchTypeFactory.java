@@ -7,6 +7,7 @@ public class OmniSketchTypeFactory {
         return switch (type) {
             case "SampleFirst" -> new OmniSketchTypeSampleFirst(sketchConfig);
             case "SampleFirstPerRow" -> new OmniSketchTypeSampleFirstPerRow(sketchConfig);
+            case "SampleFirstNaive" -> new OmniSketchTypeSampleFirstNaive(sketchConfig);
             case "SampleFirstTest" -> new OmniSketchTypeSampleFirstTest(sketchConfig);
             case "SampleLater" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminPQ");
             case "SampleLaterExact" -> new OmniSketchTypeSampleLaterKmin(sketchConfig, "KminExact");

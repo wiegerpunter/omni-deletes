@@ -124,6 +124,15 @@ public class OmniSketchBuilder {
                 .setSketchType("SampleFirst");
     }
 
+    public static OmniSketchBuilder sampleFirstQLaterNaive() {
+        return new OmniSketchBuilder()
+                .setUseAcrossRows(true)
+                .setUseS0(true)
+                .setUseS0WithSampling(true)
+                .setUseOnlyBestRow(true)
+                .setSketchType("SampleFirstNaive");
+    }
+
     public static OmniSketchBuilder sampleFirstQLaterPerRow() {
         return new OmniSketchBuilder()
                 .setUseAcrossRows(false)

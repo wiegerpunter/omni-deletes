@@ -94,7 +94,7 @@ public class CleanDataset {
             }
             return; // no need to shuffle cleanIds, as already synthetic data.
         } else {
-            throw new RuntimeException("Unknown dataset name");
+            throw new RuntimeException("Unknown dataset name: " +  name);
         }
         // shuffle clean ids based on repetition
         Random rng = new Random(repetition);

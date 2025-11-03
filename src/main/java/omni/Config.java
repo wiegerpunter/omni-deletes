@@ -26,6 +26,7 @@ public class Config {
     public int numBins;
     public int numPredicates;
     public boolean expOmniSketchSampleFirstQLater;
+    public boolean expOmniSketchSampleFirstQLaterNaive;
     public boolean expOmniSketchSampleFirstQLaterPerRow;
     public boolean expOmniSketchVLDB;
     public boolean expOmniSketchVLDBS0;
@@ -75,8 +76,8 @@ public class Config {
     public int numFiles;
     public int w;
     public int B;
-    public boolean expOmniSketchSFQLOptimized;
-    public boolean expOmniSketchSFQLOptimizedOnlyNew;
+    public boolean expOmniSketchSampleLaterQFOptimized;
+    public boolean expOmniSketchSampleLaterQFOptimizedOnlyNew;
     public String parameterSettingType;
     public double bufferDeletesMinwise;
     public boolean expOmniSketchVLDBTreeSet;
