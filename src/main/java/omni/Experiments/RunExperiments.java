@@ -8,7 +8,6 @@ import omni.datasets.DatasetRefactor;
 import omni.datasets.Record.LongRecord;
 import omni.datasets.Record.StringRecord;
 import omni.synopses.SynopsisRefactor;
-import omni.synopses.chowMin.ChowMinAllPairs;
 import omni.synopses.omniFactory.OmniSketch;
 import omni.synopses.omniFactory.OmniSketchBuilder;
 import omni.Experiments.parameterSetting.RamToPar;
@@ -22,7 +21,7 @@ import java.util.List;
 
 public class RunExperiments {
     DatasetRefactor d;
-    public CleanDataset cd;
+    CleanDataset cd;
     String[] conditions;
     BufferedParamMinwiseSettings bp;
     static Config config;
@@ -246,15 +245,7 @@ public class RunExperiments {
                                     experiment.run(size, rtp_ash, repetition, config);
                                 }
                             }
-                        } else if (experimentName.contains("chowMin")) {
-                            for (int d : config.dGridSearch) {
-                                config.d = d;
-                                rtp.runChowMin(config.d);
-                                experiment.run(ram, rtp, repetition, config);
-                            }
-                        }
-
-                        else {
+                        } else {
                             experiment.run(ram, rtp, repetition, config);
                         }
                     }
@@ -373,9 +364,6 @@ public class RunExperiments {
 
         if (config.expResSample) enabledExperiments.add("ReservoirSampling");
         if (config.expASH) enabledExperiments.add("aSH");
-        if (config.expChowMin) enabledExperiments.add("chowMin");
-        if (config.expChowMinExactMI) enabledExperiments.add("chowMinExactMI");
-
         return enabledExperiments;
     }
 
@@ -438,24 +426,6 @@ public class RunExperiments {
     }
 
     public long runSynopsisRamBased(SynopsisRefactor syn, int repetition) throws IOException {
-        long time_passed = ingestData(syn);
-        int collisions = 0;
-
-
-        if (config.useNoCast) {
-            runQueriesNoCast ab = new runQueriesNoCast(syn, cd, time_passed, collisions, repetition, config);
-            ab.run();
-        } else {
-            runQueries ab = new runQueries(syn, cd, time_passed, collisions, repetition, config);
-            ab.runObj();
-        }
-        long synMem = syn.getMemoryUsage();
-        syn.reset();
-        //ConditionChecks.run(d, s);
-        return synMem;
-    }
-
-    public long ingestData(SynopsisRefactor syn) {
         long time_passed;
 
         if (config.readFromDisk) {
@@ -480,7 +450,20 @@ public class RunExperiments {
         System.out.println("Memory usage dataset: " + cd.getMemoryUsage());
         System.out.println("Compression ratio: " + (double) syn.getMemoryUsage() / cd.getMemoryUsage());
         System.out.println("\n");
-        return time_passed;
+        int collisions = 0;
+
+
+        if (config.useNoCast) {
+            runQueriesNoCast ab = new runQueriesNoCast(syn, cd, time_passed, collisions, repetition, config);
+            ab.run();
+        } else {
+            runQueries ab = new runQueries(syn, cd, time_passed, collisions, repetition, config);
+            ab.runObj();
+        }
+        long synMem = syn.getMemoryUsage();
+        syn.reset();
+        //ConditionChecks.run(d, s);
+        return synMem;
     }
 
     private long runDatasetFromDisk(SynopsisRefactor syn) {
@@ -700,7 +683,7 @@ public class RunExperiments {
             }
             case "CAIDA" -> {
                 this.conditions = new String[]{"1"};//, "4", "5", "6", "7", "8", "9", "10", "11", "12"};
-                config.numAttributes = 8; //actually 7; can be 10;
+                config.numAttributes = 8;//10; //actually 7; can be 10;
             }
             case "Test" -> {
                 this.conditions = new String[]{"0"};
@@ -736,12 +719,7 @@ public class RunExperiments {
         System.out.println("Running OmniSketch with parameters: " + Arrays.toString(params));
 
         int numCells = config.d * config.w * config.numStoredAttributes;
-//        int bufferSize = 8000000 / numCells / 32; // 1MB buffer size
-        if (config.B <= 2) {
-            System.out.println("Parameter settings too small, skip experiment ram: " + ram/8_000_000 + ", d: " + config.d + ", w: " + config.w + " numAttrs: " + config.numStoredAttributes);
-            return;
-        }
-        int bufferSize = Math.max(2, (int) (config.B * 0.05));
+        int bufferSize = 8000000 / numCells / 32; // 1MB buffer size
         OmniSketch omniSketch = omniSketchBuilder
                 .setRam(ram)
                 .setIngestBufferSize(bufferSize/2)
@@ -757,5 +735,4 @@ public class RunExperiments {
         omniSketch.reset();
         System.gc();
     }
-
 }

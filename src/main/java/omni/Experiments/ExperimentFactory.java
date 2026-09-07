@@ -1,5 +1,8 @@
 package omni.Experiments;
-import omni.Experiments.baselines.*;
+import omni.Experiments.baselines.HydraExperiment;
+import omni.Experiments.baselines.ReservoirExperiment;
+import omni.Experiments.baselines.aSHExperiment;
+import omni.Experiments.baselines.readFileExperiment;
 import omni.Experiments.custom.*;
 import omni.Experiments.deprecated.*;
 
@@ -81,9 +84,6 @@ public class ExperimentFactory {
 
         experiments.put("ReservoirSampling", new ReservoirExperiment());
         experiments.put("aSH", new aSHExperiment());
-        experiments.put("chowMin", new ChowMinExperiment());
-        experiments.put("chowMinExactMI", new ChowMinExactMIExperiment());
-
         experiments.put("Hydra", new HydraExperiment());
         experiments.put("readFile", new readFileExperiment());
 

@@ -1,7 +1,6 @@
 package omni;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -14,8 +13,6 @@ public class Config {
     public boolean withDeletes;
     public boolean spreadOutDeletes;
     public List<Long> ramVals;
-    public List<Double> ramValsMB;
-
     public List<Double> noiseUpdateFractions;
     public List<Double> ingestBuffers;
     public List<Integer> dGridSearch;
@@ -51,7 +48,6 @@ public class Config {
     public boolean expOmniSketchVLDBSimpleBufferNoDeleteBuffer;
 
     public boolean expASH;
-    public boolean expChowMin;
     public boolean expHydra;
     public boolean expResSample;
     public boolean expCM;
@@ -108,8 +104,6 @@ public class Config {
     public int deleteBufferSize;
     public boolean expReadFile;
     public String job_name;
-    public boolean pvldb_queries;
-    public boolean expChowMinExactMI;
 
     // Old parameters, might use them in the future
 //    public List<Double> bufferValuesOmni;
@@ -131,10 +125,7 @@ public class Config {
     }
 
     public void ramMBToBits() {
-        ramVals = new ArrayList<>(ramValsMB.size());
-        for (double ram : ramValsMB) {
-            ramVals.add((long) (ram * 1_000_000 * 8));
-        }
+        ramVals.replaceAll(aLong -> aLong * 1000000 * 8);
     }
 
     public void setCurrentDate() {

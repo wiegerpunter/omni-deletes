@@ -54,11 +54,7 @@ public class CAIDADataset {
 
     public void generateQueries(int sizeFactor) throws IOException {
         setupResiduDataset(sizeFactor); // Use 0.0 to generate queries on the residu dataset
-        if (config.pvldb_queries) {
-            generateQueriesPVLDB();
-        } else {
-            generateQueriesVLDBJ();
-        }
+        generateQueriesString();
     }
 
     public void loader(int sizeFactor) {
@@ -96,7 +92,7 @@ public class CAIDADataset {
         ArrayList<long[]> pointQueriesList = new ArrayList<>();
         ArrayList<Integer> pointQueryAnswersList = new ArrayList<>();
         ArrayList<Integer> pointQueryUnionList = new ArrayList<>();
-        queryFileName = setQueryFileName(datasetFileName, config.pvldb_queries);
+        queryFileName = setQueryFileName(datasetFileName);
         int numAttrs = config.numStoredAttributes;
         // load queries and pointQueryAnswers from file
         try (BufferedReader reader = new BufferedReader(new FileReader(queryFileName))) {
@@ -127,29 +123,7 @@ public class CAIDADataset {
         loadPointQueryArrays(pointQueriesList, pointQueryAnswersList, pointQueryUnionList, numAttrs);
     }
 
-    private void generateQueriesVLDBJ() throws IOException {
-        int numAttrs = config.numStoredAttributes;
-        pointQueries = new long[config.numSelectedRecForQueries * config.numPredicates][];
-
-        Set<Integer> selectedIndices = selectRandomIndices(datasetResiduSize, config.numSelectedRecForQueries);
-        try (BufferedReader reader = new BufferedReader(new FileReader(datasetFileName))) {
-            populatePointQueriesString(reader, numAttrs, selectedIndices);
-        } catch (IOException e) {
-            System.err.println("Error opening file for queries: " + datasetFileName);
-            throw e;
-        }
-
-        pointQueryAnswers = new int[pointQueries.length];
-        pointQueryUnion = new int[pointQueries.length];
-        pointQueriesNumAttrs = new int[pointQueries.length];
-        pointQueryBinNumber = new int[pointQueries.length];
-        applyPredicates(numAttrs);
-        deduplicateQueries(numAttrs);
-        computeExactAnswers();
-        computeQueryStats(numAttrs);
-    }
-
-    private void generateQueriesPVLDB() throws IOException {
+    private void generateQueriesString() throws IOException {
         int numAttrs = config.numStoredAttributes;
         pointQueries = new long[config.numSelectedRecForQueries * config.numPredicates][];
 
@@ -304,7 +278,7 @@ public class CAIDADataset {
     }
 
     private void writeQueriesToFile() {
-        queryFileName = setQueryFileName(datasetFileName, config.pvldb_queries);
+        queryFileName = setQueryFileName(datasetFileName);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(queryFileName))) {
             writeHeaderQueryFile(writer, pointQueries[0].length);
@@ -350,11 +324,7 @@ public class CAIDADataset {
         writer.newLine();
     }
 
-    private String setQueryFileName(String datasetFileName, boolean pvldb_queries) {
-//        String queryFileName = datasetFileName.replace(".csv", "_" + config.numStoredAttributes +"_queries.csv");
-        if (pvldb_queries) {
-            return datasetFileName.replace(".csv", "_pvldb.csv");
-        }
+    private String setQueryFileName(String datasetFileName) {
         return datasetFileName.replace(".csv", "_" + config.numStoredAttributes +"_queries.csv");
     }
 
@@ -389,7 +359,7 @@ public class CAIDADataset {
 
     public boolean queriesNotExistCAIDA(int sizeFactor) {
         setupResiduDataset(sizeFactor); // Use 0.0 queries are generated on residu.
-        String queryFileName = setQueryFileName(datasetFileName, config.pvldb_queries);
+        String queryFileName = setQueryFileName(datasetFileName);
         File queryFile = new File(queryFileName);
         return !queryFile.exists() || queryFile.length() == 0;
     }
