@@ -6,10 +6,10 @@
   "readFolder": "/home/wieger/omnibounded_data/",
   "withDeletes": true,
   "spreadOutDeletes": true,
-  "ramVals": [1,10],
+  "ramValsMB": [0.01,0.1,1],
   "noiseUpdateFractions": [0],
   "ingestBuffers": [0.1],
-  "dGridSearch": [1,3,5,7],
+  "dGridSearch": [3,5,7],
   "bGridSearch": [31],
   "BGridSearch": [1],
   "wGridSearch": [28],
@@ -30,15 +30,20 @@
   "fileStartCondition": "03110",
   "rangeQueries": false,
   "checkConditions": false,
-  "expOmniSketchSampleFirstQLater": true,
-  "expOmniSketchSampleFirstQLaterNaive": true,
+  "expOmniSketchSampleFirstQLater": false,
+  "expOmniSketchSampleFirstQLaterNaive": false,
   "expOmniSketchSampleFirstQLaterPerRow": false,
   "expOmniSketchVLDB": false,
   "expOmniSketchVLDBArray": false,
   "expOmniSketchVLDBArrayRegBuffer": false,
   "expOmniSketchVLDBArrayWithBuffer": false,
   "expOmniSketchVLDBArrayWithBufferOpt": false,
-  "expOmniSketchVLDBArrayWithBufferOptBatchDeletes": true,
+
+
+  "expOmniSketchVLDBArrayWithBufferOptBatchDeletes": false,
+
+
+
   "expOmniSketchVLDBArrayWithBufferPerRow": false,
 
   "expOmniSketchVLDBArrayWithBufferPessDeleteCount": false,
@@ -65,8 +70,10 @@
   "expFastTWOLHSOneBucketPerRow": false,
   "expNMaxTWOLHSPerRow": false,
 
-  "expASH": true,
+  "expASH": false,
   "expChowMin": true,
+  "expChowMinExactMI": true,
+
   "expHydra": false,
   "expResSample": false,
   "expCM": false,

@@ -78,6 +78,8 @@ public class CleanDataset {
             //int[] order = {12, 14, 11, 1, 5, 13, 9, 8, 10, 21, 15};//21, 19, 18, 1, 16, 12, 15, 5, 20,11, 17, 8, 13, 10};
         } else if (Objects.equals(name, "CAIDA")) {
             cleanIds = new int[]{5, 6, 8, 9, 10}; // 4 & 7 are also ok but correlate with 5 6 8 9.
+//            cleanIds = new int[]{4, 5, 6, 7}; // 4 & 7 are also ok but correlate with 5 6 8 9.
+
         } else if (Objects.equals(name, "wc98")) {
             throw new RuntimeException("Not implemented");
         } else if (name.equals("StringTest") || name.contains("tpc-ds")) {

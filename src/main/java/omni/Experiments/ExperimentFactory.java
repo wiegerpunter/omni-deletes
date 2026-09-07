@@ -82,6 +82,8 @@ public class ExperimentFactory {
         experiments.put("ReservoirSampling", new ReservoirExperiment());
         experiments.put("aSH", new aSHExperiment());
         experiments.put("chowMin", new ChowMinExperiment());
+        experiments.put("chowMinExactMI", new ChowMinExactMIExperiment());
+
         experiments.put("Hydra", new HydraExperiment());
         experiments.put("readFile", new readFileExperiment());
 

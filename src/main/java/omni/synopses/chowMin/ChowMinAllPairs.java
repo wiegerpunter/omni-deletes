@@ -2,6 +2,7 @@ package omni.synopses.chowMin;
 
 import omni.Experiments.utils.QueryInfo;
 import omni.datasets.Record.Record;
+import omni.datasets.Record.StringRecord;
 import omni.synopses.SynopsisRefactor;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -23,11 +24,9 @@ public class ChowMinAllPairs extends SynopsisRefactor {
     private final int[][] seeds;
     private final int[][] hashes;
     private double[][] MIs;
-    final private String table;
     final public String[] columns;
 
     public ChowMinAllPairs(long ram, int numAttributes, int[] params) {
-        this.table = "singleTable";
         this.columns = makeColumnsSingleTable(numAttributes);
         this.ram = ram;
         this.numAttributes = numAttributes;
@@ -115,7 +114,7 @@ public class ChowMinAllPairs extends SynopsisRefactor {
         }
     }
 
-    public void computeHashes(int att, Object attrValue, int[] hashes, int[] seeds) {
+    public void computeHashes(int att, String attrValue, int[] hashes, int[] seeds) {
         for (int i = 0; i < depth; i++) {
             if (attrValue == null) {
                 hashes[i] = -1;
@@ -157,7 +156,7 @@ public class ChowMinAllPairs extends SynopsisRefactor {
         for (int att = 0; att < numAttributes; att++) {
             int[] h = hashes[att];
             int[] s = seeds[att];
-            Object v = record.getValue(att);
+            String v = (record.getValue(att+1)).toString();
             computeHashes(att, v, h, s);
         }
         ingestToSketch(null, sign);
@@ -170,7 +169,24 @@ public class ChowMinAllPairs extends SynopsisRefactor {
 
     @Override
     public int query(Record query, int numPreds, QueryInfo queryInfo) {
-        return 0;
+        ArrayList<Integer> active = new ArrayList<>(numAttributes);
+        checkActive(active, (String[]) query.getQueryData(numAttributes));
+
+        if (active.isEmpty()) {
+            return N;
+        }
+
+        if (active.size() == 1) {
+            return marginal(active.get(0), query.getValue(active.get(0)).toString());
+        }
+
+        HashSet<Integer> attrsInPath = getAttrsInPath(active);
+
+        int root_cl = active.get(0);
+        List<Edge> f = buildFactorization(attrsInPath, root_cl, numAttributes, MIs);
+        // query the pairwise CMs to get to estimate.
+
+        return queryFactors(f, (String[]) query.getQueryData(numAttributes), attrsInPath);
     }
 
     @Override
@@ -276,7 +292,7 @@ public class ChowMinAllPairs extends SynopsisRefactor {
 
     private void checkActive(ArrayList<Integer> active, String[] record) {
         for (int i = 0; i < record.length; i++) {
-            if (record[i].equals("-1")) {
+            if (!record[i].equals("-1")) {
                 active.add(i);
             }
         }
@@ -471,8 +487,8 @@ public class ChowMinAllPairs extends SynopsisRefactor {
         return sketches[sketch_idx_first(attr)].getCodomain(attr, predicate);
     }
 
-    public int memoryUsage() {
-        int ram = 0;
+    public long getMemoryUsage() {
+        long ram = 0;
         for (TWODCM cm : sketches) {
             ram += cm.memory();
         }

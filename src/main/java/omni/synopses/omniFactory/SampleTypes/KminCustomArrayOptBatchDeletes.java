@@ -32,10 +32,10 @@ public class KminCustomArrayOptBatchDeletes implements Sample {
         if (beta == 0) {
             this.B = B - ingestionBufferSize - deleteBufferSize;
         } else if (beta >= 0) {
-            if (B <= ingestionBufferSize) {
-                throw new IllegalArgumentException("B must be greater than ingestionBufferSize");
+            if (B <= ingestionBufferSize + deleteBufferSize) {
+                throw new IllegalArgumentException("B must be greater than ingestionBufferSize + deleteBufferSize for B: " + B + " iBuf: " + ingestionBufferSize + " dBuf: " + deleteBufferSize);
             }
-            this.B = (int) ((B - ingestionBufferSize - deleteBufferSize) * beta);
+            this.B = Math.max(1, (int) ((B - ingestionBufferSize - deleteBufferSize) * beta));
         } else {
             throw new IllegalArgumentException("Beta should be >= 0");
         }

@@ -22,7 +22,7 @@ import java.util.List;
 
 public class RunExperiments {
     DatasetRefactor d;
-    CleanDataset cd;
+    public CleanDataset cd;
     String[] conditions;
     BufferedParamMinwiseSettings bp;
     static Config config;
@@ -374,6 +374,7 @@ public class RunExperiments {
         if (config.expResSample) enabledExperiments.add("ReservoirSampling");
         if (config.expASH) enabledExperiments.add("aSH");
         if (config.expChowMin) enabledExperiments.add("chowMin");
+        if (config.expChowMinExactMI) enabledExperiments.add("chowMinExactMI");
 
         return enabledExperiments;
     }
@@ -735,7 +736,12 @@ public class RunExperiments {
         System.out.println("Running OmniSketch with parameters: " + Arrays.toString(params));
 
         int numCells = config.d * config.w * config.numStoredAttributes;
-        int bufferSize = 8000000 / numCells / 32; // 1MB buffer size
+//        int bufferSize = 8000000 / numCells / 32; // 1MB buffer size
+        if (config.B <= 2) {
+            System.out.println("Parameter settings too small, skip experiment ram: " + ram/8_000_000 + ", d: " + config.d + ", w: " + config.w + " numAttrs: " + config.numStoredAttributes);
+            return;
+        }
+        int bufferSize = Math.max(2, (int) (config.B * 0.05));
         OmniSketch omniSketch = omniSketchBuilder
                 .setRam(ram)
                 .setIngestBufferSize(bufferSize/2)
