@@ -46,6 +46,9 @@ public class RamToPar {
     HashMap<Integer, double[]> sampleSizeToSketchRefParams = new HashMap<>();
     HashMap<Integer, double[]> sampleSizeToSketchKminParams = new HashMap<>();
 
+    // chowMin hashmap
+    HashMap<Long, int[]> ramToChowMin = new HashMap<>();
+
 
     int numAttrs;
     //int w;
@@ -79,6 +82,14 @@ public class RamToPar {
 
             double[] parsKmin = compParamsSingleKmin(ram);
             ramToKminParams.put(ram , parsKmin);
+        }
+    }
+
+    public void runChowMin(int depth) {
+        d = depth;
+        for (long ram : ramVals) {
+            int[] parsChowMin = setParamsChowMin(ram);
+            ramToChowMin.put(ram, parsChowMin);
         }
     }
 
@@ -731,6 +742,26 @@ public class RamToPar {
                 i++;
             }
             return sampleSizes;
+        }
+    }
+
+
+    public int[] setParamsChowMin(long ram) {
+        // number of CMs needed: numAttributes + numAttributes - 1
+        int numCMs = numAttrs * numAttrs/2 - numAttrs/2;
+        long cells = ram / 32L;
+        int perCM = (int) cells / (d * numCMs);
+        int width = (int) Math.sqrt(perCM);
+        System.out.println("Chow M All pairs has parameters d: " + d + " w: " +width);
+
+        return new int[]{d,width};
+    }
+
+    public int[] getParamsChowMin(long ram) {
+        if (ramToChowMin.containsKey(ram)) {
+            return ramToChowMin.get(ram);
+        } else {
+            throw new IllegalArgumentException("ram not found in ramToChowMin");
         }
     }
 //    public double[] getParamsHydra(long ram) {

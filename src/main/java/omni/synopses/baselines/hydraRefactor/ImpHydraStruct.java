@@ -501,6 +501,7 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
         for (int k = 1; k < Math.pow(2, numStoredAttributes); k++) {
             long[] recToAdd = new long[numStoredAttributes];
             // Convert k to binary string.
+
             StringBuilder binaryString = new StringBuilder(Integer.toBinaryString(k));
             // Pad with zeros.
             while (binaryString.length() < numStoredAttributes) {
@@ -518,6 +519,7 @@ public class ImpHydraStruct extends SynopsisRefactor implements Serializable {
             String insert = binaryString + "-" + Arrays.toString(recToAdd);
             totalAdded++;
             updateOne(insert, "1", value);
+//            updateOne(binaryString, recToAdd, value);
         }
 
         /*

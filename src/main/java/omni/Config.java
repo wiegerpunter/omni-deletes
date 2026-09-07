@@ -48,6 +48,7 @@ public class Config {
     public boolean expOmniSketchVLDBSimpleBufferNoDeleteBuffer;
 
     public boolean expASH;
+    public boolean expChowMin;
     public boolean expHydra;
     public boolean expResSample;
     public boolean expCM;
@@ -104,6 +105,7 @@ public class Config {
     public int deleteBufferSize;
     public boolean expReadFile;
     public String job_name;
+    public boolean pvldb_queries;
 
     // Old parameters, might use them in the future
 //    public List<Double> bufferValuesOmni;

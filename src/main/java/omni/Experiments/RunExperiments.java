@@ -8,6 +8,7 @@ import omni.datasets.DatasetRefactor;
 import omni.datasets.Record.LongRecord;
 import omni.datasets.Record.StringRecord;
 import omni.synopses.SynopsisRefactor;
+import omni.synopses.chowMin.ChowMinAllPairs;
 import omni.synopses.omniFactory.OmniSketch;
 import omni.synopses.omniFactory.OmniSketchBuilder;
 import omni.Experiments.parameterSetting.RamToPar;
@@ -245,7 +246,15 @@ public class RunExperiments {
                                     experiment.run(size, rtp_ash, repetition, config);
                                 }
                             }
-                        } else {
+                        } else if (experimentName.contains("chowMin")) {
+                            for (int d : config.dGridSearch) {
+                                config.d = d;
+                                rtp.runChowMin(config.d);
+                                experiment.run(ram, rtp, repetition, config);
+                            }
+                        }
+
+                        else {
                             experiment.run(ram, rtp, repetition, config);
                         }
                     }
@@ -364,6 +373,8 @@ public class RunExperiments {
 
         if (config.expResSample) enabledExperiments.add("ReservoirSampling");
         if (config.expASH) enabledExperiments.add("aSH");
+        if (config.expChowMin) enabledExperiments.add("chowMin");
+
         return enabledExperiments;
     }
 
@@ -426,6 +437,24 @@ public class RunExperiments {
     }
 
     public long runSynopsisRamBased(SynopsisRefactor syn, int repetition) throws IOException {
+        long time_passed = ingestData(syn);
+        int collisions = 0;
+
+
+        if (config.useNoCast) {
+            runQueriesNoCast ab = new runQueriesNoCast(syn, cd, time_passed, collisions, repetition, config);
+            ab.run();
+        } else {
+            runQueries ab = new runQueries(syn, cd, time_passed, collisions, repetition, config);
+            ab.runObj();
+        }
+        long synMem = syn.getMemoryUsage();
+        syn.reset();
+        //ConditionChecks.run(d, s);
+        return synMem;
+    }
+
+    public long ingestData(SynopsisRefactor syn) {
         long time_passed;
 
         if (config.readFromDisk) {
@@ -450,20 +479,7 @@ public class RunExperiments {
         System.out.println("Memory usage dataset: " + cd.getMemoryUsage());
         System.out.println("Compression ratio: " + (double) syn.getMemoryUsage() / cd.getMemoryUsage());
         System.out.println("\n");
-        int collisions = 0;
-
-
-        if (config.useNoCast) {
-            runQueriesNoCast ab = new runQueriesNoCast(syn, cd, time_passed, collisions, repetition, config);
-            ab.run();
-        } else {
-            runQueries ab = new runQueries(syn, cd, time_passed, collisions, repetition, config);
-            ab.runObj();
-        }
-        long synMem = syn.getMemoryUsage();
-        syn.reset();
-        //ConditionChecks.run(d, s);
-        return synMem;
+        return time_passed;
     }
 
     private long runDatasetFromDisk(SynopsisRefactor syn) {
@@ -683,7 +699,7 @@ public class RunExperiments {
             }
             case "CAIDA" -> {
                 this.conditions = new String[]{"1"};//, "4", "5", "6", "7", "8", "9", "10", "11", "12"};
-                config.numAttributes = 8;//10; //actually 7; can be 10;
+                config.numAttributes = 8; //actually 7; can be 10;
             }
             case "Test" -> {
                 this.conditions = new String[]{"0"};
@@ -735,4 +751,5 @@ public class RunExperiments {
         omniSketch.reset();
         System.gc();
     }
+
 }
